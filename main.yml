@@ -1,0 +1,96 @@
+- hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - defaults/main.yml
+  pre_tasks:
+    - name: Include playbook configuration.
+      include_vars: "{{ item }}"
+      with_fileglob:
+        - "{{ playbook_dir }}/config.yml"
+      tags: ['always']
+  roles:
+  - role: elliotweiser.osx-command-line-tools
+  - role: geerlingguy.mac.homebrew
+    tags: ['homebrew']
+  - role: geerlingguy.mac.mas
+    when: mas_installed_apps or mas_installed_app_ids
+    tags: ['mas']
+  - role: geerlingguy.mac.dock
+    when: configure_dock
+    tags: ['dock']
+  - role: ansible-vim
+    tags: ['vim']
+  - role: ansible-tmux
+    tags: ['tmux']
+  - role: ansible_role_antigen
+    tags: ['antigen']
+  vars:  
+    #vim
+    vim_cleanup: yes
+    vim_env: users
+    vim_plugin_manager: plug
+    vim_emoji_git_integration: no
+    vim_neovim: no
+    vim_users:
+     - kevin
+    vim_colorscheme: mustang
+    vim_plugins:
+    - { name: 'tpope/vim-sensible' }             # Starting point for vim configuration
+    - { name: 'tpope/vim-surround' }             # Starting point for vim configuration
+    - { name: 'tpope/vim-fugitive' }             # Starting point for vim configuration
+    - { name: 'tpope/vim-commentary' }           # Starting point for vim configuration
+    - { name: 'easymotion/vim-easymotion' }      # Starting point for vim configuration
+    - { name: 'preservim/nerdtree' }             # Starting point for vim configuration
+    - { name: 'morhetz/gruvbox' }                # Starting point for vim configuration
+    - { name: 'airblade/vim-gitgutter' }         # Starting point for vim configuration
+    - { name: 'vim-airline/vim-airline' }        # Lightweight vimscrip-based statusline
+    - { name: 'vim-airline/vim-airline-themes' } # vim-airline theme collection
+    - { name: 'edkolev/tmuxline.vim' }           # tmux status line generator with vim-airline integration
+    - { name: 'junegunn/vim-emoji' }             # EMOJI
+    - { name: 'mhinz/vim-signify' }              # Fast alternative to slow 'airblade/vim-gitgutter' (show git signatures)
+    - { name: 'vim-syntastic/syntastic' }        # Syntax Checker for different filetypes (airline integration)
+    - { name: 'ryanoasis/vim-devicons' }         # Add icons to plugins (Must be loaded after all other plugins in .vimrc)
+    - { name: 'wincent/command-t' }              # Fast "fuzzy" engine for switching buffers, searching etc.
+    - { name: 'ctrlpvim/ctrlp.vim' }             # Alternative to command-t (heavy - a lot of features, airline intergration)
+    #antigen
+    users:
+      - username: kevin
+        antigen_libraries:
+          - name: oh-my-zsh
+        antigen_theme:
+          name: romkatv/powerlevel10k
+        antigen_bundles:
+          # Bundles from the default repo (robbyrussell's oh-my-zsh).
+          - name: git
+          - name: kubectl
+          - name: terraform
+          - name: pip
+          - name: vscode
+          - name: vi-mode
+          - name: command-not-found
+          # Syntax highlighting bundle.
+          - name: zsh-syntax-highlighting # `name` is required (any valid file name will do so long as it's unique for the bundles)
+            url: https://github.com/zsh-users/zsh-syntax-highlighting
+          - name: zsh-autosuggestions
+            url: https://github.com/zsh-users/zsh-autosuggestions
+          - name: zsh-completions
+            url: https://github.com/zsh-users/zsh-completions
+  tasks:
+
+    - import_tasks: tasks/sudoers.yml
+      when: configure_sudoers
+      tags: ['sudoers']
+
+    - import_tasks: tasks/osx.yml
+      when: configure_osx
+      tags: ['osx']
+
+    - import_tasks: tasks/extra-packages.yml
+      tags: ['extra-packages']
+
+    - name: Run configured post-provision ansible task files.
+      include_tasks: "{{ outer_item }}"
+      loop_control:
+        loop_var: outer_item
+      with_fileglob: "{{ post_provision_tasks|default(omit) }}"
+      tags: ['post']
