@@ -24,7 +24,7 @@
     tags: ['tmux']
   - role: ansible_role_antigen
     tags: ['antigen']
-  vars:  
+  vars:
     #vim
     vim_cleanup: yes
     vim_env: users
@@ -32,7 +32,7 @@
     vim_emoji_git_integration: no
     vim_neovim: no
     vim_users:
-     - kevin
+     - "{{ lookup('env','USER') }}"
     vim_colorscheme: mustang
     vim_plugins:
     - { name: 'tpope/vim-sensible' }             # Starting point for vim configuration
@@ -54,7 +54,7 @@
     - { name: 'ctrlpvim/ctrlp.vim' }             # Alternative to command-t (heavy - a lot of features, airline intergration)
     #antigen
     users:
-      - username: kevin
+      - username: "{{ lookup('env', 'USER') }}"
         antigen_libraries:
           - name: oh-my-zsh
         antigen_theme:
@@ -80,10 +80,9 @@
     - import_tasks: tasks/sudoers.yml
       when: configure_sudoers
       tags: ['sudoers']
-
-    - import_tasks: tasks/osx.yml
-      when: configure_osx
-      tags: ['osx']
+    - import_tasks: tasks/exportrc.yml
+      when: configure_exportrc
+      tags: ['exportrc']
 
     - import_tasks: tasks/extra-packages.yml
       tags: ['extra-packages']

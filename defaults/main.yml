@@ -17,12 +17,21 @@ dockitems_persist: []
 #   path: "/Applications/Sublime Text.app/"
 #   pos: 5
 
-configure_sudoers: false
-sudoers_custom_config: ''
-# Example:
+configure_sudoers: true
 sudoers_custom_config: |
   # Allow users in admin group to use sudo with no password.
-  %admin ALL=(ALL) NOPASSWD: ALL
+  {{ lookup('env','USER') }} ALL=(ALL) NOPASSWD: ALL
+configure_exportrc: true
+exportrc: |
+  export PATH="/usr/local/opt/libtool/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/gsed/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/gawk/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+  export PATH="/usr/local/opt/gnu-which/libexec/gnubin:$PATH"
 
 dotfiles_repo: https://github.com/geerlingguy/dotfiles.git
 dotfiles_repo_accept_hostkey: true
@@ -35,7 +44,6 @@ dotfiles_files:
   - .vimrc
 
 homebrew_installed_packages:
-  # - ansible # Installed via Pip.
   - autoconf
   - bash-completion
   - doxygen
@@ -46,6 +54,9 @@ homebrew_installed_packages:
   - go
   - gpg
   - httpie
+  - htop
+  - kind
+  - kubectl
   - iperf
   - libevent
   - sqlite
@@ -59,9 +70,22 @@ homebrew_installed_packages:
   - readline
   - openssl
   - pv
-  - wget
   - wrk
   - zsh-history-substring-search
+  #gnu
+  - coreutils
+  - diffutils
+  - findutils
+  - gawk
+  - gnu-indent
+  - gnu-sed
+  - gnu-tar
+  - gnu-which
+  - gnutls
+  - grep
+  - gzip
+  - watch
+  - wget
 
 homebrew_taps:
   - homebrew/core
@@ -79,7 +103,6 @@ homebrew_cask_apps:
   - slack
   - transmit
   - vagrant
-  - kind
 
 # See `geerlingguy.mas` role documentation for usage instructions.
 mas_installed_apps: []
