@@ -54,6 +54,7 @@ homebrew_installed_packages:
   - go
   - gpg
   - httpie
+  - iterm2
   - htop
   - kind
   - kubectl
