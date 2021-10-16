@@ -54,7 +54,6 @@ homebrew_installed_packages:
   - go
   - gpg
   - httpie
-  - iterm2
   - htop
   - kind
   - kubectl
@@ -100,6 +99,7 @@ homebrew_cask_apps:
   - firefox
   - google-chrome
   - handbrake
+  - iterm2
   - licecap
   - sequel-ace
   - slack
