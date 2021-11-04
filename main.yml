@@ -93,3 +93,5 @@
         loop_var: outer_item
       with_fileglob: "{{ post_provision_tasks|default(omit) }}"
       tags: ['post']
+    - import_tasks: tasks/gdircolors.yml
+      tags: ['gdircolors']

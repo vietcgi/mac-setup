@@ -32,6 +32,9 @@ exportrc: |
   export PATH="/usr/local/opt/gawk/libexec/gnubin:$PATH"
   export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
   export PATH="/usr/local/opt/gnu-which/libexec/gnubin:$PATH"
+  eval `gdircolors -b $HOME/.dircolors`
+  alias ls="ls --show-control-chars --color=auto --sort=extension"
+  alias cat="ccat"
 
 dotfiles_repo: https://github.com/geerlingguy/dotfiles.git
 dotfiles_repo_accept_hostkey: true
@@ -47,6 +50,7 @@ homebrew_installed_packages:
   - autoconf
   - bash-completion
   - doxygen
+  - ccat
   - gettext
   - gifsicle
   - git
@@ -70,6 +74,7 @@ homebrew_installed_packages:
   - readline
   - openssl
   - pv
+  - tree
   - wrk
   - zsh-history-substring-search
   #gnu
