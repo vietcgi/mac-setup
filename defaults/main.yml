@@ -49,8 +49,9 @@ dotfiles_files:
 homebrew_installed_packages:
   - autoconf
   - bash-completion
-  - doxygen
+  - bat
   - ccat
+  - doxygen
   - gettext
   - gifsicle
   - git
@@ -63,6 +64,7 @@ homebrew_installed_packages:
   - kubectl
   - iperf
   - libevent
+  - lsd
   - sqlite
   - mcrypt
   - nmap
