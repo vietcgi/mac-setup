@@ -33,7 +33,8 @@ exportrc: |
   export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
   export PATH="/usr/local/opt/gnu-which/libexec/gnubin:$PATH"
   eval `gdircolors -b $HOME/.dircolors`
-  alias ls="ls --show-control-chars --color=always --sort=extension"
+  alias ls="lsd --color=always --sort=extension"
+  #alias ls="ls --show-control-chars --color=always --sort=extension"
   alias cat="ccat --color='always'"
 
 dotfiles_repo: https://github.com/geerlingguy/dotfiles.git
