@@ -12,6 +12,7 @@ roles:
   - name: nginxinc.nginx_config
   - name: elliotweiser.osx-command-line-tools
   - name: geerlingguy.dotfiles
+  - name: gantsign.visual-studio-code
   - src: https://github.com/ansible-community/ansible-consul.git
     name: ansible-consul
     scm: git
