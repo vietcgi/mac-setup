@@ -111,6 +111,7 @@
           "editor.guides.bracketPairs" : true,
           "editor.guides.highlightActiveIndentation" : true,
           "editor.guides.bracketPairsHorizontal" : "active",
+          "terminal.integrated.fontFamily": "MesloLGS NF", 
         }
   tasks:
 
