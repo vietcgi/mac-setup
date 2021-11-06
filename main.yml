@@ -65,10 +65,12 @@
           # Bundles from the default repo (robbyrussell's oh-my-zsh).
           - name: git
           - name: kubectl
-          - name: terraform
           - name: pip
+          - name: sudo
+          - name: terraform
           - name: vscode
           - name: vi-mode
+          - name: web-search
           - name: command-not-found
           # Syntax highlighting bundle.
           - name: zsh-syntax-highlighting # `name` is required (any valid file name will do so long as it's unique for the bundles)
@@ -87,12 +89,12 @@
           - donjayamanne.githistory
           - idleberg.icon-fonts
           - vscode-icons-team.vscode-icons
-          - wayou.vscode-todo-highlight	
+          - wayou.vscode-todo-highlight
           - johnpapa.vscode-peacock
-          - TabNine.tabnine-vscode	
+          - TabNine.tabnine-vscode
           - christian-kohler.path-intellisense
           - yzhang.markdown-all-in-one
-          - aaron-bond.better-comments	
+          - aaron-bond.better-comments
           - zhuangtongfa.Material-theme
           - wesbos.theme-cobalt2
         visual_studio_code_settings_overwrite: yes
@@ -111,7 +113,7 @@
           "editor.guides.bracketPairs" : true,
           "editor.guides.highlightActiveIndentation" : true,
           "editor.guides.bracketPairsHorizontal" : "active",
-          "terminal.integrated.fontFamily": "MesloLGS NF", 
+          "terminal.integrated.fontFamily": "MesloLGS NF",
         }
   tasks:
 
