@@ -112,7 +112,7 @@ if command -v brew >& /dev/null; then
     echo Homebrew is installed
 else
     echo Installing Homebrew
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 # Install developer tools if needed, newer versions of homebrew already do this
@@ -159,7 +159,7 @@ fi
 echo -n "Version: "
 ansible --version
 
-echo Installing the Ansible requirements 
+echo Installing the Ansible requirements
 ansible-galaxy install -r requirements.yml --force
 echo Ansible requirements installation complete
 
