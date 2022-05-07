@@ -23,15 +23,15 @@ sudoers_custom_config: |
   {{ lookup('env','USER') }} ALL=(ALL) NOPASSWD: ALL
 configure_exportrc: true
 exportrc: |
-  export PATH="/usr/local/opt/libtool/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/gsed/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/gawk/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
-  export PATH="/usr/local/opt/gnu-which/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/libtool/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/gsed/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/gawk/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/gnu-which/libexec/gnubin:$PATH"
   eval `gdircolors -b $HOME/.dircolors`
   alias ls="lsd --color=always --sort=extension"
   #alias ls="ls --show-control-chars --color=always --sort=extension"
