@@ -114,8 +114,15 @@ else
     echo Installing Homebrew
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> $HOME/.zprofile
-eval $(/opt/homebrew/bin/brew shellenv)
+if [[ $(uname -m) == 'arm64' ]]; then
+  echo M1
+  echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> $HOME/.zprofile
+  eval $(/opt/homebrew/bin/brew shellenv)
+  else 
+  echo 'eval $(/usr/local/bin/brew shellenv)' >> $HOME/.zprofile
+  eval $(/usr/local/bin/brew shellenv)
+fi
+
 
 # Install developer tools if needed, newer versions of homebrew already do this
 if xcode-select -p >& /dev/null; then
