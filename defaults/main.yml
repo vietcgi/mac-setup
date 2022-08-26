@@ -103,6 +103,17 @@ homebrew_installed_packages:
   - tree
   - wrk
   - zsh-history-substring-search
+  - postgresql
+  - aws-iam-authenticator
+  - awscli
+  - k9s
+  - helm
+  - jq
+  - aws-sso-util
+  - aws-iam-authenticator
+  - krew
+  - eksctl
+  - kubectx
   #gnu
   - coreutils
   - diffutils
@@ -117,6 +128,7 @@ homebrew_installed_packages:
   - gzip
   - watch
   - wget
+ 
 
 homebrew_taps:
   - homebrew/core
