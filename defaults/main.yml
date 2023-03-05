@@ -57,6 +57,7 @@ exportrc: |
   export PATH="{{ homebrew_prefix }}/opt/make/libexec/gnubin:$PATH"
   export PATH="{{ homebrew_prefix }}/opt/gnu-which/libexec/gnubin:$PATH"
   eval `gdircolors -b $HOME/.dircolors`
+  eval $(thefuck --alias)
   alias ls="lsd --color=always --sort=extension"
   alias cat="ccat --bg='dark' --color='always'"
 
@@ -114,6 +115,9 @@ homebrew_installed_packages:
   - krew
   - eksctl
   - kubectx
+  - thefuck
+  - fzf
+
   #gnu
   - coreutils
   - diffutils

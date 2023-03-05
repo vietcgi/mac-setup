@@ -72,6 +72,8 @@
           - name: vi-mode
           - name: web-search
           - name: command-not-found
+          - name: kubectx
+          - name: kube-ps1
           # Syntax highlighting bundle.
           - name: zsh-syntax-highlighting # `name` is required (any valid file name will do so long as it's unique for the bundles)
             url: https://github.com/zsh-users/zsh-syntax-highlighting
