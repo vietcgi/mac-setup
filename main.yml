@@ -3,8 +3,6 @@
   vars_files:
     - defaults/main.yml
   pre_tasks:
-    - name: Include playbook configuration.
-      include_vars: "{{ item }}"
       with_fileglob:
         - "{{ playbook_dir }}/config.yml"
       tags: ['always']
@@ -99,6 +97,14 @@
           - aaron-bond.better-comments
           - zhuangtongfa.Material-theme
           - wesbos.theme-cobalt2
+          - redhat.vscode-yaml
+          - redhat.ansible
+          - ms-kubernetes-tools.vscode-kubernetes-tools
+          - dbaeumer.vscode-eslint
+          - ms-azuretools.vscode-docker
+          - github.vscode-pull-request-github
+          - ibm.output-colorizer
+
         visual_studio_code_settings_overwrite: yes
         visual_studio_code_settings: {
           "editor.rulers": [80, 100, 120],

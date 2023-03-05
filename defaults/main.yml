@@ -117,7 +117,7 @@ homebrew_installed_packages:
   - kubectx
   - thefuck
   - fzf
-
+  - ansible-lint
   #gnu
   - coreutils
   - diffutils
