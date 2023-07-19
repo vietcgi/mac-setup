@@ -59,7 +59,8 @@ exportrc: |
   eval `gdircolors -b $HOME/.dircolors`
   eval $(thefuck --alias)
   alias ls="lsd --color=always --sort=extension"
-  alias cat="ccat --bg='dark' --color='always'"
+  #alias cat="ccat --bg='dark' --color='always'"
+  alias cat="bat --paging=never"
 
 dotfiles_repo: https://github.com/geerlingguy/dotfiles.git
 dotfiles_repo_accept_hostkey: true
