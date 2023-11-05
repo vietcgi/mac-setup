@@ -108,6 +108,7 @@
           - ibm.output-colorizer
           - hashicorp.terraform
           - oderwat.indent-rainbow
+          - pkief.material-icon-theme
 
         visual_studio_code_settings_overwrite: yes
         visual_studio_code_settings:
