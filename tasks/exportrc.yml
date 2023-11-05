@@ -10,3 +10,8 @@
     path: ~/.zshrc
     line: source ~/.exportrc
     create: yes
+- name: Add grc to .zshrc
+  ansible.builtin.lineinfile:
+    path: ~/.zshrc
+    line: source /opt/homebrew/etc/grc.zsh
+    create: yes
