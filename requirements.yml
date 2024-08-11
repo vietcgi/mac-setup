@@ -17,10 +17,10 @@ roles:
     name: ansible-consul
     scm: git
     version: master
-  - src: https://github.com/openstack/ansible-role-chrony
-    name: ansible-role-chrony
-    scm: git
-    version: master
+#  - src: https://github.com/openstack/ansible-role-chrony
+#    name: ansible-role-chrony
+#    scm: git
+#    version: master
   - src: https://github.com/vietcgi/ansible-vim
     name: ansible-vim
     scm: git
