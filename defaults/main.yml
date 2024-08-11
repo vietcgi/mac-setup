@@ -136,9 +136,7 @@ homebrew_installed_packages:
   - wget
  
 
-homebrew_taps:
-  - homebrew/core
-  - homebrew/cask
+homebrew_taps: []
 
 homebrew_cask_appdir: /Applications
 homebrew_cask_apps:
