@@ -112,14 +112,24 @@ if command -v brew >& /dev/null; then
     echo Homebrew is installed
 else
     echo Installing Homebrew
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        echo "Failed to install Homebrew"
+        exit 1
+    fi
 fi
 if [[ $(uname -m) == 'arm64' ]]; then
-  echo M1
-  echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> $HOME/.zprofile
+  echo M1 Mac detected
+  # Only add to .zprofile if not already present
+  if ! grep -q "eval.*opt/homebrew.*shellenv" "$HOME/.zprofile" 2>/dev/null; then
+    echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> $HOME/.zprofile
+  fi
   eval $(/opt/homebrew/bin/brew shellenv)
-  else 
-  echo 'eval $(/usr/local/bin/brew shellenv)' >> $HOME/.zprofile
+else 
+  echo Intel Mac detected
+  # Only add to .zprofile if not already present
+  if ! grep -q "eval.*usr/local.*shellenv" "$HOME/.zprofile" 2>/dev/null; then
+    echo 'eval $(/usr/local/bin/brew shellenv)' >> $HOME/.zprofile
+  fi
   eval $(/usr/local/bin/brew shellenv)
 fi
 
@@ -139,18 +149,18 @@ else
             if ! softwareupdate --install --verbose "${clt_pkg}" ; then
                 echo Install of Command Line Tools failed
                 echo Try running command "xcode-select --install" before running this script
-                exit
+                exit 1
             fi
         else
             echo Update to Command Line Tools not found
             echo Try running command "xcode-select --install" before running this script
-            exit
+            exit 1
         fi
         rm -f "${clt_file}"
     else
         echo Not installing Command Line Tools for MacOS prior to version 10.9
         echo Try running command "xcode-select --install" before running this script
-        exit
+        exit 1
     fi
 fi
 
@@ -162,16 +172,29 @@ if command -v ansible >& /dev/null; then
     echo Ansible is installed
 else
     echo Installing Ansible
-    brew install ansible
+    if ! brew install ansible; then
+        echo "Failed to install Ansible"
+        exit 1
+    fi
     echo Ansible installation complete
 fi
 echo -n "Version: "
 ansible --version
 
 echo Installing the Ansible requirements
-ansible-galaxy install -r requirements.yml --force
+if ! ansible-galaxy install -r requirements.yml --force; then
+    echo "Failed to install Ansible requirements"
+    exit 1
+fi
 echo Ansible requirements installation complete
 
 echo Install Ansible Playbook
-ansible-playbook -i inventory main.yml --ask-become-pass
+# Use sudo with timeout to avoid multiple password prompts
+# sudo -v extends the timeout for subsequent sudo commands
+sudo -v
+if ! ansible-playbook -i inventory main.yml --become; then
+    echo "Ansible playbook execution failed"
+    exit 1
+fi
+echo "Mac setup completed successfully!"
 

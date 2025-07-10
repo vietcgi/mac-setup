@@ -1,0 +1,10 @@
+---
+# Optional configuration overrides
+# This file allows you to customize the installation without modifying defaults/main.yml
+# 
+# Examples:
+# configure_dock: false
+# homebrew_installed_packages:
+#   - custom-package
+# 
+# All variables from defaults/main.yml can be overridden here
