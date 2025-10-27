@@ -344,6 +344,8 @@ jobs:
           chmod +x bootstrap-ansible.sh
           export DEBIAN_FRONTEND=noninteractive
           ./bootstrap-ansible.sh
+        env:
+          CI: true
 
       - name: Verify installations
         run: |
@@ -392,6 +394,8 @@ jobs:
           chmod +x bootstrap-ansible.sh
           export DEBIAN_FRONTEND=noninteractive
           ./bootstrap-ansible.sh
+        env:
+          CI: true
 
       - name: Verify installations
         run: |
@@ -493,6 +497,8 @@ jobs:
         run: |
           chmod +x bootstrap-ansible.sh
           ./bootstrap-ansible.sh
+        env:
+          CI: true
 
       - name: Verify installations
         run: |
@@ -539,6 +545,8 @@ jobs:
         run: |
           chmod +x bootstrap-ansible.sh
           ./bootstrap-ansible.sh
+        env:
+          CI: true
 
       - name: Verify installations
         run: |
