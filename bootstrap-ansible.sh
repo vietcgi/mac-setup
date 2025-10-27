@@ -127,7 +127,7 @@ main() {
         print_success "Homebrew already installed"
     else
         print_info "Installing Homebrew..."
-        if retry /bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        if retry bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
             # Add Homebrew to PATH for this session
             eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
             print_success "Homebrew installed"
