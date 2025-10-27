@@ -260,7 +260,7 @@
     # Shell Configuration (Zsh + Oh My Zsh + Powerlevel10k)
     # =========================================================================
 
-    - name: Check if Oh My Zsh is installed
+    - name: Check Oh My Zsh installation
       ansible.builtin.stat:
         path: "{{ home }}/.oh-my-zsh"
       register: ohmyzsh_check

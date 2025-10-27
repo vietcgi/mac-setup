@@ -6,7 +6,7 @@
 
 ### Before (Old Setup)
 
-```
+```yaml
 mac-setup/
 ├── bootstrap.sh                 # Complex bootstrap
 ├── main.yml                     # Main playbook
@@ -25,6 +25,7 @@ mac-setup/
 ```
 
 **Problems:**
+
 - [NO] 10+ files to maintain
 - [NO] 8 external role dependencies
 - [NO] Complex YAML hierarchy
@@ -33,7 +34,7 @@ mac-setup/
 
 ### After (New Setup)
 
-```
+```yaml
 mac-setup/
 ├── setup.yml                    # Single clean playbook (~250 lines)
 ├── bootstrap-ansible.sh         # Simple bootstrap
@@ -44,6 +45,7 @@ mac-setup/
 ```
 
 **Benefits:**
+
 - [OK] 3 main files (setup.yml, Brewfile, .mise.toml)
 - [OK] Zero external roles
 - [OK] Simple, readable YAML
@@ -80,11 +82,13 @@ cp -r ~/mac-setup ~/mac-setup-backup
 ### Step 2: Review What You've Customized
 
 **If you had custom configuration**, note your changes:
-```
+
+```yaml
 
 If it's mostly empty (just comments), you're using defaults → Easy migration!
 
 If you have customizations, note them down. We'll add them to the new setup.
+```
 
 ### Step 3: Run the New Setup
 
@@ -97,6 +101,7 @@ chmod +x bootstrap-ansible.sh
 ```
 
 This will:
+
 1. Install Homebrew (if needed)
 2. Install Ansible (if needed)
 3. Run the new simplified playbook
@@ -130,6 +135,7 @@ rm -rf .ansible/  # Old downloaded roles
 ### Adding/Removing Packages
 
 **Old way:**
+
 ```yaml
 # defaults/main.yml
 homebrew_installed_packages:
@@ -139,6 +145,7 @@ homebrew_installed_packages:
 ```
 
 **New way:**
+
 ```ruby
 # Brewfile
 brew "git"
@@ -147,6 +154,7 @@ brew "new-package"  # ← Add here
 ```
 
 Then run:
+
 ```bash
 brew bundle install
 # or
@@ -156,12 +164,14 @@ ansible-playbook setup.yml
 ### Changing Tool Versions
 
 **Old way:**
+
 ```bash
 # Install nvm, then manually:
 nvm install 20
 ```
 
 **New way:**
+
 ```toml
 # .mise.toml
 [tools]
@@ -171,6 +181,7 @@ python = "3.12"
 ```
 
 Then run:
+
 ```bash
 mise install
 # or
@@ -180,6 +191,7 @@ ansible-playbook setup.yml
 ### Adding VS Code Extensions
 
 **Old way:**
+
 ```yaml
 # defaults/main.yml
 visual_studio_code_extensions:
@@ -188,6 +200,7 @@ visual_studio_code_extensions:
 ```
 
 **New way:**
+
 ```yaml
 # setup.yml
 vars:
@@ -197,6 +210,7 @@ vars:
 ```
 
 Then run:
+
 ```bash
 ansible-playbook setup.yml
 ```
@@ -204,6 +218,7 @@ ansible-playbook setup.yml
 ### Customizing Shell Config
 
 **Old way:**
+
 ```yaml
 # defaults/main.yml
 exportrc: |
@@ -212,6 +227,7 @@ exportrc: |
 ```
 
 **New way:**
+
 ```bash
 # Edit dotfiles/.zshrc directly
 # Then manage with chezmoi
@@ -223,6 +239,7 @@ chezmoi apply
 ### macOS Dock Configuration
 
 **Old way:**
+
 ```yaml
 # defaults/main.yml
 dockitems_persist:
@@ -231,6 +248,7 @@ dockitems_persist:
 ```
 
 **New way:**
+
 ```yaml
 # setup.yml - edit the dock configuration task
 - name: Configure Dock
@@ -239,6 +257,7 @@ dockitems_persist:
 ```
 
 Then run:
+
 ```bash
 ansible-playbook setup.yml --tags macos
 ```
@@ -275,6 +294,7 @@ ansible-playbook setup.yml --tags vim
 Both old and new setups are idempotent. You can run them multiple times safely.
 
 **Test it:**
+
 ```bash
 # Run twice in a row
 ansible-playbook setup.yml
@@ -323,7 +343,7 @@ They won't conflict - they install the same things in the same places.
 | **Homebrew casks** | [OK] | [OK] |
 | **Tool versions (node/go/python)** | Manual (nvm/rbenv) | [OK] mise |
 | **Oh My Zsh** | [OK] via role | [OK] built-in |
-| **Powerlevel10k** | [OK] via role | [OK] built-in |
+| **Powerlevel10k** | [OK] via role |. [OK] built-in |
 | **Vim plugins** | [OK] via role | [OK] vim-plug |
 | **VS Code extensions** | [OK] | [OK] |
 | **Dotfiles management** | Manual sync | [OK] chezmoi |
@@ -342,6 +362,7 @@ These features from your old setup aren't in the new playbook yet (but easy to a
 **Old:** `requirements.yml` included `ansible-tmux` role
 
 **To add to new setup:**
+
 ```yaml
 # Add to setup.yml
 - name: Install tmux plugin manager
@@ -360,6 +381,7 @@ These features from your old setup aren't in the new playbook yet (but easy to a
 **Old:** `tasks/sudoers.yml`
 
 **To add to new setup:**
+
 ```yaml
 # Add to setup.yml
 - name: Configure passwordless sudo
@@ -378,6 +400,7 @@ These features from your old setup aren't in the new playbook yet (but easy to a
 **Old:** `geerlingguy.mac.mas` role
 
 **To add to new setup:**
+
 ```bash
 # Add mas to Brewfile
 brew "mas"
@@ -445,6 +468,7 @@ mise doctor
 ### Q: What if I have custom roles?
 
 **A:** Review them and either:
+
 1. Convert to tasks in `setup.yml`
 2. Keep as separate role and import it
 3. Write equivalent shell scripts
