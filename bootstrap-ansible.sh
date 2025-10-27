@@ -45,6 +45,12 @@ detect_package_manager() {
 OS=$(detect_os)
 PKG_MGR=$(detect_package_manager)
 
+# Determine if we need sudo (not root and sudo exists)
+SUDO=""
+if [[ $EUID -ne 0 ]] && command -v sudo &> /dev/null; then
+    SUDO="sudo"
+fi
+
 # Homebrew paths
 if [[ "$OS" == "darwin" ]]; then
     HOMEBREW_PREFIX="/opt/homebrew"
@@ -182,7 +188,7 @@ main() {
             apt)
                 # Debian/Ubuntu
                 print_info "Updating package lists..."
-                if retry sudo apt-get update -y; then
+                if retry $SUDO apt-get update -y; then
                     print_success "Package lists updated"
                 else
                     print_error "Failed to update package lists"
@@ -190,7 +196,7 @@ main() {
                 fi
 
                 print_info "Installing build essentials and dependencies..."
-                if retry sudo apt-get install -y build-essential curl git software-properties-common; then
+                if retry $SUDO apt-get install -y build-essential curl git software-properties-common; then
                     print_success "Build essentials installed"
                 else
                     print_error "Failed to install build essentials"
@@ -201,7 +207,7 @@ main() {
                     print_success "Ansible already installed"
                 else
                     print_info "Installing Ansible..."
-                    if retry sudo apt-get install -y ansible; then
+                    if retry $SUDO apt-get install -y ansible; then
                         print_success "Ansible installed"
                     else
                         print_error "Failed to install Ansible after retries"
@@ -213,21 +219,21 @@ main() {
             dnf)
                 # Fedora/RHEL 8+/CentOS Stream
                 print_info "Updating package cache..."
-                if retry sudo dnf check-update || [ $? -eq 100 ]; then
+                if retry $SUDO dnf check-update || [ $? -eq 100 ]; then
                     print_success "Package cache updated"
                 else
                     print_warning "Package cache update returned non-zero (may be normal)"
                 fi
 
                 print_info "Installing Development Tools and dependencies..."
-                if retry sudo dnf groupinstall -y "Development Tools"; then
+                if retry $SUDO dnf groupinstall -y "Development Tools"; then
                     print_success "Development Tools installed"
                 else
                     print_error "Failed to install Development Tools"
                     exit 1
                 fi
 
-                if retry sudo dnf install -y curl git; then
+                if retry $SUDO dnf install -y curl git; then
                     print_success "Additional dependencies installed"
                 else
                     print_error "Failed to install dependencies"
@@ -238,7 +244,7 @@ main() {
                     print_success "Ansible already installed"
                 else
                     print_info "Installing Ansible..."
-                    if retry sudo dnf install -y ansible; then
+                    if retry $SUDO dnf install -y ansible; then
                         print_success "Ansible installed"
                     else
                         print_error "Failed to install Ansible after retries"
@@ -250,21 +256,21 @@ main() {
             yum)
                 # RHEL 7/CentOS 7
                 print_info "Updating package cache..."
-                if retry sudo yum check-update || [ $? -eq 100 ]; then
+                if retry $SUDO yum check-update || [ $? -eq 100 ]; then
                     print_success "Package cache updated"
                 else
                     print_warning "Package cache update returned non-zero (may be normal)"
                 fi
 
                 print_info "Installing Development Tools and dependencies..."
-                if retry sudo yum groupinstall -y "Development Tools"; then
+                if retry $SUDO yum groupinstall -y "Development Tools"; then
                     print_success "Development Tools installed"
                 else
                     print_error "Failed to install Development Tools"
                     exit 1
                 fi
 
-                if retry sudo yum install -y curl git; then
+                if retry $SUDO yum install -y curl git; then
                     print_success "Additional dependencies installed"
                 else
                     print_error "Failed to install dependencies"
@@ -276,8 +282,8 @@ main() {
                 else
                     print_info "Installing Ansible..."
                     # EPEL may be needed for Ansible on RHEL/CentOS 7
-                    retry sudo yum install -y epel-release || print_warning "EPEL not available or already installed"
-                    if retry sudo yum install -y ansible; then
+                    retry $SUDO yum install -y epel-release || print_warning "EPEL not available or already installed"
+                    if retry $SUDO yum install -y ansible; then
                         print_success "Ansible installed"
                     else
                         print_error "Failed to install Ansible after retries"
@@ -289,7 +295,7 @@ main() {
             pacman)
                 # Arch Linux/Manjaro
                 print_info "Updating package database..."
-                if retry sudo pacman -Sy --noconfirm; then
+                if retry $SUDO pacman -Sy --noconfirm; then
                     print_success "Package database updated"
                 else
                     print_error "Failed to update package database"
@@ -297,7 +303,7 @@ main() {
                 fi
 
                 print_info "Installing base-devel and dependencies..."
-                if retry sudo pacman -S --noconfirm --needed base-devel curl git; then
+                if retry $SUDO pacman -S --noconfirm --needed base-devel curl git; then
                     print_success "Base development tools installed"
                 else
                     print_error "Failed to install base-devel"
@@ -308,7 +314,7 @@ main() {
                     print_success "Ansible already installed"
                 else
                     print_info "Installing Ansible..."
-                    if retry sudo pacman -S --noconfirm --needed ansible; then
+                    if retry $SUDO pacman -S --noconfirm --needed ansible; then
                         print_success "Ansible installed"
                     else
                         print_error "Failed to install Ansible after retries"
@@ -320,7 +326,7 @@ main() {
             zypper)
                 # openSUSE
                 print_info "Refreshing repositories..."
-                if retry sudo zypper refresh; then
+                if retry $SUDO zypper refresh; then
                     print_success "Repositories refreshed"
                 else
                     print_error "Failed to refresh repositories"
@@ -328,14 +334,14 @@ main() {
                 fi
 
                 print_info "Installing development patterns and dependencies..."
-                if retry sudo zypper install -y -t pattern devel_basis; then
+                if retry $SUDO zypper install -y -t pattern devel_basis; then
                     print_success "Development tools installed"
                 else
                     print_error "Failed to install development tools"
                     exit 1
                 fi
 
-                if retry sudo zypper install -y curl git; then
+                if retry $SUDO zypper install -y curl git; then
                     print_success "Additional dependencies installed"
                 else
                     print_error "Failed to install dependencies"
@@ -346,7 +352,7 @@ main() {
                     print_success "Ansible already installed"
                 else
                     print_info "Installing Ansible..."
-                    if retry sudo zypper install -y ansible; then
+                    if retry $SUDO zypper install -y ansible; then
                         print_success "Ansible installed"
                     else
                         print_error "Failed to install Ansible after retries"
