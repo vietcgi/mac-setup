@@ -97,7 +97,7 @@
     # Linux Package Installation (apt)
     # =========================================================================
 
-    - name: Install essential Linux packages
+    - name: Install essential Linux packages (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
           - git
@@ -130,6 +130,72 @@
         - install_dev_tools | default(true)
       tags: [linux, packages]
 
+    - name: Install essential Linux packages (RedHat/Fedora)
+      ansible.builtin.dnf:
+        name:
+          - git
+          - curl
+          - wget
+          - vim
+          - neovim
+          - tmux
+          - zsh
+          - fzf
+          - ripgrep
+          - bat
+          - tree
+          - htop
+          - jq
+          - gcc
+          - gcc-c++
+          - make
+          - python3-pip
+          - nodejs
+          - npm
+          - golang
+          - postgresql
+          - sqlite
+          - direnv
+          - ShellCheck
+        state: present
+      become: yes
+      when:
+        - ansible_os_family == "RedHat"
+        - install_dev_tools | default(true)
+      tags: [linux, packages]
+
+    - name: Install essential Linux packages (Arch Linux)
+      community.general.pacman:
+        name:
+          - git
+          - curl
+          - wget
+          - vim
+          - neovim
+          - tmux
+          - zsh
+          - fzf
+          - ripgrep
+          - bat
+          - tree
+          - htop
+          - jq
+          - base-devel
+          - python-pip
+          - nodejs
+          - npm
+          - go
+          - postgresql
+          - sqlite
+          - direnv
+          - shellcheck
+        state: present
+      become: yes
+      when:
+        - ansible_os_family == "Archlinux"
+        - install_dev_tools | default(true)
+      tags: [linux, packages]
+
     # =========================================================================
     # mise (Tool Version Manager)
     # =========================================================================
@@ -140,7 +206,7 @@
       args:
         creates: "{{ home }}/.local/bin/mise"
       when:
-        - ansible_os_family == "Debian"
+        - ansible_os_family != "Darwin"
         - install_dev_tools | default(true)
       tags: [mise, dev-tools]
 
@@ -150,7 +216,7 @@
         line: 'eval "$(~/.local/bin/mise activate bash)"'
         create: yes
       when:
-        - ansible_os_family == "Debian"
+        - ansible_os_family != "Darwin"
         - install_dev_tools | default(true)
       tags: [mise, dev-tools]
 
@@ -246,7 +312,9 @@
         {{ homebrew_prefix }}/opt/fzf/install --key-bindings --completion --no-update-rc
       args:
         creates: "{{ home }}/.fzf.zsh"
-      when: install_shell_tools | default(true)
+      when:
+        - ansible_os_family == "Darwin"
+        - install_shell_tools | default(true)
       tags: [shell]
 
     - name: Download dircolors (LS_COLORS)
@@ -409,7 +477,7 @@
 
     - name: Create vim symlinks to neovim (override system vim)
       ansible.builtin.file:
-        src: "{{ homebrew_prefix }}/bin/nvim"
+        src: "{{ '/usr/bin/nvim' if ansible_os_family == 'Debian' else homebrew_prefix ~ '/bin/nvim' }}"
         dest: "/usr/local/bin/{{ item }}"
         state: link
         force: true
@@ -417,7 +485,7 @@
         - vim
         - vi
       when: install_neovim | default(true)
-      become: false
+      become: yes
       tags: [neovim]
 
     # =========================================================================
@@ -550,18 +618,28 @@
     # Dotfiles with chezmoi
     # =========================================================================
 
+    - name: Check if chezmoi binary exists
+      ansible.builtin.stat:
+        path: "{{ homebrew_prefix }}/bin/chezmoi"
+      register: chezmoi_binary_check
+      when: configure_dotfiles | default(true)
+      tags: [always, dotfiles]
+
     - name: Check if chezmoi is initialized
       ansible.builtin.stat:
         path: "{{ home }}/.local/share/chezmoi"
       register: chezmoi_check
-      when: configure_dotfiles | default(true)
+      when:
+        - configure_dotfiles | default(true)
+        - chezmoi_binary_check.stat.exists | default(false)
       tags: [always, dotfiles]
 
     - name: Initialize chezmoi
       ansible.builtin.command: "{{ homebrew_prefix }}/bin/chezmoi init"
       when:
         - configure_dotfiles | default(true)
-        - not chezmoi_check.stat.exists
+        - chezmoi_binary_check.stat.exists | default(false)
+        - chezmoi_check is not defined or not chezmoi_check.stat.exists
       register: chezmoi_init
       changed_when: chezmoi_init.rc == 0
       tags: [dotfiles]
@@ -581,6 +659,7 @@
         backup: true
       when:
         - configure_dotfiles | default(true)
+        - chezmoi_binary_check.stat.exists | default(false)
         - chezmoi_check is defined
         - not chezmoi_check.stat.exists
         - dotfiles_zshrc_check.stat.exists
@@ -591,6 +670,7 @@
       ansible.builtin.command: "{{ homebrew_prefix }}/bin/chezmoi add {{ home }}/.zshrc"
       when:
         - configure_dotfiles | default(true)
+        - chezmoi_binary_check.stat.exists | default(false)
         - chezmoi_check is defined
         - not chezmoi_check.stat.exists
         - zshrc_copy is defined

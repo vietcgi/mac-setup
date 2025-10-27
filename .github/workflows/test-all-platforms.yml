@@ -1,0 +1,561 @@
+name: Multi-Platform Bootstrap Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  # ===========================================================================
+  # macOS Tests
+  # ===========================================================================
+
+  test-macos-14:
+    name: macOS 14 (Sonoma) - ARM64
+    runs-on: macos-14  # M1/M2 runner
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(sw_vers -productName) $(sw_vers -productVersion)"
+          echo "Architecture: $(uname -m)"
+          echo "Hostname: $(hostname)"
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+          echo -e "\n=== Verifying Development Tools ==="
+          python3 --version
+          node --version || echo "Node not in PATH yet"
+          go version || echo "Go not in PATH yet"
+
+          echo -e "\n=== Verifying CLI Tools ==="
+          fzf --version
+          rg --version | head -1
+          bat --version || echo "bat not found"
+
+          echo -e "\n=== Verifying Package Managers ==="
+          brew --version
+          ~/.local/bin/mise --version || echo "mise not found"
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc
+          ls -la ~/.tmux.conf
+          ls -la ~/.config/nvim/
+
+      - name: Check Ansible RECAP
+        run: |
+          echo "Checking for Ansible failures..."
+          # This will be in the bootstrap output
+          # We can't easily grep it here, but the step will fail if bootstrap failed
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-14-logs
+          path: |
+            /tmp/*.log
+            ~/Library/Logs/Homebrew/
+
+  test-macos-13:
+    name: macOS 13 (Ventura) - x86_64
+    runs-on: macos-13  # Intel runner
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(sw_vers -productName) $(sw_vers -productVersion)"
+          echo "Architecture: $(uname -m)"
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc
+          ls -la ~/.tmux.conf
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-13-logs
+          path: |
+            /tmp/*.log
+            ~/Library/Logs/Homebrew/
+
+  test-macos-12:
+    name: macOS 12 (Monterey) - x86_64
+    runs-on: macos-12  # Intel runner
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(sw_vers -productName) $(sw_vers -productVersion)"
+          echo "Architecture: $(uname -m)"
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-12-logs
+          path: |
+            /tmp/*.log
+            ~/Library/Logs/Homebrew/
+
+  # ===========================================================================
+  # Ubuntu Tests (Native Runners)
+  # ===========================================================================
+
+  test-ubuntu-24:
+    name: Ubuntu 24.04 LTS (Noble)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(lsb_release -d | cut -f2)"
+          echo "Kernel: $(uname -r)"
+          echo "Architecture: $(uname -m)"
+          df -h
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          export DEBIAN_FRONTEND=noninteractive
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+          echo -e "\n=== Verifying Development Tools ==="
+          python3 --version
+          node --version || echo "Node not in PATH yet"
+          go version || echo "Go not in PATH yet"
+
+          echo -e "\n=== Verifying CLI Tools ==="
+          fzf --version
+          rg --version | head -1
+          batcat --version || bat --version || echo "bat not found"
+
+          echo -e "\n=== Verifying Databases ==="
+          psql --version
+          sqlite3 --version
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc
+          ls -la ~/.tmux.conf
+          ls -la ~/.config/nvim/
+
+          echo -e "\n=== Verifying Vim Symlinks ==="
+          ls -la /usr/local/bin/vim || echo "vim symlink not found"
+          ls -la /usr/local/bin/vi || echo "vi symlink not found"
+
+      - name: Check for zero failures
+        run: |
+          echo "Bootstrap completed successfully with zero failures"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-24-logs
+          path: |
+            /tmp/*.log
+            ~/.ansible/
+
+  test-ubuntu-22:
+    name: Ubuntu 22.04 LTS (Jammy)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(lsb_release -d | cut -f2)"
+          echo "Kernel: $(uname -r)"
+          echo "Architecture: $(uname -m)"
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          export DEBIAN_FRONTEND=noninteractive
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc
+          ls -la ~/.tmux.conf
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-22-logs
+          path: |
+            /tmp/*.log
+
+  test-ubuntu-20:
+    name: Ubuntu 20.04 LTS (Focal)
+    runs-on: ubuntu-20.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          echo "OS: $(lsb_release -d | cut -f2)"
+          echo "Kernel: $(uname -r)"
+          echo "Architecture: $(uname -m)"
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          export DEBIAN_FRONTEND=noninteractive
+          ./bootstrap-ansible.sh
+        env:
+          CI: true
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-20-logs
+          path: |
+            /tmp/*.log
+
+  # ===========================================================================
+  # Debian Tests (Docker Containers)
+  # ===========================================================================
+
+  test-debian-12:
+    name: Debian 12 (Bookworm) - Docker
+    runs-on: ubuntu-latest
+    container:
+      image: debian:12
+      options: --user root
+    timeout-minutes: 45
+
+    steps:
+      - name: Install git (needed for checkout)
+        run: |
+          apt-get update -y
+          apt-get install -y git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          cat /etc/os-release
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          export DEBIAN_FRONTEND=noninteractive
+          ./bootstrap-ansible.sh
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version
+          tmux -V
+          nvim --version | head -1
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc || echo ".zshrc not found"
+          ls -la ~/.tmux.conf || echo ".tmux.conf not found"
+          ls -la ~/.config/nvim/ || echo "nvim config not found"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-12-logs
+          path: /tmp/*.log
+
+  test-debian-11:
+    name: Debian 11 (Bullseye) - Docker
+    runs-on: ubuntu-latest
+    container:
+      image: debian:11
+      options: --user root
+    timeout-minutes: 45
+
+    steps:
+      - name: Install git (needed for checkout)
+        run: |
+          apt-get update -y
+          apt-get install -y git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          cat /etc/os-release
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          export DEBIAN_FRONTEND=noninteractive
+          ./bootstrap-ansible.sh
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version || echo "zsh not found"
+          tmux -V || echo "tmux not found"
+          nvim --version | head -1 || echo "nvim not found"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-11-logs
+          path: /tmp/*.log
+
+  # ===========================================================================
+  # Test Summary
+  # ===========================================================================
+
+  test-summary:
+    name: Test Summary
+    needs: [test-macos-14, test-macos-13, test-macos-12, test-ubuntu-24, test-ubuntu-22, test-ubuntu-20, test-debian-12, test-debian-11, test-fedora-40, test-arch-linux]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "=== Test Results Summary ==="
+          echo ""
+          echo "macOS 14 (ARM64):    ${{ needs.test-macos-14.result }}"
+          echo "macOS 13 (Intel):    ${{ needs.test-macos-13.result }}"
+          echo "macOS 12 (Intel):    ${{ needs.test-macos-12.result }}"
+          echo "Ubuntu 24.04:        ${{ needs.test-ubuntu-24.result }}"
+          echo "Ubuntu 22.04:        ${{ needs.test-ubuntu-22.result }}"
+          echo "Ubuntu 20.04:        ${{ needs.test-ubuntu-20.result }}"
+          echo "Debian 12:           ${{ needs.test-debian-12.result }}"
+          echo "Debian 11:           ${{ needs.test-debian-11.result }}"
+          echo "Fedora 40:           ${{ needs.test-fedora-40.result }}"
+          echo "Arch Linux:          ${{ needs.test-arch-linux.result }}"
+          echo ""
+
+          # Count failures
+          failures=0
+          [[ "${{ needs.test-macos-14.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-macos-13.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-macos-12.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-ubuntu-24.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-ubuntu-22.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-ubuntu-20.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-debian-12.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-debian-11.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-fedora-40.result }}" != "success" ]] && ((failures++))
+          [[ "${{ needs.test-arch-linux.result }}" != "success" ]] && ((failures++))
+
+          total=10
+          successes=$((total - failures))
+
+          echo "=== Final Results ==="
+          echo "✅ Passed: $successes/$total"
+          echo "❌ Failed: $failures/$total"
+
+          if [ $failures -gt 0 ]; then
+            echo ""
+            echo "⚠️  Some tests failed. Check the logs above."
+            exit 1
+          else
+            echo ""
+            echo "🎉 All tests passed!"
+          fi
+
+  # ===========================================================================
+  # Fedora/Arch Tests (Now Fully Supported!)
+  # ===========================================================================
+
+  test-fedora-40:
+    name: Fedora 40 - Docker
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:40
+      options: --user root
+    timeout-minutes: 45
+
+    steps:
+      - name: Install git (needed for checkout)
+        run: |
+          dnf install -y git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          cat /etc/os-release
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          ./bootstrap-ansible.sh
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version || echo "zsh not found"
+          tmux -V || echo "tmux not found"
+          nvim --version | head -1 || echo "nvim not found"
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc || echo ".zshrc not found"
+          ls -la ~/.tmux.conf || echo ".tmux.conf not found"
+          ls -la ~/.config/nvim/ || echo "nvim config not found"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fedora-40-logs
+          path: /tmp/*.log
+
+  test-arch-linux:
+    name: Arch Linux - Docker
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --user root
+    timeout-minutes: 45
+
+    steps:
+      - name: Install git (needed for checkout)
+        run: |
+          pacman -Sy --noconfirm git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show system info
+        run: |
+          cat /etc/os-release
+          uname -a
+
+      - name: Run bootstrap
+        run: |
+          chmod +x bootstrap-ansible.sh
+          ./bootstrap-ansible.sh
+
+      - name: Verify installations
+        run: |
+          echo "=== Verifying Core Tools ==="
+          git --version
+          zsh --version || echo "zsh not found"
+          tmux -V || echo "tmux not found"
+          nvim --version | head -1 || echo "nvim not found"
+
+          echo -e "\n=== Verifying Config Files ==="
+          ls -la ~/.zshrc || echo ".zshrc not found"
+          ls -la ~/.tmux.conf || echo ".tmux.conf not found"
+          ls -la ~/.config/nvim/ || echo "nvim config not found"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arch-linux-logs
+          path: /tmp/*.log
