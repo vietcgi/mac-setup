@@ -85,6 +85,7 @@
       environment:
         PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
       when:
+        - ansible_os_family == "Darwin"
         - brewfile_check.stat.exists
         - install_gui_apps | default(true) or install_dev_tools | default(true)
       register: brew_bundle_result
@@ -93,8 +94,65 @@
       tags: [homebrew, packages]
 
     # =========================================================================
+    # Linux Package Installation (apt)
+    # =========================================================================
+
+    - name: Install essential Linux packages
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - wget
+          - vim
+          - neovim
+          - tmux
+          - zsh
+          - fzf
+          - ripgrep
+          - bat
+          - tree
+          - htop
+          - jq
+          - build-essential
+          - python3-pip
+          - nodejs
+          - npm
+          - golang-go
+          - postgresql
+          - sqlite3
+          - direnv
+          - shellcheck
+        state: present
+        update_cache: yes
+      become: yes
+      when:
+        - ansible_os_family == "Debian"
+        - install_dev_tools | default(true)
+      tags: [linux, packages]
+
+    # =========================================================================
     # mise (Tool Version Manager)
     # =========================================================================
+
+    - name: Install mise on Linux
+      ansible.builtin.shell: |
+        curl https://mise.run | sh
+      args:
+        creates: "{{ home }}/.local/bin/mise"
+      when:
+        - ansible_os_family == "Debian"
+        - install_dev_tools | default(true)
+      tags: [mise, dev-tools]
+
+    - name: Add mise to PATH for Linux
+      ansible.builtin.lineinfile:
+        path: "{{ home }}/.bashrc"
+        line: 'eval "$(~/.local/bin/mise activate bash)"'
+        create: yes
+      when:
+        - ansible_os_family == "Debian"
+        - install_dev_tools | default(true)
+      tags: [mise, dev-tools]
 
     - name: Check if .mise.toml exists
       ansible.builtin.stat:
@@ -102,8 +160,13 @@
       register: mise_toml_check
       tags: [always, mise]
 
+    - name: Set mise binary path
+      ansible.builtin.set_fact:
+        mise_bin: "{{ homebrew_prefix ~ '/bin/mise' if ansible_os_family == 'Darwin' else home ~ '/.local/bin/mise' }}"
+      tags: [always, mise]
+
     - name: Trust mise config file
-      ansible.builtin.command: "{{ homebrew_prefix }}/bin/mise trust"
+      ansible.builtin.command: "{{ mise_bin }} trust"
       args:
         chdir: "{{ playbook_dir }}"
       when:
@@ -116,11 +179,9 @@
 
     - name: Install tool versions with mise
       ansible.builtin.shell: |
-        {{ homebrew_prefix }}/bin/mise install
+        {{ mise_bin }} install
       args:
         chdir: "{{ playbook_dir }}"
-      environment:
-        PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
       when:
         - mise_toml_check.stat.exists
         - install_dev_tools | default(true)

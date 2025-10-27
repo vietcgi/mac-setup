@@ -122,36 +122,69 @@ main() {
         fi
     fi
 
-    # Step 2: Install Homebrew
-    if command -v brew &> /dev/null; then
-        print_success "Homebrew already installed"
-    else
-        print_info "Installing Homebrew..."
-        if retry bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-            # Add Homebrew to PATH for this session
-            eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-            print_success "Homebrew installed"
+    # Step 2: Install package manager and tools
+    if [[ "$OS" == "darwin" ]]; then
+        # macOS: Install Homebrew
+        if command -v brew &> /dev/null; then
+            print_success "Homebrew already installed"
         else
-            print_error "Failed to install Homebrew after retries"
+            print_info "Installing Homebrew..."
+            if retry bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+                # Add Homebrew to PATH for this session
+                eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+                print_success "Homebrew installed"
+            else
+                print_error "Failed to install Homebrew after retries"
+                exit 1
+            fi
+        fi
+
+        # Ensure brew is in PATH
+        if ! command -v brew &> /dev/null; then
+            eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+        fi
+
+        # Step 3: Install Ansible via Homebrew
+        if command -v ansible-playbook &> /dev/null; then
+            print_success "Ansible already installed"
+        else
+            print_info "Installing Ansible..."
+            if retry brew install ansible; then
+                print_success "Ansible installed"
+            else
+                print_error "Failed to install Ansible after retries"
+                exit 1
+            fi
+        fi
+    else
+        # Linux: Use apt-get
+        print_info "Updating package lists..."
+        if retry sudo apt-get update -y; then
+            print_success "Package lists updated"
+        else
+            print_error "Failed to update package lists"
             exit 1
         fi
-    fi
 
-    # Ensure brew is in PATH
-    if ! command -v brew &> /dev/null; then
-        eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-    fi
-
-    # Step 3: Install Ansible
-    if command -v ansible-playbook &> /dev/null; then
-        print_success "Ansible already installed"
-    else
-        print_info "Installing Ansible..."
-        if retry brew install ansible; then
-            print_success "Ansible installed"
+        print_info "Installing build essentials and dependencies..."
+        if retry sudo apt-get install -y build-essential curl git software-properties-common; then
+            print_success "Build essentials installed"
         else
-            print_error "Failed to install Ansible after retries"
+            print_error "Failed to install build essentials"
             exit 1
+        fi
+
+        # Step 3: Install Ansible via apt
+        if command -v ansible-playbook &> /dev/null; then
+            print_success "Ansible already installed"
+        else
+            print_info "Installing Ansible..."
+            if retry sudo apt-get install -y ansible; then
+                print_success "Ansible installed"
+            else
+                print_error "Failed to install Ansible after retries"
+                exit 1
+            fi
         fi
     fi
 
