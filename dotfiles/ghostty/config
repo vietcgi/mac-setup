@@ -1,0 +1,246 @@
+# Ghostty Terminal Configuration
+# Modern GPU-accelerated terminal emulator
+# Documentation: https://ghostty.org/docs
+
+# ============================================================================
+# Font Configuration
+# ============================================================================
+
+# Use Nerd Font for icon support (compatible with Powerlevel10k)
+font-family = "MesloLGS Nerd Font Mono"
+font-size = 13
+
+# Font features
+font-feature = -calt  # Disable ligatures for clearer code reading (optional)
+# font-feature = +calt  # Enable ligatures (uncomment if preferred)
+
+# Font thickening (adjust for your display)
+# Values: none, thin, medium, thick
+font-thicken = true
+
+# ============================================================================
+# Color Scheme - Catppuccin Mocha (Modern & Popular)
+# ============================================================================
+
+# Background and foreground
+background = #1e1e2e
+foreground = #cdd6f4
+
+# Selection colors
+selection-background = #585b70
+selection-foreground = #cdd6f4
+
+# Cursor
+cursor-color = #f5e0dc
+cursor-text = #1e1e2e
+
+# Regular colors
+palette = 0=#45475a
+palette = 1=#f38ba8
+palette = 2=#a6e3a1
+palette = 3=#f9e2af
+palette = 4=#89b4fa
+palette = 5=#f5c2e7
+palette = 6=#94e2d5
+palette = 7=#bac2de
+
+# Bright colors
+palette = 8=#585b70
+palette = 9=#f38ba8
+palette = 10=#a6e3a1
+palette = 11=#f9e2af
+palette = 12=#89b4fa
+palette = 13=#f5c2e7
+palette = 14=#94e2d5
+palette = 15=#a6adc8
+
+# ============================================================================
+# Window & Appearance
+# ============================================================================
+
+# Window padding (breathing room)
+window-padding-x = 8
+window-padding-y = 8
+
+# Window decorations
+window-decoration = true
+
+# Background opacity (1.0 = solid, 0.0 = transparent)
+background-opacity = 0.95
+
+# Blur background (macOS only, requires opacity < 1.0)
+background-blur-radius = 20
+
+# Window title
+window-title-font-family = "MesloLGS Nerd Font Mono"
+
+# Initial window size (columns x rows)
+window-width = 120
+window-height = 35
+
+# ============================================================================
+# Performance & GPU
+# ============================================================================
+
+# GPU rendering (auto, software, opengl, metal)
+# metal = macOS hardware acceleration
+# opengl = Linux hardware acceleration
+# auto = automatically choose best option
+# renderer = auto  # Usually auto is best
+
+# Frame rate cap (0 = unlimited, matches display refresh rate)
+# max-fps = 120
+
+# ============================================================================
+# Cursor
+# ============================================================================
+
+# Cursor style: block, beam, underline
+cursor-style = block
+
+# Cursor blink
+cursor-style-blink = true
+
+# Cursor color follows text color under cursor
+# cursor-invert-fg-bg = true
+
+# ============================================================================
+# Shell Integration
+# ============================================================================
+
+# Enable shell integration (auto-inject shell hooks)
+shell-integration = detect
+
+# Shell integration features
+shell-integration-features = cursor,sudo,title
+
+# ============================================================================
+# Scrollback
+# ============================================================================
+
+# Scrollback buffer size (lines)
+scrollback-limit = 10000
+
+# ============================================================================
+# Mouse & Selection
+# ============================================================================
+
+# Click to select word
+mouse-shift-capture = true
+
+# Copy on select (automatically copy selected text)
+copy-on-select = true
+
+# URL detection and click
+link-url = true
+
+# ============================================================================
+# Tabs & Windows
+# ============================================================================
+
+# Tab bar visibility: always, never, auto
+# window-theme = auto
+
+# Close window without confirmation if no running processes
+confirm-close-surface = false
+
+# ============================================================================
+# Keyboard & Keybindings
+# ============================================================================
+
+# macOS: Use Option as Alt (important for terminal shortcuts)
+macos-option-as-alt = true
+
+# Custom keybindings (uncomment and modify as needed)
+
+# New tab
+# keybind = cmd+t=new_tab
+
+# Close tab
+# keybind = cmd+w=close_surface
+
+# Next/Previous tab
+# keybind = cmd+shift+]>=goto_tab:+1
+# keybind = cmd+shift+[=goto_tab:-1
+
+# Split window
+# keybind = cmd+d=new_split:right
+# keybind = cmd+shift+d=new_split:down
+
+# Navigate splits
+# keybind = cmd+opt+left=goto_split:left
+# keybind = cmd+opt+right=goto_split:right
+# keybind = cmd+opt+up=goto_split:top
+# keybind = cmd+opt+down=goto_split:bottom
+
+# Font size adjustment
+# keybind = cmd+plus=increase_font_size:1
+# keybind = cmd+minus=decrease_font_size:1
+# keybind = cmd+0=reset_font_size
+
+# Clear screen
+# keybind = cmd+k=clear_screen
+
+# ============================================================================
+# Advanced Settings
+# ============================================================================
+
+# True color support (24-bit color)
+# Most modern terminals support this by default
+
+# Clipboard integration
+clipboard-read = ask
+clipboard-write = allow
+
+# Working directory for new tabs/splits
+# working-directory = inherit
+
+# Environment variables
+# env = TERM=xterm-256color
+
+# ============================================================================
+# Platform-Specific Settings
+# ============================================================================
+
+# macOS-specific
+# macos-titlebar-style = transparent  # native, transparent
+# macos-window-shadow = true
+
+# Linux-specific
+# gtk-single-instance = true
+# gtk-tabs-location = top
+
+# ============================================================================
+# Experimental Features
+# ============================================================================
+
+# Auto-update (if supported)
+# auto-update = check
+
+# ============================================================================
+# Notes & Tips
+# ============================================================================
+
+# To reload config: Restart Ghostty or use keybind if configured
+# To test colors: Run `msgcat --color=test`
+# To see all options: ghostty --help
+# To validate config: ghostty --config-check
+
+# Alternative color schemes to try:
+# - Tokyo Night
+# - Nord
+# - Dracula
+# - Gruvbox
+# - Solarized
+
+# Recommended fonts:
+# - MesloLGS Nerd Font (default, best for Powerlevel10k)
+# - JetBrains Mono Nerd Font
+# - Fira Code Nerd Font
+# - Hack Nerd Font
+
+# Performance tips:
+# - Keep scrollback-limit reasonable (10000 is good default)
+# - Use GPU rendering (auto or metal on macOS)
+# - Disable background blur if performance is an issue
+# - Reduce opacity to 1.0 for maximum performance

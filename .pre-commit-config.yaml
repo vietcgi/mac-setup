@@ -1,0 +1,87 @@
+# Pre-commit hooks for Mac Setup Repository
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Update: pre-commit autoupdate
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+      - id: check-shebang-scripts-are-executable
+        name: Check shebang scripts are executable
+      - id: mixed-line-ending
+        name: Check for mixed line endings
+        args: ['--fix=lf']
+      - id: detect-private-key
+        name: Detect private keys
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Shellcheck (bash/sh linting)
+        args: ['--severity=warning']
+
+  # Ansible linting
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v6.22.1
+    hooks:
+      - id: ansible-lint
+        name: Ansible-lint
+        files: \.(ya?ml)$
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        name: Markdownlint
+        args: ['--fix']
+
+  # YAML formatting
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.11.0
+    hooks:
+      - id: pretty-format-yaml
+        name: Format YAML files
+        args:
+          - --autofix
+          - --indent=2
+
+  # Git commit message linting
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        name: Gitlint (commit message linting)
+        stages: [commit-msg]
+
+# Default settings
+default_language_version:
+  python: python3
+
+# Files to exclude
+exclude: |
+  (?x)^(
+    \.git/.*
+  )$

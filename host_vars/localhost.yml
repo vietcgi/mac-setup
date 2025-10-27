@@ -1,0 +1,14 @@
+---
+# Variables specific to this machine (localhost)
+# Highest priority - overrides everything
+
+# Example: Machine-specific settings
+# machine_role: development
+# install_extra_tools: true
+
+# Example: Override VS Code extensions for this specific machine
+# vscode_extensions_extra:
+#   - ms-vscode.cpptools
+
+# Example: Custom Brewfile for this machine
+# brewfile_name: Brewfile.custom

@@ -1,0 +1,37 @@
+# mise configuration for development tool version management
+# mise replaces nvm, rbenv, pyenv, gvm, etc. with a unified tool
+# Install: brew install mise
+# Documentation: https://mise.jdx.dev
+
+# Node.js
+[tools]
+node = "lts"              # Use LTS version, or specify like "20.11.0"
+# node = "20"             # Use latest Node 20.x
+
+# Go
+go = "latest"             # Use latest stable, or specify like "1.22.0"
+# go = "1.22"             # Use latest Go 1.22.x
+
+# Python (if needed)
+python = "latest"         # Use latest stable, or specify like "3.12.1"
+# python = "3.12"         # Use latest Python 3.12.x
+
+# Ruby (if needed)
+# ruby = "latest"
+# ruby = "3.3"
+
+# Terraform (if using)
+# terraform = "latest"
+# terraform = "1.7"
+
+# Additional tools mise can manage:
+# - bun, deno, elixir, erlang, java, kotlin, lua, perl, php, rust, zig, etc.
+# See: https://mise.jdx.dev/plugins.html
+
+# Environment variables
+[env]
+# Add custom environment variables here
+# EDITOR = "vim"
+
+# Task aliases (optional - we're using Just instead)
+# [tasks]

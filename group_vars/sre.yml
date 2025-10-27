@@ -1,0 +1,44 @@
+---
+# Variables for SRE/Platform Engineering machines
+# These override group_vars/all.yml
+
+# Additional VS Code extensions for SRE/Platform Engineers
+vscode_extensions_extra:
+  # DevOps & Infrastructure
+  - redhat.ansible
+  - ms-kubernetes-tools.vscode-kubernetes-tools
+  - ms-azuretools.vscode-docker
+  - hashicorp.terraform
+  - ms-azuretools.vscode-azureterraform
+
+  # Kubernetes & Cloud
+  - googlecloudtools.cloudcode
+  - amazonwebservices.aws-toolkit-vscode
+  - ms-vscode.azure-account
+  - mindaro.mindaro
+
+  # GitOps & CI/CD
+  - github.vscode-github-actions
+  - gitlab.gitlab-workflow
+  - ms-azuredevops.azure-pipelines
+
+  # Monitoring & Observability
+  - grafana.vscode-jsonnet
+
+  # Linting & Security
+  - timonwong.shellcheck
+  - redhat.vscode-yaml
+  - bridgecrew.checkov
+  - aquasecurity.trivy-vulnerability-scanner
+
+  # Programming Languages
+  - golang.go
+  - ms-python.python
+
+# SRE-specific tools enabled
+install_monitoring_tools: true
+install_security_scanners: true
+install_cloud_tools: true
+
+# Use dedicated Brewfile for SRE machines
+brewfile_name: Brewfile.sre

@@ -1,0 +1,156 @@
+# Brewfile for SRE/Platform Engineering Machines
+# Extended version with additional cloud and observability tools
+# Usage: brew bundle --file=Brewfile.sre
+
+# Include all base packages from main Brewfile
+brew "git"
+brew "node"
+brew "go"
+brew "php"
+brew "postgresql"
+brew "neovim"
+
+# Kubernetes & Container Tools
+brew "kubectl"
+brew "kind"
+brew "k9s"
+brew "helm"
+brew "eksctl"
+brew "kubectx"
+brew "krew"
+brew "stern"
+brew "kustomize"
+brew "dive"
+brew "ctop"
+brew "skaffold"                 # Kubernetes dev workflow
+brew "flux"                     # GitOps toolkit
+brew "argocd"                   # GitOps CD
+
+# Cloud Provider CLIs
+brew "awscli"
+brew "aws-iam-authenticator"
+brew "aws-sso-util"
+tap "azure/bicep"
+brew "azure-cli"                # Azure CLI
+tap "hashicorp/tap"
+brew "hashicorp/tap/vault"      # HashiCorp Vault
+
+# Infrastructure as Code
+tap "opentofu/tap"
+brew "opentofu/tap/opentofu"    # Open source Terraform alternative
+brew "tenv"                     # Terraform/OpenTofu version manager
+brew "terragrunt"               # Terraform wrapper
+brew "packer"                   # Image builder
+brew "pulumi"                   # Modern IaC
+
+# Observability & Monitoring
+brew "prometheus"               # Metrics collection
+brew "grafana"                  # Metrics visualization
+brew "promtail"                 # Log aggregation
+
+# Utilities
+brew "bat"
+brew "ccat"
+brew "lsd"
+brew "tree"
+brew "fzf"
+brew "jq"
+brew "yq"
+brew "thefuck"
+brew "httpie"
+brew "grpcurl"
+brew "htop"
+brew "bottom"
+brew "procs"
+brew "ncdu"
+brew "mtr"
+brew "tmux"
+brew "nmap"
+brew "iperf"
+brew "pv"
+brew "wrk"
+brew "vegeta"                   # HTTP load testing
+brew "ansible-lint"
+brew "grc"
+
+# Build & Dev Dependencies
+brew "autoconf"
+brew "bash-completion"
+brew "doxygen"
+brew "gettext"
+brew "gifsicle"
+brew "gpg"
+brew "libevent"
+brew "libtool"
+brew "sqlite"
+brew "readline"
+brew "openssl"
+
+# GNU Utilities
+brew "coreutils"
+brew "diffutils"
+brew "findutils"
+brew "gawk"
+brew "gnu-indent"
+brew "gnu-sed"
+brew "gnu-tar"
+brew "gnu-which"
+brew "gnutls"
+brew "grep"
+brew "gzip"
+brew "watch"
+brew "wget"
+
+# Linting & Security
+brew "shellcheck"
+brew "yamllint"
+brew "hadolint"
+brew "tflint"
+brew "trivy"
+brew "checkov"                  # IaC security scanner
+brew "cosign"                   # Container signing
+brew "syft"                     # SBOM generator
+brew "grype"                    # Vulnerability scanner
+
+# Shell Enhancements
+brew "zsh-history-substring-search"
+
+# Dotfiles & Version Management
+brew "chezmoi"
+brew "mise"                     # Modern unified tool version manager (manages node, go, python, ruby, etc.)
+
+# Development Tools
+brew "gh"
+brew "direnv"
+brew "pre-commit"
+brew "rclone"                   # Cloud storage sync
+
+# SSH & Network
+brew "ssh-copy-id"
+brew "mosh"                     # Mobile shell
+brew "wireguard-tools"          # VPN
+
+# macOS Apps
+cask "docker-desktop"
+cask "google-chrome"
+cask "firefox"
+cask "ghostty"                 # Modern cross-platform terminal (GPU-accelerated)
+cask "iterm2"                  # Alternative terminal (macOS-only)
+cask "multipass"               # Lightweight Ubuntu VMs for testing
+cask "visual-studio-code"
+cask "slack"
+cask "sequel-ace"
+cask "transmit"
+cask "dropbox"
+cask "vagrant"
+cask "rectangle"
+cask "postman"
+tap "homebrew/cask-fonts"
+cask "font-meslo-lg-nerd-font"
+
+# SRE-Specific Apps
+cask "wireshark"                # Network analysis
+tap "adoptopenjdk/openjdk"
+
+# Mac App Store CLI
+brew "mas"

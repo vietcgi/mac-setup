@@ -1,0 +1,81 @@
+---
+# Ansible Inventory for Fleet Management
+# Organize your 20+ machines by role/function
+
+all:
+  vars:
+    # Global variables for all machines
+    ansible_connection: local
+
+  children:
+    # Group machines by function
+    workstations:
+      hosts:
+        localhost:
+          ansible_host: 127.0.0.1
+      vars:
+        # Default packages for all workstations
+        install_gui_apps: true
+        install_docker: true
+        install_vscode: true
+
+    # Example: Development machines
+    development:
+      hosts:
+        # dev-macbook-1:
+        #   ansible_host: dev-macbook-1.local
+        # dev-macbook-2:
+        #   ansible_host: dev-macbook-2.local
+      vars:
+        install_dev_tools: true
+        install_databases: true
+
+    # Example: Design machines (different tools)
+    design:
+      hosts:
+        # design-macbook-1:
+        #   ansible_host: design-macbook-1.local
+      vars:
+        install_gui_apps: true
+        install_dev_tools: false
+        install_design_tools: true
+
+    # Example: QA machines
+    qa:
+      hosts:
+        # qa-macbook-1:
+        #   ansible_host: qa-macbook-1.local
+      vars:
+        install_testing_tools: true
+
+    # SRE/DevOps/Platform Engineering machines
+    sre:
+      hosts:
+        # sre-macbook-1:
+        #   ansible_host: sre-macbook-1.local
+        # sre-macbook-2:
+        #   ansible_host: sre-macbook-2.local
+      vars:
+        install_dev_tools: true
+        install_monitoring_tools: true
+        install_security_scanners: true
+        install_cloud_tools: true
+        brewfile_name: Brewfile.sre
+
+    # Platform-specific groups
+    macos:
+      hosts:
+        localhost:
+      vars:
+        homebrew_prefix: /opt/homebrew
+        configure_dock: true
+        configure_macos_defaults: true
+
+    linux:
+      hosts:
+        # linux-desktop-1:
+        #   ansible_host: linux-desktop-1.local
+      vars:
+        homebrew_prefix: /home/linuxbrew/.linuxbrew
+        configure_dock: false
+        configure_macos_defaults: false

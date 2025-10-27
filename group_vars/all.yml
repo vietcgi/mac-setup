@@ -1,0 +1,125 @@
+---
+# Global variables for ALL machines
+# Override these in group_vars/{{ group }}.yml or host_vars/{{ hostname }}.yml
+
+# User settings
+user: "{{ lookup('env', 'USER') }}"
+home: "{{ lookup('env', 'HOME') }}"
+
+# Feature flags (enable/disable features)
+install_shell_tools: true
+install_neovim: true  # Using neovim instead of vim
+install_vscode: true
+install_gui_apps: true
+install_dev_tools: true
+configure_dotfiles: true
+configure_dock: true
+configure_macos_defaults: true
+configure_sudoers: false  # Set to true for new machines (requires sudo)
+
+# VS Code extensions (common to all machines)
+vscode_extensions_common:
+  # Language Support
+  - ms-python.python
+  - wholroyd.jinja
+  - redhat.vscode-yaml
+
+  # Code Quality
+  - streetsidesoftware.code-spell-checker
+  - esbenp.prettier-vscode
+  - dbaeumer.vscode-eslint
+  - aaron-bond.better-comments
+
+  # Git Integration
+  - eamodio.gitlens
+  - donjayamanne.githistory
+  - github.vscode-pull-request-github
+
+  # UI/UX Enhancement
+  - pkief.material-icon-theme
+  - wayou.vscode-todo-highlight
+  - oderwat.indent-rainbow
+  - ibm.output-colorizer
+  - johnpapa.vscode-peacock
+  - idleberg.icon-fonts
+
+  # Themes
+  - zhuangtongfa.material-theme
+  - wesbos.theme-cobalt2
+
+  # Productivity
+  - christian-kohler.path-intellisense
+  - yzhang.markdown-all-in-one
+  - github.copilot
+  - github.copilot-chat
+
+# Additional extensions (override in group vars)
+vscode_extensions_extra: []
+
+# Combined list
+vscode_extensions: "{{ vscode_extensions_common + vscode_extensions_extra }}"
+
+# VS Code settings (applied to all machines)
+vscode_settings:
+  # Editor
+  "editor.fontSize": 13
+  "editor.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace"
+  "editor.rulers": [80, 100, 120]
+  "editor.renderWhitespace": "boundary"
+  "editor.linkedEditing": true
+  "editor.bracketPairColorization.enabled": true
+  "editor.guides.bracketPairs": true
+  "editor.guides.bracketPairsHorizontal": "active"
+  "editor.guides.highlightActiveIndentation": true
+  "editor.formatOnSave": true
+  "editor.codeActionsOnSave":
+    "source.fixAll.eslint": "explicit"
+  "editor.tabSize": 2
+  "editor.insertSpaces": true
+  "editor.wordWrap": "on"
+
+  # Terminal
+  "terminal.integrated.fontFamily": "MesloLGS NF"
+  "terminal.integrated.fontSize": 12
+  "terminal.integrated.cursorBlinking": true
+
+  # Files
+  "files.autoSave": "onFocusChange"
+  "files.trimTrailingWhitespace": true
+  "files.insertFinalNewline": true
+
+  # Language Specific
+  "html.autoClosingTags": true
+  "javascript.autoClosingTags": true
+  "typescript.autoClosingTags": true
+  "javascript.suggest.autoImports": true
+  "typescript.suggest.autoImports": true
+  "javascript.updateImportsOnFileMove.enabled": "always"
+  "typescript.updateImportsOnFileMove.enabled": "always"
+
+  # Python
+  "python.linting.enabled": true
+  "python.linting.pylintEnabled": true
+  "python.formatting.provider": "black"
+
+  # Git
+  "git.autofetch": true
+  "git.confirmSync": false
+  "git.enableSmartCommit": true
+
+  # Workbench
+  "workbench.iconTheme": "material-icon-theme"
+  "workbench.colorTheme": "Default Dark Modern"
+  "workbench.startupEditor": "none"
+
+  # Telemetry
+  "telemetry.telemetryLevel": "off"
+
+# Zsh plugins (common to all)
+zsh_plugins:
+  - name: zsh-syntax-highlighting
+    repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+  - name: zsh-autosuggestions
+    repo: https://github.com/zsh-users/zsh-autosuggestions
+  - name: zsh-completions
+    repo: https://github.com/zsh-users/zsh-completions

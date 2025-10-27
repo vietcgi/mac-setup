@@ -1,0 +1,45 @@
+---
+# Variables for development machines
+# These override group_vars/all.yml
+
+# Additional VS Code extensions for developers
+vscode_extensions_extra:
+  # DevOps & Infrastructure
+  - redhat.ansible
+  - ms-kubernetes-tools.vscode-kubernetes-tools
+  - ms-azuretools.vscode-docker
+  - hashicorp.terraform
+  - ms-azuretools.vscode-azureterraform
+
+  # Kubernetes & Cloud
+  - googlecloudtools.cloudcode
+  - amazonwebservices.aws-toolkit-vscode
+  - ms-vscode.azure-account
+  - mindaro.mindaro
+
+  # GitOps & CI/CD
+  - github.vscode-github-actions
+  - gitlab.gitlab-workflow
+
+  # Monitoring & Observability
+  - grafana.vscode-jsonnet
+
+  # Programming Languages
+  - golang.go
+  - rust-lang.rust-analyzer
+  - ms-vscode.cpptools
+  - redhat.java
+
+  # Linting & Security
+  - timonwong.shellcheck
+  - redhat.vscode-yaml
+  - bridgecrew.checkov
+  - aquasecurity.trivy-vulnerability-scanner
+
+# Development tools enabled
+install_dev_tools: true
+install_databases: true
+install_docker: true
+
+# Brewfile to use (can override per group)
+brewfile_name: Brewfile.development
