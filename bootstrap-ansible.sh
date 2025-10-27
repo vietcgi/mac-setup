@@ -96,8 +96,8 @@ retry() {
     return $exitCode
 }
 
-# Check if running as root
-if [[ $EUID -eq 0 ]]; then
+# Check if running as root (only on macOS where Homebrew is required)
+if [[ $EUID -eq 0 ]] && [[ "$OS" == "darwin" ]]; then
     print_error "This script must NOT be run as root (Homebrew requirement)"
     exit 1
 fi
