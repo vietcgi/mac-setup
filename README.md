@@ -2,8 +2,8 @@
 
 **Fast, cross-platform, reproducible development environment for desktop machines.**
 
-[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue)]()
-[![Setup Time](https://img.shields.io/badge/setup%20time-~2%20min-green)]()
+[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue)](#)
+[![Setup Time](https://img.shields.io/badge/setup%20time-~2%20min-green)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -17,6 +17,7 @@
 ```
 
 **Done!** Your desktop is now configured with:
+
 - 100+ development tools & utilities
 - Shell environment (zsh + Oh My Zsh + Powerlevel10k)
 - Modern editors (Neovim with LSP, VS Code with extensions)
@@ -27,6 +28,7 @@
 **Detailed guide:** [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)
 
 **Verify your setup:**
+
 ```bash
 ./verify-setup.sh
 ```
@@ -38,12 +40,14 @@
 ### Supported Platforms
 
 **macOS**:
+
 - macOS 13.0 (Ventura) or later
 - macOS 14.0 (Sonoma) - Recommended
 - macOS 15.0 (Sequoia) - Supported
 - Both Intel (x86_64) and Apple Silicon (M1/M2/M3/M4) architectures
 
 **Linux**:
+
 - Ubuntu 20.04 LTS or later
 - Debian 11+ (Bullseye or later)
 - Other Debian-based distributions (should work, but not extensively tested)
@@ -52,12 +56,14 @@
 ### Hardware Requirements
 
 **Minimum**:
+
 - **CPU**: Any modern 64-bit processor (Intel or ARM)
 - **RAM**: 8 GB
 - **Disk**: 10 GB free space
 - **Network**: Stable internet connection for downloads
 
 **Recommended**:
+
 - **CPU**: Multi-core processor (Apple Silicon M1+ or Intel i5+)
 - **RAM**: 16 GB or more
 - **Disk**: 20 GB+ free space (especially for SRE setup)
@@ -66,11 +72,13 @@
 ### Software Prerequisites
 
 **Automatically installed if missing**:
+
 - Xcode Command Line Tools (macOS)
 - Homebrew
 - Ansible
 
 **Required for full functionality**:
+
 - Git (usually pre-installed)
 - Zsh (usually pre-installed on modern systems)
 - Admin/sudo access (for initial Homebrew install only)
@@ -101,19 +109,22 @@
 
 ---
 
-## Documentation
+## Project Documentation
 
 ### Essential Guides (Start Here)
+
 - **[QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)** - Complete setup guide (start here)
 - **[KNOWN-ISSUES.md](KNOWN-ISSUES.md)** - Troubleshooting & common problems
 - **[verify-setup.sh](verify-setup.sh)** - Verify your installation
 
 ### Production & Migration
-- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Production deployment & fleet management (20+ machines)
+
+- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Production deployment & fleet management for 20+ machines
 - **[ANSIBLE-MIGRATION.md](ANSIBLE-MIGRATION.md)** - Migrate from old Ansible setup
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history & breaking changes
 
 ### Community & Support
+
 - **[SUPPORT.md](SUPPORT.md)** - How to get help and ask questions
 - **[SECURITY.md](SECURITY.md)** - Security policy and vulnerability reporting
 - **[update.sh](update.sh)** - Update all packages and tools
@@ -123,6 +134,7 @@
 ## What's Included
 
 ### Core Tools
+
 - **Package Management**: Homebrew with Brewfile (100+ packages)
 - **Version Management**: mise (unified manager for node, go, python, ruby)
 - **Shell**: zsh + Oh My Zsh + Powerlevel10k + 10+ plugins
@@ -133,6 +145,7 @@
 - **Testing**: Multipass (lightweight Ubuntu VMs)
 
 ### Development
+
 - Languages: Node.js, Go, Python, PHP, Ruby
 - Kubernetes: kubectl, helm, k9s, kind, kustomize, stern
 - Cloud: AWS CLI, eksctl, aws-iam-authenticator
@@ -140,6 +153,7 @@
 - Utilities: bat, lsd, fzf, jq, yq, httpie, htop
 
 ### SRE/DevOps (Brewfile.sre)
+
 - IaC: Terraform (via tenv), Terragrunt, Packer, Pulumi
 - Monitoring: Prometheus, Grafana, Promtail
 - Security: Trivy, Checkov, Cosign, Syft, Grype
@@ -151,7 +165,8 @@
 ## Architecture
 
 ### Single Playbook Design
-```
+
+```yaml
 mac-setup/
 ├── bootstrap-ansible.sh       # One-command bootstrap
 ├── setup.yml                  # Main Ansible playbook (~625 lines)
@@ -187,13 +202,16 @@ mac-setup/
 ## Features
 
 ### Cross-Platform
+
 - Automatically detects macOS vs Linux
 - Adjusts paths and packages accordingly
 - macOS: Full GUI app support via Homebrew Cask
 - Linux: CLI tools + manual GUI app installation
 
 ### Fleet Management
+
 Manage different machine types with inventory groups:
+
 - **workstations**: GUI apps, Docker, VS Code
 - **development**: Dev tools, databases, debuggers
 - **sre**: Monitoring, IaC, security scanners
@@ -201,12 +219,14 @@ Manage different machine types with inventory groups:
 - **design**: Design tools instead of dev tools
 
 ### Idempotent & Safe
+
 - Run multiple times without issues
 - Skips already-installed components
 - Backs up existing configs before overwriting
 - Feature flags to enable/disable components
 
 ### Modern Tool Integration
+
 - **Homebrew**: Native Brewfile format (not YAML)
 - **mise**: Replaces nvm, rbenv, pyenv with unified tool
 - **chezmoi**: Purpose-built dotfile manager
@@ -217,18 +237,22 @@ Manage different machine types with inventory groups:
 ## Alternative Approaches
 
 ### Option 1: Modernized Ansible (Recommended)
+
 **→ [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)**
 
 Perfect for:
+
 - Desktop machines (Mac/Linux)
 - GUI app installation
 - Fleet management (20+ machines)
 - Declarative configuration
 
 ### Option 2: Shell-Only (Minimal Dependencies)
+
 **→ Use [Justfile](Justfile) directly**
 
 Perfect for:
+
 - Minimal dependencies (no Ansible/Python)
 - Maximum speed
 - Simple single-machine setup
@@ -236,9 +260,11 @@ Perfect for:
 Run: `just bootstrap`
 
 ### Option 3: SRE/DevOps Setup
+
 **→ Use `Brewfile.sre` instead of `Brewfile`**
 
 Perfect for:
+
 - Platform engineers
 - SRE teams
 - DevOps workstations
@@ -251,7 +277,9 @@ See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for SRE setup instructions.
 ## Customization
 
 ### Feature Flags
+
 Control what gets installed via `group_vars/all.yml`:
+
 ```yaml
 install_shell_tools: true
 install_neovim: true
@@ -264,6 +292,7 @@ configure_macos_defaults: true # macOS only
 ```
 
 ### Per-Machine Customization
+
 ```bash
 # group_vars/sre.yml - all SRE machines
 brewfile_name: Brewfile.sre
@@ -281,6 +310,7 @@ vscode_extensions_extra:
 ## Testing & Verification
 
 ### Verify Setup
+
 ```bash
 # Run verification script
 ./verify-setup.sh
@@ -291,6 +321,7 @@ ansible-playbook -i inventory.yml setup.yml --tags mise --check
 ```
 
 ### Idempotency Test
+
 ```bash
 # Run twice - second run should show no changes
 ansible-playbook -i inventory.yml setup.yml
@@ -324,6 +355,7 @@ multipass purge
 ```
 
 **Test different Ubuntu versions**:
+
 ```bash
 # Ubuntu 20.04 LTS
 multipass launch ubuntu:20.04 --name test-focal
@@ -340,6 +372,7 @@ multipass launch ubuntu:24.04 --name test-noble
 ## Contributing
 
 ### Pre-commit Hooks
+
 ```bash
 # Install pre-commit
 brew install pre-commit
@@ -352,6 +385,7 @@ pre-commit run --all-files
 ```
 
 ### Testing Changes
+
 ```bash
 # Test on local machine
 ansible-playbook -i inventory.yml setup.yml --check
@@ -373,17 +407,20 @@ Apache License 2.0 - see [LICENSE](LICENSE) file for details.
 
 ## Getting Help
 
-### Documentation
+### Further Documentation
+
 - **[KNOWN-ISSUES.md](KNOWN-ISSUES.md)** - Common problems & solutions
 - **[QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)** - Detailed setup guide
 - **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Advanced deployment
 
 ### Run Verification
+
 ```bash
 ./verify-setup.sh
 ```
 
 ### Check Logs
+
 ```bash
 # Run with verbose output
 ansible-playbook -i inventory.yml setup.yml -vvv
@@ -391,4 +428,4 @@ ansible-playbook -i inventory.yml setup.yml -vvv
 
 ---
 
-**Made with care for developers, by developers**
+### Made with care for developers, by developers

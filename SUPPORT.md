@@ -1,32 +1,35 @@
 # Support
 
-Thank you for using this Mac/Linux setup automation! This document explains how to get help.
+Thank you for using this Mac/Linux setup automation! This document explains
+how to get help.
 
 ## Getting Help
 
 ### Before Asking for Help
 
 1. **Read the Documentation**
-   - [README.md](README.md) - Overview and quick start
-   - [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md) - Detailed setup guide
-   - [KNOWN-ISSUES.md](KNOWN-ISSUES.md) - Common problems and solutions
-   - [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) - Advanced deployment
+    - [README.md](README.md) - Overview and quick start
+    - [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md) - Detailed setup guide
+    - [KNOWN-ISSUES.md](KNOWN-ISSUES.md) - Common problems and solutions
+    - [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) - Advanced deployment
 
 2. **Run Verification Script**
-   ```bash
-   ./verify-setup.sh
-   ```
-   This checks your system and identifies common issues.
+
+    ```bash
+    ./verify-setup.sh
+    ```
+
+    This checks your system and identifies common issues.
 
 3. **Check for Known Issues**
-   See [KNOWN-ISSUES.md](KNOWN-ISSUES.md) for solutions to common problems:
-   - Node.js version manager conflicts (nvm vs mise)
-   - Homebrew installation issues
-   - Permission problems
-   - Shell configuration issues
+    See [KNOWN-ISSUES.md](KNOWN-ISSUES.md) for solutions to common problems:
+    - Node.js version manager conflicts (nvm vs mise)
+    - Homebrew installation issues
+    - Permission problems
+    - Shell configuration issues
 
 4. **Review Recent Changes**
-   Check [CHANGELOG.md](CHANGELOG.md) for breaking changes in recent versions.
+    Check [CHANGELOG.md](CHANGELOG.md) for breaking changes in recent versions.
 
 ## Support Channels
 
@@ -38,24 +41,27 @@ For bugs, feature requests, and questions:
 2. **Open a new issue** if needed: [New Issue](../../issues/new)
 
 When opening an issue, please include:
+
 - **Description**: Clear description of the problem
 - **Steps to reproduce**: How to recreate the issue
 - **Expected behavior**: What should happen
 - **Actual behavior**: What actually happens
 - **Environment**: Output from `./verify-setup.sh`
 - **System info**:
-  ```bash
-  uname -a
-  sw_vers  # macOS only
-  brew --version
-  ansible --version
-  ```
+
+    ```bash
+    uname -a
+    sw_vers  # macOS only
+    brew --version
+    ansible --version
+    ```
 
 ### GitHub Discussions
 
 For general questions and discussions: [Discussions](../../discussions)
 
 Topics:
+
 - **Q&A**: Ask questions and help others
 - **Ideas**: Suggest new features
 - **Show and Tell**: Share your customizations
@@ -125,7 +131,8 @@ This is an open-source project maintained by volunteers. Response times vary:
 - **Feature requests**: 7-14 days
 - **Questions**: 1-7 days (community-driven)
 
-**Note**: These are target times, not guarantees. Community contributions and discussions help everyone faster!
+**Note**: These are target times, not guarantees. Community contributions and
+discussions help everyone faster!
 
 ## Self-Help Resources
 
@@ -196,9 +203,11 @@ When asking for help:
 
 ## Contributing
 
-Want to help improve this project? See [README.md](README.md#contributing) for contribution guidelines.
+Want to help improve this project? See [README.md](README.md#contributing)
+for contribution guidelines.
 
 Ways to contribute:
+
 - Report bugs and suggest features
 - Improve documentation
 - Answer questions in Discussions
@@ -209,19 +218,23 @@ Ways to contribute:
 ## External Resources
 
 ### Homebrew
+
 - [Homebrew Documentation](https://docs.brew.sh/)
 - [Homebrew FAQ](https://docs.brew.sh/FAQ)
 - [Homebrew Common Issues](https://docs.brew.sh/Common-Issues)
 
 ### Ansible
+
 - [Ansible Documentation](https://docs.ansible.com/)
 - [Ansible Community](https://www.ansible.com/community)
 
 ### mise
+
 - [mise Documentation](https://mise.jdx.dev/)
 - [mise GitHub](https://github.com/jdx/mise)
 
 ### Shell Configuration
+
 - [Oh My Zsh](https://ohmyz.sh/)
 - [Powerlevel10k](https://github.com/romkatv/powerlevel10k)
 - [zsh Documentation](https://zsh.sourceforge.io/Doc/)
@@ -231,6 +244,7 @@ Ways to contribute:
 ### Where can I customize packages?
 
 Edit `Brewfile` (base packages) or `Brewfile.sre` (SRE packages), then run:
+
 ```bash
 ansible-playbook setup.yml --tags packages
 ```
@@ -238,6 +252,7 @@ ansible-playbook setup.yml --tags packages
 ### How do I change tool versions?
 
 Edit `.mise.toml`, then run:
+
 ```bash
 mise install
 ```
@@ -245,6 +260,7 @@ mise install
 ### How do I update everything?
 
 Run the update script:
+
 ```bash
 ./update.sh
 ```
@@ -256,23 +272,27 @@ Yes! This setup supports macOS and Linux. See README.md for details.
 ### How do I uninstall?
 
 Currently there's no automated uninstall. To manually uninstall:
+
 1. Remove installed packages: `brew bundle cleanup --force`
 2. Restore backed-up dotfiles from `~/*.backup`
 3. Remove directories: `~/.oh-my-zsh`, `~/.config/nvim`, etc.
 
 ### Is this safe to run multiple times?
 
-Yes! The setup is idempotent - safe to run multiple times without breaking your system.
+Yes! The setup is idempotent - safe to run multiple times without breaking
+your system.
 
 ## Need More Help?
 
 If you've:
+
 - Read the documentation
 - Checked known issues
 - Searched existing issues
 - Run verification tools
 
-...and still need help, please [open an issue](../../issues/new) with all the details.
+...and still need help, please [open an issue](../../issues/new) with all the
+details.
 
 ---
 

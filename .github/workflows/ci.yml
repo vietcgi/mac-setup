@@ -1,4 +1,3 @@
----
 name: CI
 
 on:
@@ -14,53 +13,53 @@ jobs:
     name: Shellcheck
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Run shellcheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          severity: warning
-          scandir: '.'
-          format: gcc
+    - name: Run shellcheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        severity: warning
+        scandir: .
+        format: gcc
 
   # Lint Ansible playbook
   ansible-lint:
     name: Ansible Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install Ansible and ansible-lint
-        run: |
-          pip install ansible ansible-lint
+    - name: Install Ansible and ansible-lint
+      run: |
+        pip install ansible ansible-lint
 
-      - name: Run ansible-lint
-        run: |
-          ansible-lint setup.yml
+    - name: Run ansible-lint
+      run: |
+        ansible-lint setup.yml
 
-      - name: Check Ansible syntax
-        run: |
-          ansible-playbook setup.yml --syntax-check
+    - name: Check Ansible syntax
+      run: |
+        ansible-playbook setup.yml --syntax-check
 
   # Lint Markdown files
   markdown-lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Run markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v15
-        with:
-          globs: '**/*.md'
+    - name: Run markdownlint
+      uses: DavidAnson/markdownlint-cli2-action@v15
+      with:
+        globs: '**/*.md'
 
   # Test on macOS
   test-macos:
@@ -68,27 +67,27 @@ jobs:
     runs-on: macos-latest
     needs: [shellcheck, ansible-lint]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install Homebrew
-        run: |
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
+    - name: Install Homebrew
+      run: |
+        if ! command -v brew &> /dev/null; then
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        fi
 
-      - name: Install Ansible
-        run: |
-          brew install ansible
+    - name: Install Ansible
+      run: |
+        brew install ansible
 
-      - name: Test Brewfile syntax
-        run: |
-          brew bundle check --file=Brewfile || true
-          brew bundle check --file=Brewfile.sre || true
+    - name: Test Brewfile syntax
+      run: |
+        brew bundle check --file=Brewfile || true
+        brew bundle check --file=Brewfile.sre || true
 
-      - name: Dry run Ansible playbook
-        run: |
-          ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
+    - name: Dry run Ansible playbook
+      run: |
+        ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
 
   # Test on Ubuntu
   test-ubuntu:
@@ -96,82 +95,82 @@ jobs:
     runs-on: ubuntu-latest
     needs: [shellcheck, ansible-lint]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install Ansible
-        run: |
-          pip install ansible
+    - name: Install Ansible
+      run: |
+        pip install ansible
 
-      - name: Dry run Ansible playbook
-        run: |
-          ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
+    - name: Dry run Ansible playbook
+      run: |
+        ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
 
   # Verify configuration files
   verify-config:
     name: Verify Configuration
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Check YAML syntax
-        run: |
-          find . -name "*.yml" -o -name "*.yaml" | while read file; do
-            echo "Checking $file"
-            python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
-          done
+    - name: Check YAML syntax
+      run: |
+        find . -name "*.yml" -o -name "*.yaml" | while read file; do
+          echo "Checking $file"
+          python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+        done
 
-      - name: Check TOML syntax
-        run: |
-          pip install toml
-          python3 -c "import toml; toml.load('.mise.toml')"
+    - name: Check TOML syntax
+      run: |
+        pip install toml
+        python3 -c "import toml; toml.load('.mise.toml')"
 
-      - name: Verify no secrets in code
-        run: |
-          # Check for common secret patterns
-          ! grep -r "password\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
-          ! grep -r "secret\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
-          ! grep -r "api_key\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
+    - name: Verify no secrets in code
+      run: |
+        # Check for common secret patterns
+        ! grep -r "password\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
+        ! grep -r "secret\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
+        ! grep -r "api_key\s*=\s*['\"]" . --include="*.yml" --include="*.yaml" --include="*.sh"
 
   # Check for broken links in documentation
   link-check:
     name: Check Documentation Links
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Check links in Markdown files
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: 'yes'
-          config-file: '.github/workflows/markdown-link-check-config.json'
-          check-modified-files-only: 'no'
+    - name: Check links in Markdown files
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: yes
+        config-file: .github/workflows/markdown-link-check-config.json
+        check-modified-files-only: no
 
   # Pre-commit hooks
   pre-commit:
     name: Pre-commit Checks
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+    - name: Install pre-commit
+      run: pip install pre-commit
 
-      - name: Run pre-commit
-        run: pre-commit run --all-files
+    - name: Run pre-commit
+      run: pre-commit run --all-files
 
   # Final status check
   ci-success:
@@ -180,10 +179,10 @@ jobs:
     needs: [shellcheck, ansible-lint, markdown-lint, test-macos, test-ubuntu, verify-config, pre-commit]
     if: always()
     steps:
-      - name: Check all jobs succeeded
-        run: |
-          if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ]; then
-            echo "One or more CI jobs failed"
-            exit 1
-          fi
-          echo "All CI jobs passed successfully!"
+    - name: Check all jobs succeeded
+      run: |
+        if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ]; then
+          echo "One or more CI jobs failed"
+          exit 1
+        fi
+        echo "All CI jobs passed successfully!"

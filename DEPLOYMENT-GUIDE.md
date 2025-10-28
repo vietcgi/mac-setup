@@ -3,18 +3,23 @@
 ## Quick Start
 
 ### Standard Development Setup
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --limit development
 ```
+
 **Result**: Base setup with 98 packages + 38 VS Code extensions
 
 ### Full SRE/DevOps Setup
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --limit sre
 ```
+
 **Result**: Extended SRE stack with 115 packages + 38 VS Code extensions
 
 ### Local Machine (Current Mac)
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --limit localhost
 ```
@@ -24,12 +29,14 @@ ansible-playbook -i inventory.yml setup.yml --limit localhost
 ## Pre-Deployment Checklist
 
 ### 1. Prerequisites
+
 - [ ] macOS 13+ (Ventura or later)
 - [ ] Command Line Tools installed: `xcode-select --install`
 - [ ] Ansible installed: `brew install ansible`
 - [ ] Git installed (for cloning roles/plugins)
 
 ### 2. Backup Current Config
+
 ```bash
 # Backup existing dotfiles
 cp ~/.zshrc ~/.zshrc.backup
@@ -38,6 +45,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ```
 
 ### 3. Review Configuration
+
 - [ ] Check `inventory.yml` - add your machines to appropriate groups
 - [ ] Review `group_vars/all.yml` - verify feature flags
 - [ ] Review `group_vars/development.yml` or `group_vars/sre.yml`
@@ -47,6 +55,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ## Configuration Files Verification
 
 ### Core Files (All Created)
+
 ```
 - Brewfile (98 packages)
 - Brewfile.sre (115 packages)
@@ -58,6 +67,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ```
 
 ### Dotfiles (All Created)
+
 ```
 - dotfiles/.zshrc (with 9 GNU PATH exports)
 - dotfiles/.tmux.conf (with TPM + 6 plugins)
@@ -68,6 +78,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ```
 
 ### Documentation (All Created)
+
 ```
 - README.md
 - QUICKSTART-ANSIBLE.md
@@ -80,10 +91,12 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ## Package Counts
 
 ### Base Brewfile (98 packages)
+
 - **82 formulas** (CLI tools)
 - **16 casks** (GUI applications)
 
 **Includes SRE essentials**:
+
 - stern, kustomize, dive, ctop (Kubernetes)
 - yq, jq (data processing)
 - gh, direnv, pre-commit (development)
@@ -91,10 +104,12 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 - Rectangle, Postman (productivity)
 
 ### SRE Brewfile (115 packages)
+
 - **101 formulas** (extended CLI tools)
 - **14 casks** (specialized apps)
 
 **Additional tools**:
+
 - flux, argocd, skaffold (GitOps)
 - azure-cli, vault (cloud)
 - opentofu, terragrunt, packer, pulumi (IaC)
@@ -103,6 +118,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 - wireshark (network analysis)
 
 ### VS Code Extensions
+
 - **22 common extensions** (all machines)
 - **16 additional extensions** (dev/sre groups)
 - **Total: 38 extensions** for development/sre roles
@@ -112,18 +128,23 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 ## Deployment Workflow
 
 ### Step 1: Syntax Check
+
 ```bash
 ansible-playbook setup.yml --syntax-check
 ```
+
 Expected output: `playbook: setup.yml`
 
 ### Step 2: Dry Run (Check Mode)
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --check --limit localhost
 ```
+
 Shows what would be changed without making changes.
 
 ### Step 3: Deploy to Current Machine
+
 ```bash
 # Standard development setup
 ansible-playbook -i inventory.yml setup.yml --limit development
@@ -133,6 +154,7 @@ ansible-playbook -i inventory.yml setup.yml --limit sre
 ```
 
 ### Step 4: Deploy Specific Tags Only
+
 ```bash
 # Only install packages
 ansible-playbook -i inventory.yml setup.yml --tags packages
@@ -155,6 +177,7 @@ ansible-playbook -i inventory.yml setup.yml --tags vscode
 ## Post-Deployment Steps
 
 ### 1. Shell Configuration
+
 ```bash
 # Reload shell configuration
 source ~/.zshrc
@@ -164,6 +187,7 @@ source ~/.zshrc
 ```
 
 ### 2. Tmux Plugin Installation
+
 ```bash
 # Start tmux
 tmux
@@ -173,6 +197,7 @@ tmux
 ```
 
 ### 3. Neovim Plugin Installation
+
 ```bash
 # Open neovim
 nvim
@@ -182,13 +207,16 @@ nvim
 ```
 
 ### 4. VS Code Extensions
+
 Extensions install automatically. Verify:
+
 ```bash
 code --list-extensions | wc -l
 # Should show 38+ extensions
 ```
 
 ### 5. direnv Setup
+
 ```bash
 # direnv is installed and hooked into zsh
 # For each project with .envrc file:
@@ -203,18 +231,21 @@ direnv allow
 ### 6. Cloud CLI Setup (SRE only)
 
 **AWS**:
+
 ```bash
 aws configure sso
 aws sso login --profile production
 ```
 
 **Azure**:
+
 ```bash
 az login
 az account set --subscription "Production"
 ```
 
 ### 7. kubectl Plugins (SRE only)
+
 ```bash
 # Install recommended plugins
 kubectl krew install ctx ns neat tree tail who-can access-matrix view-secret
@@ -225,6 +256,7 @@ kubectl krew install ctx ns neat tree tail who-can access-matrix view-secret
 ## Verification Commands
 
 ### Package Installation
+
 ```bash
 # Check Homebrew packages
 brew list --formula | wc -l  # Should be 82+ (base) or 101+ (SRE)
@@ -235,6 +267,7 @@ command -v stern kubectl k9s helm gh direnv yq jq
 ```
 
 ### Shell Tools
+
 ```bash
 # Verify GNU tools are in PATH
 which sed     # Should show /opt/homebrew/opt/gnu-sed/...
@@ -249,6 +282,7 @@ alias | grep -E "(ls|cat|vim)"
 ```
 
 ### Neovim
+
 ```bash
 # Check neovim version
 nvim --version  # Should be 0.9+
@@ -259,6 +293,7 @@ nvim +":Lazy" +qa
 ```
 
 ### VS Code
+
 ```bash
 # List extensions
 code --list-extensions
@@ -270,6 +305,7 @@ code --list-extensions | wc -l
 ```
 
 ### Tmux
+
 ```bash
 # Check tmux version
 tmux -V  # Should be 3.3+
@@ -282,6 +318,7 @@ tmux list-keys | grep plugin
 ```
 
 ### Security Tools (SRE)
+
 ```bash
 # Verify security scanners
 command -v trivy checkov hadolint tflint shellcheck yamllint
@@ -292,21 +329,27 @@ command -v trivy checkov hadolint tflint shellcheck yamllint
 ## Troubleshooting
 
 ### Issue: "command not found" after installation
+
 **Solution**: Reload shell configuration
+
 ```bash
 source ~/.zshrc
 # OR restart terminal
 ```
 
 ### Issue: Tmux plugins not loading
+
 **Solution**: Install TPM plugins manually
+
 ```bash
 tmux
 # Press: Ctrl+A then Shift+I
 ```
 
 ### Issue: Neovim plugins missing
+
 **Solution**: Force reinstall
+
 ```bash
 nvim
 :Lazy sync
@@ -314,7 +357,9 @@ nvim
 ```
 
 ### Issue: VS Code extensions not installing
+
 **Solution**: Install manually
+
 ```bash
 while IFS= read -r ext; do code --install-extension "$ext"; done < <(
   ansible-playbook -i inventory.yml setup.yml --list-tags 2>/dev/null | \
@@ -323,7 +368,9 @@ while IFS= read -r ext; do code --install-extension "$ext"; done < <(
 ```
 
 ### Issue: Homebrew packages fail to install
+
 **Solution**: Update Homebrew and retry
+
 ```bash
 brew update
 brew upgrade
@@ -331,7 +378,9 @@ brew bundle install --file=Brewfile
 ```
 
 ### Issue: Permission denied on sudoers task
+
 **Solution**: Run with sudo password
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --ask-become-pass
 ```
@@ -343,6 +392,7 @@ ansible-playbook -i inventory.yml setup.yml --ask-become-pass
 ### Adding New Machines
 
 **Development Machine**:
+
 ```yaml
 # Add to inventory.yml under development group
 development:
@@ -352,6 +402,7 @@ development:
 ```
 
 **SRE Machine**:
+
 ```yaml
 # Add to inventory.yml under sre group
 sre:
@@ -361,7 +412,9 @@ sre:
 ```
 
 ### Custom Configuration Per Machine
+
 Create `host_vars/hostname.yml`:
+
 ```yaml
 # host_vars/dev-macbook-1.yml
 brewfile_name: Brewfile.sre  # Use SRE Brewfile on dev machine
@@ -392,6 +445,7 @@ vscode_extensions_extra:
 ## Quick Reference
 
 ### Deployment Commands
+
 ```bash
 # Check syntax
 ansible-playbook setup.yml --syntax-check
@@ -416,6 +470,7 @@ ansible-playbook -i inventory.yml setup.yml --ask-become-pass
 ```
 
 ### Post-Install Commands
+
 ```bash
 # Reload shell
 source ~/.zshrc
@@ -436,7 +491,8 @@ command -v stern kubectl k9s helm
 
 ## Success Indicators
 
-### Base Setup Complete When:
+### Base Setup Complete When
+
 - [ ] 82+ Homebrew formulas installed
 - [ ] 16+ Homebrew casks installed
 - [ ] Zsh configured with Powerlevel10k
@@ -446,7 +502,8 @@ command -v stern kubectl k9s helm
 - [ ] All GNU tools in PATH
 - [ ] direnv configured and working
 
-### SRE Setup Complete When:
+### SRE Setup Complete When
+
 - [ ] All base requirements met
 - [ ] 101+ Homebrew formulas installed
 - [ ] Kubernetes tools available (stern, kustomize, k9s, helm)
@@ -462,11 +519,14 @@ command -v stern kubectl k9s helm
 
 ### Important: Brewfile.sre Must Be Manually Synced
 
-**CRITICAL**: Due to Homebrew limitations, `Brewfile.sre` duplicates all base packages from `Brewfile` plus SRE-specific additions. **These must be manually synchronized** when updating packages.
+**CRITICAL**: Due to Homebrew limitations, `Brewfile.sre` duplicates all base packages
+from `Brewfile` plus SRE-specific additions. **These must be manually synchronized**
+when updating packages.
 
 ### Why This Design?
 
-Homebrew's Brewfile format doesn't support imports or includes, so we must:
+Homebrew\'s Brewfile format doesn\'t support imports or includes, so we must:
+
 1. Maintain a base `Brewfile` for all machines
 2. Duplicate base packages in `Brewfile.sre` plus add SRE tools
 
@@ -524,99 +584,118 @@ chmod +x verify-brewfiles.sh
 ### Best Practices
 
 1. **Use Comments**: Add descriptive comments to both files
-   ```ruby
-   brew "ripgrep"  # Better grep (search tool)
-   ```
+
+    ```ruby
+    brew "ripgrep"  # Better grep (search tool)
+    ```
 
 2. **Group by Category**: Keep related packages together
-   ```ruby
-   # CLI Tools - Utilities
-   brew "bat"
-   brew "lsd"
-   brew "fzf"
-   ```
+
+    ```ruby
+    # CLI Tools - Utilities
+    brew "bat"
+    brew "lsd"
+    brew "fzf"
+    ```
 
 3. **Version Control**: Always commit both files together
-   ```bash
-   git add Brewfile Brewfile.sre
-   git commit -m "feat: add ripgrep to both Brewfiles"
-   ```
+
+    ```bash
+    git add Brewfile Brewfile.sre
+    git commit -m "feat: add ripgrep to both Brewfiles"
+    ```
 
 4. **Test Both**: After changes, test both Brewfiles
-   ```bash
-   # Test base
-   brew bundle check --file=Brewfile
 
-   # Test SRE
-   brew bundle check --file=Brewfile.sre
-   ```
+    ```bash
+    # Test base
+    brew bundle check --file=Brewfile
+
+    # Test SRE
+    brew bundle check --file=Brewfile.sre
+    ```
 
 ### SRE-Specific Packages
 
 These packages should ONLY be in `Brewfile.sre`:
 
 **Infrastructure as Code**:
+
 - `opentofu/tap/opentofu`
 - `terragrunt`
 - `packer`
 - `pulumi`
 
 **Monitoring & Observability**:
+
 - `prometheus`
 - `grafana`
 - `promtail`
 
 **Security Scanners**:
+
 - `checkov`
 - `cosign`
 - `syft`
 - `grype`
 
 **GitOps & Advanced Kubernetes**:
+
 - `flux`
 - `argocd`
 - `skaffold`
 
 **Cloud Providers**:
+
 - `azure-cli`
 - `hashicorp/tap/vault`
 
 **Load Testing**:
+
 - `vegeta`
 - `wrk`
 
 **Networking**:
+
 - `mosh`
 - `wireguard-tools`
 - `wireshark` (cask)
 
 ### Automated Sync (Future Enhancement)
 
-Consider creating a script to auto-generate `Brewfile.sre` from `Brewfile`:
+Consider creating a script to auto-generate `Brewfile.sre` from `Brewfile`:\n\n```bash
+# !/usr/bin/env bash
 
-```bash
-#!/usr/bin/env bash
 # generate-sre-brewfile.sh (example - not yet implemented)
 
 # Copy base Brewfile
+
 cp Brewfile Brewfile.sre.new
 
 # Append SRE-specific packages
+
 cat >> Brewfile.sre.new << 'EOF'
 
 # ============================================================================
+
 # SRE-Specific Additions
+
 # ============================================================================
 
 # Infrastructure as Code
+
 tap "opentofu/tap"
 brew "opentofu/tap/opentofu"
 brew "terragrunt"
+
 # ... (add all SRE-specific packages)
+
 EOF
 
 # Replace old file
+
 mv Brewfile.sre.new Brewfile.sre
+
 ```
 
 ---
@@ -624,6 +703,7 @@ mv Brewfile.sre.new Brewfile.sre
 ## Support
 
 ### Documentation
+
 - Main README: `README.md`
 - Quick Start: `QUICKSTART-ANSIBLE.md`
 - Troubleshooting: `KNOWN-ISSUES.md`
@@ -631,13 +711,17 @@ mv Brewfile.sre.new Brewfile.sre
 - SRE Tools: See inline comments in `Brewfile.sre`
 
 ### Common Issues
+
 Check Ansible logs:
+
 ```bash
 ansible-playbook -i inventory.yml setup.yml --limit localhost -vvv
 ```
 
 ### Rollback
+
 If issues occur, restore backups:
+
 ```bash
 cp ~/.zshrc.backup ~/.zshrc
 cp ~/.tmux.conf.backup ~/.tmux.conf

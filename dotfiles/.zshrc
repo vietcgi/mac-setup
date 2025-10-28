@@ -58,11 +58,11 @@ alias vi='nvim'
 alias v='nvim'
 
 # thefuck - Command correction
-eval $(thefuck --alias)
+eval "$(thefuck --alias)"
 
 # dircolors
 if [ -f "$HOME/.dircolors" ]; then
-  eval `gdircolors -b $HOME/.dircolors`
+  eval "$(gdircolors -b $HOME/.dircolors)"
 fi
 
 # FZF - Fuzzy finder
@@ -73,8 +73,8 @@ fi
 
 # Powerlevel10k instant prompt
 # Should stay close to the top of ~/.zshrc
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$(whoami).zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$(whoami).zsh"
 fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh

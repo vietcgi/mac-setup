@@ -61,8 +61,8 @@ mac-setup/
 | `requirements.yml` (nvm/rbenv roles) | `.mise.toml` | mise |
 | `tasks/exportrc.yml` | `dotfiles/.zshrc` | chezmoi |
 | `defaults/main.yml:vim_plugins` | `setup.yml` (vim-plug) | vim-plug |
-| `defaults/main.yml:visual_studio_code_extensions` | `setup.yml` (vars) | Ansible |
-| `requirements.yml:geerlingguy.mac.homebrew` | `setup.yml` (homebrew_bundle) | Built-in |
+| `defaults/main.yml:visual_studio_code_extensions` | `setup.yml` (vars) | Ansible  |
+| `requirements.yml:geerlingguy.mac.homebrew` | `setup.yml` (bundle) | Built-in |
 | `requirements.yml:ansible-vim` | `setup.yml` (get_url vim-plug) | Built-in |
 | `requirements.yml:ansible-tmux` | Not migrated yet | Manual |
 | `requirements.yml:ansible_role_antigen` | `setup.yml` (Oh My Zsh) | Built-in |
@@ -77,7 +77,8 @@ mac-setup/
 cp -r ~/mac-setup ~/mac-setup-backup
 ```
 
-**Note**: The old Ansible files have been removed in v3.0.0. If you're still using the old setup, backup your repo before upgrading.
+**Note**: The old Ansible files have been removed in v3.0.0. If you're
+still using the old setup, backup your repo before upgrading.
 
 ### Step 2: Review What You've Customized
 
@@ -291,7 +292,8 @@ ansible-playbook setup.yml --tags vim
 
 ## Idempotency
 
-Both old and new setups are idempotent. You can run them multiple times safely.
+Both old and new setups are idempotent.
+You can run them multiple times safely.
 
 **Test it:**
 
@@ -492,7 +494,7 @@ mise doctor
 3. [OK] Customize `Brewfile` and `.mise.toml` as needed
 4. [OK] Set up dotfiles with chezmoi
 5. [OK] Clean up old files if needed
-6.  Enjoy your modern, simplified setup!
+6. Enjoy your modern, simplified setup!
 
 ---
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # direnv configuration
 # https://direnv.net/
 
@@ -31,7 +32,8 @@ layout_poetry() {
     exit 2
   fi
 
-  local VENV=$(poetry env info --path 2>/dev/null)
+  local VENV
+  VENV=$(poetry env info --path 2>/dev/null)
   if [[ -z $VENV || ! -d $VENV/bin ]]; then
     log_status 'No poetry virtual environment found. Use `poetry install` to create one first.'
     exit 2

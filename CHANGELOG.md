@@ -53,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Major Improvements
 
-This release focuses on **cleanup, consistency, and quality** - taking the repository from B grade to **A++**.
+This release focuses on **cleanup, consistency, and quality** - taking
+the repository from B grade to **A++**.
 
 ### Breaking Changes
 
@@ -93,6 +94,8 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
 ### Documentation Cleanup
 
 #### Removed (6 redundant files)
+
+
 - **Deleted**:
   - DESKTOP-RECOMMENDATION.md (info integrated into README.md)
   - FLEET-MANAGEMENT.md (info integrated into DEPLOYMENT-GUIDE.md)
@@ -100,21 +103,25 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
   - README-SRE.md (tool list available in Brewfile.sre with comments)
   - SRE-ADDITIONS-SUMMARY.md (historical, no longer needed)
   - bootstrap-modern.sh (Justfile provides shell alternative)
+
 - **Result**: Reduced from 11 docs to 6 essential docs
 
 #### Removed (Legacy Ansible - 12 files)
+
 - **Deleted old Ansible setup**:
   - bootstrap.sh, main.yml, defaults/, tasks/, requirements.yml, inventory, config.yml
   - .ansible/ directory with downloaded roles
 - **Replaced by**: setup.yml (single modern playbook)
 
 #### Removed (Status Reports - 8 files)
+
 - **Deleted historical status reports**:
   - SETUP-STATUS.md, FINAL-STATUS.md, MIGRATION-COMPLETE.md, FINAL-VERIFICATION.md
   - AUDIT-REPORT.md, SUMMARY.md, MIGRATION.md
 - **Current status**: Tracked in CHANGELOG.md
 
 #### Improved
+
 - **README.md** - Complete rewrite with:
   - Clear visual hierarchy with badges
   - Quick start in under 2 minutes
@@ -137,6 +144,7 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
   - SRE-specific package list
 
 #### Consolidated
+
 - Moved outdated status reports to `archive/docs/`
   - SETUP-STATUS.md
   - FINAL-STATUS.md
@@ -150,6 +158,7 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
 ### Repository Structure
 
 #### Archived
+
 - **Legacy Ansible files** moved to `archive/old-ansible/`
   - bootstrap.sh (old bootstrap script)
   - main.yml (old playbook with 8 external roles)
@@ -191,6 +200,7 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
 ### Metrics
 
 **Before This Release:**
+
 - 15+ overlapping documentation files
 - Version manager conflicts (nvm + mise)
 - Legacy files mixed with modern setup
@@ -199,6 +209,7 @@ This release focuses on **cleanup, consistency, and quality** - taking the repos
 - **Grade: B**
 
 **After This Release:**
+
 - 6 core documentation files
 - Single version manager (mise only)
 - Legacy files removed
@@ -251,6 +262,7 @@ pre-commit install
 ## [2.0.0] - 2025-10-26 - Modern Ansible with SRE Additions
 
 ### Added
+
 - SRE-specific Brewfile (Brewfile.sre)
 - Fleet management via inventory.yml
 - Group variables (group_vars/all.yml, development.yml, sre.yml)
@@ -261,11 +273,13 @@ pre-commit install
 - Comprehensive documentation (15+ files)
 
 ### Changed
+
 - Migrated from 8 external Ansible roles to single playbook
 - Replaced YAML package lists with native Brewfile format
 - Setup time reduced from ~10 minutes to ~2 minutes
 
 ### Deprecated
+
 - Old Ansible setup (bootstrap.sh, main.yml, defaults/, tasks/)
 - Multiple version managers (nvm, rbenv, pyenv) in favor of mise
 
@@ -274,6 +288,7 @@ pre-commit install
 ## [1.0.0] - 2024-08-13 - Legacy Ansible Setup
 
 ### Initial Release
+
 - Ansible-based setup with 8 external roles
 - macOS-only support
 - Complex YAML configuration hierarchy

@@ -17,6 +17,7 @@ cd ~/mac-setup
 ## What Gets Installed?
 
 ### CLI Tools (from Brewfile)
+
 - **Development:** git, node, go, python, php
 - **Kubernetes:** kubectl, k9s, helm, eksctl, kubectx
 - **AWS:** awscli, aws-iam-authenticator, aws-sso-util
@@ -24,6 +25,7 @@ cd ~/mac-setup
 - **GNU tools:** coreutils, grep, sed, tar, etc.
 
 ### Desktop Apps (macOS only - from Brewfile)
+
 - Docker Desktop
 - Google Chrome
 - Firefox
@@ -34,11 +36,13 @@ cd ~/mac-setup
 - And more...
 
 ### Development Tools (from .mise.toml)
+
 - Node.js LTS
 - Go latest
 - Python latest
 
 ### Shell Setup
+
 - Zsh
 - Oh My Zsh
 - Powerlevel10k theme
@@ -47,10 +51,12 @@ cd ~/mac-setup
 - Completions
 
 ### Editor Setup
+
 - Vim with vim-plug
 - VS Code with 25+ extensions
 
 ### Dotfiles
+
 - Managed by chezmoi
 - Initial .zshrc provided
 
@@ -83,6 +89,7 @@ chmod +x bootstrap-ansible.sh
 ```
 
 **What it does:**
+
 1. Installs Homebrew (if not present)
 2. Installs Ansible (via Homebrew)
 3. Runs the Ansible playbook (`setup.yml`)
@@ -133,6 +140,7 @@ The setup is **idempotent** - safe to run multiple times:
 ### Add/Remove Packages
 
 Edit `Brewfile`:
+
 ```ruby
 # Add a package
 brew "ripgrep"
@@ -142,6 +150,7 @@ cask "spotify"
 ```
 
 Then run:
+
 ```bash
 brew bundle install
 # or
@@ -151,6 +160,7 @@ ansible-playbook setup.yml
 ### Change Tool Versions
 
 Edit `.mise.toml`:
+
 ```toml
 [tools]
 node = "20"      # ← Change version
@@ -159,6 +169,7 @@ python = "3.12"  # ← Change version
 ```
 
 Then run:
+
 ```bash
 mise install
 # or
@@ -168,6 +179,7 @@ ansible-playbook setup.yml
 ### Add VS Code Extensions
 
 Edit `setup.yml`:
+
 ```yaml
 vscode_extensions:
   - ms-python.python
@@ -175,6 +187,7 @@ vscode_extensions:
 ```
 
 Then run:
+
 ```bash
 ansible-playbook setup.yml
 ```
@@ -253,6 +266,7 @@ chezmoi managed
 - [SKIP] macOS defaults skipped
 
 **Install desktop apps on Linux:**
+
 ```bash
 # Ubuntu/Debian
 sudo apt install code docker.io slack
@@ -324,7 +338,7 @@ brew bundle check
 3. [OK] Run `p10k configure` for theme setup
 4. [OK] Customize `Brewfile` and `.mise.toml`
 5. [OK] Set up dotfiles with `chezmoi`
-6.  Enjoy your modern setup!
+6. Enjoy your modern setup!
 
 ## Getting Help
 
@@ -346,8 +360,9 @@ brew bundle check
 
 ---
 
-**That's it! You're all set.** 
+**That's it! You're all set.**
 
 For more details, see:
+
 - [ANSIBLE-MIGRATION.md](ANSIBLE-MIGRATION.md) - Migrating from old setup
 - [README.md](README.md) - Full documentation

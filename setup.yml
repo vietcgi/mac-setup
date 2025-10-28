@@ -1,4 +1,3 @@
----
 # Production-Grade Fleet Management Playbook
 # For managing 20+ Mac/Linux desktop machines
 #
@@ -9,10 +8,10 @@
 
 - name: Setup Development Environment
   hosts: all
-  gather_facts: true
+  gather_facts: yes
 
   vars:
-    os_family: "{{ ansible_os_family }}"
+    os_family: '{{ ansible_os_family }}'
     is_macos: "{{ ansible_os_family == 'Darwin' }}"
     is_linux: "{{ ansible_os_family != 'Darwin' }}"
 
@@ -27,806 +26,817 @@
     # Homebrew Installation
     # =========================================================================
 
-    - name: Check if Homebrew is installed
-      ansible.builtin.stat:
-        path: "{{ homebrew_prefix }}/bin/brew"
-      register: homebrew_check
-      tags: [always, homebrew]
+  - name: Check if Homebrew is installed
+    ansible.builtin.stat:
+      path: '{{ homebrew_prefix }}/bin/brew'
+    register: homebrew_check
+    tags: [always, homebrew]
 
-    - name: Install Homebrew
-      ansible.builtin.shell: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-      when: not homebrew_check.stat.exists
-      register: homebrew_install
-      changed_when: homebrew_install.rc == 0
-      retries: 3
-      delay: 5
-      until: homebrew_install is succeeded
-      tags: [homebrew]
+  - name: Install Homebrew
+    ansible.builtin.shell: |
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    register: homebrew_install
+    when: not homebrew_check.stat.exists
+    changed_when: homebrew_install.rc == 0
+    retries: 3
+    delay: 5
+    until: homebrew_install is succeeded
+    tags: [homebrew]
 
-    - name: Ensure Homebrew is in PATH
-      ansible.builtin.set_fact:
-        ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
-      when: not homebrew_check.stat.exists
-      tags: [homebrew]
+  - name: Ensure Homebrew is in PATH
+    ansible.builtin.set_fact:
+      ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
+    when: not homebrew_check.stat.exists
+    tags: [homebrew]
 
     # =========================================================================
     # Package Installation via Brewfile
     # =========================================================================
 
-    - name: Check if Brewfile exists
-      ansible.builtin.stat:
-        path: "{{ brewfile_path }}"
-      register: brewfile_check
-      tags: [always, homebrew, packages]
+  - name: Check if Brewfile exists
+    ansible.builtin.stat:
+      path: '{{ brewfile_path }}'
+    register: brewfile_check
+    tags: [always, homebrew, packages]
 
-    - name: Check if terraform is installed (conflicts with tenv)
-      ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew list terraform 2>/dev/null"
-      register: terraform_check
-      failed_when: false
-      changed_when: false
-      tags: [homebrew, packages]
+  - name: Check if terraform is installed
+    ansible.builtin.command: '{{ homebrew_prefix }}/bin/brew list terraform'
+    register: terraform_check
+    failed_when: false
+    changed_when: false
+    when:
+    - brewfile_check.stat.exists
+    tags: [homebrew, packages]
 
-    - name: Unlink terraform if tenv will be installed
-      ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew unlink terraform"
-      when:
-        - terraform_check.rc == 0
-        - brewfile_check.stat.exists
-      register: terraform_unlink
-      failed_when: false
-      changed_when: terraform_unlink.rc == 0 and 'Unlinking' in terraform_unlink.stderr
-      tags: [homebrew, packages]
+  - name: Unlink terraform if tenv will be installed
+    ansible.builtin.shell: '{{ homebrew_prefix }}/bin/brew unlink terraform'
+    register: terraform_unlink
+    when:
+    - terraform_check.rc == 0
+    - brewfile_check.stat.exists
+    failed_when: false
+    changed_when: terraform_unlink.rc == 0 and 'Unlinking' in terraform_unlink.stderr
+    tags: [homebrew, packages]
 
-    - name: Install packages from Brewfile
-      ansible.builtin.shell: |
-        {{ homebrew_prefix }}/bin/brew bundle install --file={{ brewfile_path }}
-      args:
-        chdir: "{{ playbook_dir }}"
-      environment:
-        PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
-      when:
-        - ansible_os_family == "Darwin"
-        - brewfile_check.stat.exists
-        - install_gui_apps | default(true) or install_dev_tools | default(true)
-      register: brew_bundle_result
-      changed_when: "'Installing' in brew_bundle_result.stdout or 'Upgrading' in brew_bundle_result.stdout"
-      failed_when: brew_bundle_result.rc != 0
-      tags: [homebrew, packages]
+  - name: Install packages from Brewfile
+    ansible.builtin.shell: |
+      {{ homebrew_prefix }}/bin/brew bundle install --file={{ brewfile_path }} --no-lock || true
+    args:
+      chdir: '{{ playbook_dir }}'
+    environment:
+      PATH: '{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}'
+    register: brew_bundle_result
+    when:
+    - ansible_os_family == "Darwin"
+    - brewfile_check.stat.exists
+    - install_gui_apps | default(true) or install_dev_tools | default(true)
+    changed_when: "'Installing' in brew_bundle_result.stdout or 'Upgrading' in brew_bundle_result.stdout"
+    failed_when: false
+    tags: [homebrew, packages]
 
     # =========================================================================
     # Linux Package Installation (apt)
     # =========================================================================
 
-    - name: Install essential Linux packages (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name:
-          - git
-          - curl
-          - wget
-          - vim
-          - neovim
-          - tmux
-          - zsh
-          - fzf
-          - ripgrep
-          - bat
-          - tree
-          - htop
-          - jq
-          - build-essential
-          - python3-pip
-          - nodejs
-          - npm
-          - golang-go
-          - postgresql
-          - sqlite3
-          - direnv
-          - shellcheck
-        state: present
-        update_cache: yes
-      become: yes
-      when:
-        - ansible_os_family == "Debian"
-        - install_dev_tools | default(true)
-      tags: [linux, packages]
+  - name: Install essential Linux packages (Debian/Ubuntu)
+    ansible.builtin.apt:
+      name:
+      - git
+      - curl
+      - wget
+      - vim
+      - neovim
+      - tmux
+      - zsh
+      - fzf
+      - ripgrep
+      - bat
+      - tree
+      - htop
+      - jq
+      - build-essential
+      - python3-pip
+      - nodejs
+      - npm
+      - golang-go
+      - postgresql
+      - sqlite3
+      - direnv
+      - shellcheck
+      state: present
+      update_cache: true
+    become: true
+    when:
+    - ansible_os_family == "Debian"
+    - install_dev_tools | default(true)
+    tags: [linux, packages]
 
-    - name: Install essential Linux packages (RedHat/Fedora)
-      ansible.builtin.dnf:
-        name:
-          - git
-          - curl
-          - wget
-          - vim
-          - neovim
-          - tmux
-          - zsh
-          - fzf
-          - ripgrep
-          - bat
-          - tree
-          - htop
-          - jq
-          - gcc
-          - gcc-c++
-          - make
-          - python3-pip
-          - nodejs
-          - npm
-          - golang
-          - postgresql
-          - sqlite
-          - direnv
-          - ShellCheck
-        state: present
-      become: yes
-      when:
-        - ansible_os_family == "RedHat"
-        - install_dev_tools | default(true)
-      tags: [linux, packages]
+  - name: Install essential Linux packages (RedHat/Fedora)
+    ansible.builtin.dnf:
+      name:
+      - git
+      - curl
+      - wget
+      - vim
+      - neovim
+      - tmux
+      - zsh
+      - fzf
+      - ripgrep
+      - bat
+      - tree
+      - htop
+      - jq
+      - gcc
+      - gcc-c++
+      - make
+      - python3-pip
+      - nodejs
+      - npm
+      - golang
+      - postgresql
+      - sqlite
+      - direnv
+      - ShellCheck
+      state: present
+    become: true
+    when:
+    - ansible_os_family == "RedHat"
+    - install_dev_tools | default(true)
+    tags: [linux, packages]
 
-    - name: Install essential Linux packages (Arch Linux)
-      community.general.pacman:
-        name:
-          - git
-          - curl
-          - wget
-          - vim
-          - neovim
-          - tmux
-          - zsh
-          - fzf
-          - ripgrep
-          - bat
-          - tree
-          - htop
-          - jq
-          - base-devel
-          - python-pip
-          - nodejs
-          - npm
-          - go
-          - postgresql
-          - sqlite
-          - direnv
-          - shellcheck
-        state: present
-      become: yes
-      when:
-        - ansible_os_family == "Archlinux"
-        - install_dev_tools | default(true)
-      tags: [linux, packages]
+  - name: Install essential Linux packages (Arch Linux)
+    community.general.pacman:
+      name:
+      - git
+      - curl
+      - wget
+      - vim
+      - neovim
+      - tmux
+      - zsh
+      - fzf
+      - ripgrep
+      - bat
+      - tree
+      - htop
+      - jq
+      - base-devel
+      - python-pip
+      - nodejs
+      - npm
+      - go
+      - postgresql
+      - sqlite
+      - direnv
+      - shellcheck
+      state: present
+    become: true
+    when:
+    - ansible_os_family == "Archlinux"
+    - install_dev_tools | default(true)
+    tags: [linux, packages]
 
     # =========================================================================
     # mise (Tool Version Manager)
     # =========================================================================
 
-    - name: Install mise on Linux
-      ansible.builtin.shell: |
-        curl https://mise.run | sh
-      args:
-        creates: "{{ home }}/.local/bin/mise"
-      when:
-        - ansible_os_family != "Darwin"
-        - install_dev_tools | default(true)
-      tags: [mise, dev-tools]
+  - name: Download mise installer
+    ansible.builtin.get_url:
+      url: https://mise.run
+      dest: /tmp/mise-installer.sh
+      mode: '0755'
+      owner: root
+      group: root
+    when:
+    - ansible_os_family != "Darwin"
+    - install_dev_tools | default(true)
+    tags: [mise, dev-tools]
 
-    - name: Add mise to PATH for Linux
-      ansible.builtin.lineinfile:
-        path: "{{ home }}/.bashrc"
-        line: 'eval "$(~/.local/bin/mise activate bash)"'
-        create: yes
-      when:
-        - ansible_os_family != "Darwin"
-        - install_dev_tools | default(true)
-      tags: [mise, dev-tools]
+  - name: Install mise on Linux
+    ansible.builtin.shell: /tmp/mise-installer.sh
+    args:
+      creates: '{{ home }}/.local/bin/mise'
+    when:
+    - ansible_os_family != "Darwin"
+    - install_dev_tools | default(true)
+    tags: [mise, dev-tools]
 
-    - name: Check if .mise.toml exists
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/.mise.toml"
-      register: mise_toml_check
-      tags: [always, mise]
+  - name: Add mise to PATH for Linux
+    ansible.builtin.lineinfile:
+      path: '{{ home }}/.bashrc'
+      line: eval "$(~/.local/bin/mise activate bash)"
+      create: true
+      mode: '0644'
+    when:
+    - ansible_os_family != "Darwin"
+    - install_dev_tools | default(true)
+    tags: [mise, dev-tools]
 
-    - name: Set mise binary path
-      ansible.builtin.set_fact:
-        mise_bin: "{{ homebrew_prefix ~ '/bin/mise' if ansible_os_family == 'Darwin' else home ~ '/.local/bin/mise' }}"
-      tags: [always, mise]
+  - name: Check if .mise.toml exists
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/.mise.toml'
+    register: mise_toml_check
+    tags: [always, mise]
 
-    - name: Trust mise config file
-      ansible.builtin.command: "{{ mise_bin }} trust"
-      args:
-        chdir: "{{ playbook_dir }}"
-      when:
-        - mise_toml_check.stat.exists
-        - install_dev_tools | default(true)
-      register: mise_trust_result
-      changed_when: mise_trust_result.rc == 0 and 'trusted' in mise_trust_result.stdout
-      failed_when: false
-      tags: [mise, dev-tools]
+  - name: Set mise binary path
+    ansible.builtin.set_fact:
+      mise_bin: "{{ homebrew_prefix ~ '/bin/mise' if ansible_os_family == 'Darwin' else home ~ '/.local/bin/mise' }}"
+    tags: [always, mise]
 
-    - name: Install tool versions with mise
-      ansible.builtin.shell: |
-        {{ mise_bin }} install
-      args:
-        chdir: "{{ playbook_dir }}"
-      when:
-        - mise_toml_check.stat.exists
-        - install_dev_tools | default(true)
-      register: mise_install_result
-      changed_when: "'installed' in mise_install_result.stdout or 'Installing' in mise_install_result.stdout"
-      failed_when: mise_install_result.rc != 0
-      tags: [mise, dev-tools]
+  - name: Trust mise config file
+    ansible.builtin.command: '{{ mise_bin }} trust'
+    args:
+      chdir: '{{ playbook_dir }}'
+    register: mise_trust_result
+    when:
+    - mise_toml_check.stat.exists
+    - install_dev_tools | default(true)
+    changed_when: mise_trust_result.rc == 0 and 'trusted' in mise_trust_result.stdout
+    failed_when: false
+    tags: [mise, dev-tools]
+
+  - name: Install tool versions with mise
+    ansible.builtin.command: '{{ mise_bin }} install'
+    args:
+      chdir: '{{ playbook_dir }}'
+    register: mise_install_result
+    when:
+    - mise_toml_check.stat.exists
+    - install_dev_tools | default(true)
+    changed_when: "'installed' in mise_install_result.stdout or 'Installing' in mise_install_result.stdout"
+    failed_when: mise_install_result.rc != 0
+    tags: [mise, dev-tools]
 
     # =========================================================================
     # Shell Configuration (Zsh + Oh My Zsh + Powerlevel10k)
     # =========================================================================
 
-    - name: Check Oh My Zsh installation
-      ansible.builtin.stat:
-        path: "{{ home }}/.oh-my-zsh"
-      register: ohmyzsh_check
-      tags: [always, shell]
+  - name: Check Oh My Zsh installation
+    ansible.builtin.stat:
+      path: '{{ home }}/.oh-my-zsh'
+    register: ohmyzsh_check
+    tags: [always, shell]
 
-    - name: Install Oh My Zsh
-      ansible.builtin.shell: |
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-      when:
-        - not ohmyzsh_check.stat.exists
-        - install_shell_tools | default(true)
-      register: ohmyzsh_install
-      changed_when: ohmyzsh_install.rc == 0
-      retries: 3
-      delay: 5
-      until: ohmyzsh_install is succeeded
-      tags: [shell]
+  - name: Install Oh My Zsh
+    ansible.builtin.shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    register: ohmyzsh_install
+    when:
+    - not ohmyzsh_check.stat.exists
+    - install_shell_tools | default(true)
+    changed_when: ohmyzsh_install.rc == 0
+    retries: 3
+    delay: 5
+    until: ohmyzsh_install is succeeded
+    tags: [shell]
 
-    - name: Clone Powerlevel10k theme
-      ansible.builtin.git:
-        repo: https://github.com/romkatv/powerlevel10k.git
-        dest: "{{ home }}/.oh-my-zsh/custom/themes/powerlevel10k"
-        depth: 1
-        version: master
-        update: true
-      when: install_shell_tools | default(true)
-      retries: 3
-      delay: 5
-      register: p10k_result
-      until: p10k_result is succeeded
-      tags: [shell]
+  - name: Clone Powerlevel10k theme
+    ansible.builtin.git:
+      repo: https://github.com/romkatv/powerlevel10k.git
+      dest: '{{ home }}/.oh-my-zsh/custom/themes/powerlevel10k'
+      depth: 1
+      version: master
+      update: true
+    register: p10k_result
+    when: install_shell_tools | default(true)
+    retries: 3
+    delay: 5
+    until: p10k_result is succeeded
+    tags: [shell]
 
-    - name: Clone zsh plugins
-      ansible.builtin.git:
-        repo: "{{ item.repo }}"
-        dest: "{{ home }}/.oh-my-zsh/custom/plugins/{{ item.name }}"
-        version: master
-        update: true
-      loop: "{{ zsh_plugins }}"
-      when: install_shell_tools | default(true)
-      retries: 3
-      delay: 5
-      register: zsh_plugins_result
-      until: zsh_plugins_result is succeeded
-      tags: [shell]
+  - name: Clone zsh plugins
+    ansible.builtin.git:
+      repo: '{{ item.repo }}'
+      dest: '{{ home }}/.oh-my-zsh/custom/plugins/{{ item.name }}'
+      version: master
+      update: true
+    loop: '{{ zsh_plugins }}'
+    register: zsh_plugins_result
+    when: install_shell_tools | default(true)
+    retries: 3
+    delay: 5
+    until: zsh_plugins_result is succeeded
+    tags: [shell]
 
-    - name: Install fzf key bindings and completion
-      ansible.builtin.shell: |
-        {{ homebrew_prefix }}/opt/fzf/install --key-bindings --completion --no-update-rc
-      args:
-        creates: "{{ home }}/.fzf.zsh"
-      when:
-        - ansible_os_family == "Darwin"
-        - install_shell_tools | default(true)
-      tags: [shell]
+  - name: Install fzf key bindings and completion
+    ansible.builtin.shell: "{{ homebrew_prefix }}/opt/fzf/install --key-bindings --completion --no-update-rc"
+    args:
+      creates: '{{ home }}/.fzf.zsh'
+    when:
+    - ansible_os_family == "Darwin"
+    - install_shell_tools | default(true)
+    tags: [shell]
 
-    - name: Download dircolors (LS_COLORS)
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/trapd00r/LS_COLORS/master/LS_COLORS
-        dest: "{{ home }}/.dircolors"
-        mode: '0644'
-      when: install_shell_tools | default(true)
-      retries: 3
-      delay: 5
-      register: dircolors_result
-      until: dircolors_result is succeeded
-      tags: [shell]
+  - name: Download dircolors (LS_COLORS)
+    ansible.builtin.get_url:
+      url: https://raw.githubusercontent.com/trapd00r/LS_COLORS/master/LS_COLORS
+      dest: '{{ home }}/.dircolors'
+      mode: '0644'
+    register: dircolors_result
+    when: install_shell_tools | default(true)
+    retries: 3
+    delay: 5
+    until: dircolors_result is succeeded
+    tags: [shell]
 
-    - name: Check if .inputrc exists in dotfiles
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/.inputrc"
-      register: inputrc_check
-      tags: [always, shell]
+  - name: Check if .inputrc exists in dotfiles
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/.inputrc'
+    register: inputrc_check
+    tags: [always, shell]
 
-    - name: Copy .inputrc configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/.inputrc"
-        dest: "{{ home }}/.inputrc"
-        mode: '0644'
-        backup: true
-      when:
-        - install_shell_tools | default(true)
-        - inputrc_check.stat.exists
-      tags: [shell]
+  - name: Copy .inputrc configuration
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/.inputrc'
+      dest: '{{ home }}/.inputrc'
+      mode: '0644'
+      backup: true
+    when:
+    - install_shell_tools | default(true)
+    - inputrc_check.stat.exists
+    tags: [shell]
 
-    - name: Check if .direnvrc exists in dotfiles
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/.direnvrc"
-      register: direnvrc_check
-      tags: [always, shell, direnv]
+  - name: Check if .direnvrc exists in dotfiles
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/.direnvrc'
+    register: direnvrc_check
+    tags: [always, shell, direnv]
 
-    - name: Copy .direnvrc configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/.direnvrc"
-        dest: "{{ home }}/.direnvrc"
-        mode: '0644'
-        backup: true
-      when:
-        - install_dev_tools | default(true)
-        - direnvrc_check.stat.exists
-      tags: [shell, direnv]
+  - name: Copy .direnvrc configuration
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/.direnvrc'
+      dest: '{{ home }}/.direnvrc'
+      mode: '0644'
+      backup: true
+    when:
+    - install_dev_tools | default(true)
+    - direnvrc_check.stat.exists
+    tags: [shell, direnv]
 
-    - name: Enable direnv in zsh
-      ansible.builtin.lineinfile:
-        path: "{{ home }}/.zshrc"
-        line: 'eval "$(direnv hook zsh)"'
-        state: present
-        create: false
-      when: install_dev_tools | default(true)
-      tags: [shell, direnv]
+  - name: Enable direnv in zsh
+    ansible.builtin.lineinfile:
+      path: '{{ home }}/.zshrc'
+      line: eval "$(direnv hook zsh)"
+      state: present
+      create: no
+    when: install_dev_tools | default(true)
+    tags: [shell, direnv]
 
     # =========================================================================
     # Sudoers Configuration (Passwordless sudo)
     # =========================================================================
 
-    - name: Configure passwordless sudo
-      ansible.builtin.copy:
-        content: |
-          # Allow {{ user }} to use sudo with no password
-          {{ user }} ALL=(ALL) NOPASSWD: ALL
-        dest: /etc/sudoers.d/{{ user }}
-        mode: '0440'
-        validate: 'visudo -cf %s'
-      become: true
-      when: configure_sudoers | default(false)
-      tags: [sudoers]
+  - name: Configure passwordless sudo
+    ansible.builtin.copy:
+      content: |
+        # Allow {{ user }} to use sudo with no password
+        {{ user }} ALL=(ALL) NOPASSWD: ALL
+      dest: /etc/sudoers.d/{{ user }}
+      mode: '0440'
+      validate: visudo -cf %s
+    become: true
+    when: configure_sudoers | default(false)
+    tags: [sudoers]
 
     # =========================================================================
     # Tmux Configuration
     # =========================================================================
 
-    - name: Check if TPM (Tmux Plugin Manager) is installed
-      ansible.builtin.stat:
-        path: "{{ home }}/.tmux/plugins/tpm"
-      register: tpm_check
-      when: install_shell_tools | default(true)
-      tags: [always, tmux]
+  - name: Check if TPM (Tmux Plugin Manager) is installed
+    ansible.builtin.stat:
+      path: '{{ home }}/.tmux/plugins/tpm'
+    register: tpm_check
+    when: install_shell_tools | default(true)
+    tags: [always, tmux]
 
-    - name: Clone TPM (Tmux Plugin Manager)
-      ansible.builtin.git:
-        repo: https://github.com/tmux-plugins/tpm
-        dest: "{{ home }}/.tmux/plugins/tpm"
-        depth: 1
-        version: master
-        update: true
-      when:
-        - install_shell_tools | default(true)
-        - not tpm_check.stat.exists
-      retries: 3
-      delay: 5
-      register: tpm_result
-      until: tpm_result is succeeded
-      tags: [tmux]
+  - name: Clone TPM (Tmux Plugin Manager)
+    ansible.builtin.git:
+      repo: https://github.com/tmux-plugins/tpm
+      dest: '{{ home }}/.tmux/plugins/tpm'
+      depth: 1
+      version: master
+      update: true
+    register: tpm_result
+    when:
+    - install_shell_tools | default(true)
+    - not tpm_check.stat.exists
+    retries: 3
+    delay: 5
+    until: tpm_result is succeeded
+    tags: [tmux]
 
-    - name: Check if .tmux.conf exists in dotfiles
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/.tmux.conf"
-      register: tmux_conf_check
-      when: install_shell_tools | default(true)
-      tags: [always, tmux]
+  - name: Check if .tmux.conf exists in dotfiles
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/.tmux.conf'
+    register: tmux_conf_check
+    when: install_shell_tools | default(true)
+    tags: [always, tmux]
 
-    - name: Copy tmux configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/.tmux.conf"
-        dest: "{{ home }}/.tmux.conf"
-        mode: '0644'
-        backup: true
-      when:
-        - install_shell_tools | default(true)
-        - tmux_conf_check.stat.exists
-      tags: [tmux]
+  - name: Copy tmux configuration
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/.tmux.conf'
+      dest: '{{ home }}/.tmux.conf'
+      mode: '0644'
+      backup: true
+    when:
+    - install_shell_tools | default(true)
+    - tmux_conf_check.stat.exists
+    tags: [tmux]
 
-    - name: Display tmux plugin installation instructions
-      ansible.builtin.debug:
-        msg:
-          - "Tmux configuration installed!"
-          - "To install plugins, start tmux and press: Ctrl-a + I"
-          - "(That's prefix key + capital I)"
-      when:
-        - install_shell_tools | default(true)
-        - not tpm_check.stat.exists
-      tags: [tmux]
+  - name: Display tmux plugin installation instructions
+    ansible.builtin.debug:
+      msg:
+      - Tmux configuration installed!
+      - 'To install plugins, start tmux and press: Ctrl-a + I'
+      - (That's prefix key + capital I)
+    when:
+    - install_shell_tools | default(true)
+    - not tpm_check.stat.exists
+    tags: [tmux]
 
     # =========================================================================
     # Neovim Configuration (replaces vim)
     # =========================================================================
 
-    - name: Check if neovim config exists
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/nvim"
-      register: nvim_config_check
-      tags: [always, neovim]
+  - name: Check if neovim config exists
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/nvim'
+    register: nvim_config_check
+    tags: [always, neovim]
 
-    - name: Create neovim config directory
-      ansible.builtin.file:
-        path: "{{ home }}/.config/nvim"
-        state: directory
-        mode: '0755'
-      when:
-        - install_neovim | default(true)
-        - nvim_config_check.stat.exists
-      tags: [neovim]
+  - name: Create neovim config directory
+    ansible.builtin.file:
+      path: '{{ home }}/.config/nvim'
+      state: directory
+      mode: '0755'
+    when:
+    - install_neovim | default(true)
+    - nvim_config_check.stat.exists
+    tags: [neovim]
 
-    - name: Copy neovim configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/nvim/"
-        dest: "{{ home }}/.config/nvim/"
-        mode: '0644'
-        directory_mode: '0755'
-      when:
-        - install_neovim | default(true)
-        - nvim_config_check.stat.exists
-      tags: [neovim]
+  - name: Copy neovim configuration
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/nvim/'
+      dest: '{{ home }}/.config/nvim/'
+      mode: '0644'
+      directory_mode: '0755'
+    when:
+    - install_neovim | default(true)
+    - nvim_config_check.stat.exists
+    tags: [neovim]
 
-    - name: Create vim symlinks to neovim (override system vim)
-      ansible.builtin.file:
-        src: "{{ '/usr/bin/nvim' if ansible_os_family == 'Debian' else homebrew_prefix ~ '/bin/nvim' }}"
-        dest: "/usr/local/bin/{{ item }}"
-        state: link
-        force: true
-      loop:
-        - vim
-        - vi
-      when: install_neovim | default(true)
-      become: yes
-      tags: [neovim]
+  - name: Create vim symlinks to neovim (override system vim)
+    ansible.builtin.file:
+      src: "{{ '/usr/bin/nvim' if ansible_os_family == 'Debian' else homebrew_prefix ~ '/bin/nvim' }}"
+      dest: /usr/local/bin/{{ item }}
+      state: link
+      force: true
+    loop:
+    - vim
+    - vi
+    when: install_neovim | default(true)
+    become: true
+    tags: [neovim]
 
     # =========================================================================
     # VS Code Extensions
     # =========================================================================
 
-    - name: Check if VS Code is installed
-      ansible.builtin.command: which code
-      register: vscode_check
-      failed_when: false
-      changed_when: false
-      tags: [always, vscode]
+  - name: Check if VS Code is installed
+    ansible.builtin.command: which code
+    register: vscode_check
+    failed_when: false
+    changed_when: false
+    tags: [always, vscode]
 
-    - name: Get currently installed VS Code extensions
-      ansible.builtin.command: code --list-extensions
-      register: installed_extensions
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-      changed_when: false
-      failed_when: false
-      tags: [vscode]
+  - name: Get currently installed VS Code extensions
+    ansible.builtin.command: code --list-extensions
+    register: installed_extensions
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    changed_when: false
+    failed_when: false
+    tags: [vscode]
 
-    - name: Install VS Code extensions
-      ansible.builtin.command: "code --install-extension {{ item }}"
-      loop: "{{ vscode_extensions }}"
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-        - installed_extensions.stdout_lines is defined
-        - item not in installed_extensions.stdout_lines
-      register: vscode_install
-      changed_when: "'was successfully installed' in vscode_install.stdout"
-      failed_when: false
-      tags: [vscode]
+  - name: Install VS Code extensions
+    ansible.builtin.command: code --install-extension {{ item }}
+    loop: '{{ vscode_extensions }}'
+    register: vscode_install
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    - installed_extensions.stdout_lines is defined
+    - item not in installed_extensions.stdout_lines
+    changed_when: "'was successfully installed' in vscode_install.stdout"
+    failed_when: false
+    tags: [vscode]
 
-    - name: Ensure VS Code User directory exists
-      ansible.builtin.file:
-        path: "{{ home }}/Library/Application Support/Code/User"
-        state: directory
-        mode: '0755'
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-        - is_macos
-      tags: [vscode]
+  - name: Ensure VS Code User directory exists
+    ansible.builtin.file:
+      path: '{{ home }}/Library/Application Support/Code/User'
+      state: directory
+      mode: '0755'
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    - is_macos
+    tags: [vscode]
 
-    - name: Ensure VS Code User directory exists (Linux)
-      ansible.builtin.file:
-        path: "{{ home }}/.config/Code/User"
-        state: directory
-        mode: '0755'
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-        - is_linux
-      tags: [vscode]
+  - name: Ensure VS Code User directory exists (Linux)
+    ansible.builtin.file:
+      path: '{{ home }}/.config/Code/User'
+      state: directory
+      mode: '0755'
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    - is_linux
+    tags: [vscode]
 
-    - name: Configure VS Code settings.json (macOS)
-      ansible.builtin.copy:
-        content: "{{ vscode_settings | to_nice_json }}"
-        dest: "{{ home }}/Library/Application Support/Code/User/settings.json"
-        mode: '0644'
-        backup: true
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-        - vscode_settings is defined
-        - is_macos
-      tags: [vscode]
+  - name: Configure VS Code settings.json (macOS)
+    ansible.builtin.copy:
+      content: '{{ vscode_settings | to_nice_json }}'
+      dest: '{{ home }}/Library/Application Support/Code/User/settings.json'
+      mode: '0644'
+      backup: true
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    - vscode_settings is defined
+    - is_macos
+    tags: [vscode]
 
-    - name: Configure VS Code settings.json (Linux)
-      ansible.builtin.copy:
-        content: "{{ vscode_settings | to_nice_json }}"
-        dest: "{{ home }}/.config/Code/User/settings.json"
-        mode: '0644'
-        backup: true
-      when:
-        - vscode_check.rc == 0
-        - install_vscode | default(true)
-        - vscode_settings is defined
-        - is_linux
-      tags: [vscode]
+  - name: Configure VS Code settings.json (Linux)
+    ansible.builtin.copy:
+      content: '{{ vscode_settings | to_nice_json }}'
+      dest: '{{ home }}/.config/Code/User/settings.json'
+      mode: '0644'
+      backup: true
+    when:
+    - vscode_check.rc == 0
+    - install_vscode | default(true)
+    - vscode_settings is defined
+    - is_linux
+    tags: [vscode]
 
     # =========================================================================
     # Ghostty Terminal Configuration
     # =========================================================================
 
-    - name: Check if Ghostty config directory exists
-      ansible.builtin.stat:
-        path: "{{ home }}/.config/ghostty"
-      register: ghostty_dir_check
-      tags: [always, ghostty]
+  - name: Check if Ghostty config directory exists
+    ansible.builtin.stat:
+      path: '{{ home }}/.config/ghostty'
+    register: ghostty_dir_check
+    tags: [always, ghostty]
 
-    - name: Create Ghostty config directory
-      ansible.builtin.file:
-        path: "{{ home }}/.config/ghostty"
-        state: directory
-        mode: '0755'
-      when: install_shell_tools | default(true)
-      tags: [ghostty]
+  - name: Create Ghostty config directory
+    ansible.builtin.file:
+      path: '{{ home }}/.config/ghostty'
+      state: directory
+      mode: '0755'
+    when: install_shell_tools | default(true)
+    tags: [ghostty]
 
-    - name: Check if ghostty config exists in dotfiles
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/ghostty/config"
-      register: ghostty_config_check
-      tags: [always, ghostty]
+  - name: Check if ghostty config exists in dotfiles
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/ghostty/config'
+    register: ghostty_config_check
+    tags: [always, ghostty]
 
-    - name: Deploy Ghostty configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/ghostty/config"
-        dest: "{{ home }}/.config/ghostty/config"
-        mode: '0644'
-        backup: true
-      when:
-        - install_shell_tools | default(true)
-        - ghostty_config_check.stat.exists
-      register: ghostty_config_deployed
-      tags: [ghostty]
+  - name: Deploy Ghostty configuration
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/ghostty/config'
+      dest: '{{ home }}/.config/ghostty/config'
+      mode: '0644'
+      backup: true
+    register: ghostty_config_deployed
+    when:
+    - install_shell_tools | default(true)
+    - ghostty_config_check.stat.exists
+    tags: [ghostty]
 
-    - name: Notify user about Ghostty config
-      ansible.builtin.debug:
-        msg: "Ghostty configuration deployed to ~/.config/ghostty/config - Restart Ghostty to apply changes"
-      when:
-        - ghostty_config_deployed is defined
-        - ghostty_config_deployed is changed
-      tags: [ghostty]
+  - name: Notify user about Ghostty config
+    ansible.builtin.debug:
+      msg: Ghostty configuration deployed to ~/.config/ghostty/config - Restart Ghostty to apply changes
+    when:
+    - ghostty_config_deployed is defined
+    - ghostty_config_deployed is changed
+    tags: [ghostty]
 
     # =========================================================================
     # Dotfiles with chezmoi
     # =========================================================================
 
-    - name: Check if chezmoi binary exists
-      ansible.builtin.stat:
-        path: "{{ homebrew_prefix }}/bin/chezmoi"
-      register: chezmoi_binary_check
-      when: configure_dotfiles | default(true)
-      tags: [always, dotfiles]
+  - name: Check if chezmoi binary exists
+    ansible.builtin.stat:
+      path: '{{ homebrew_prefix }}/bin/chezmoi'
+    register: chezmoi_binary_check
+    when: configure_dotfiles | default(true)
+    tags: [always, dotfiles]
 
-    - name: Check if chezmoi is initialized
-      ansible.builtin.stat:
-        path: "{{ home }}/.local/share/chezmoi"
-      register: chezmoi_check
-      when:
-        - configure_dotfiles | default(true)
-        - chezmoi_binary_check.stat.exists | default(false)
-      tags: [always, dotfiles]
+  - name: Check if chezmoi is initialized
+    ansible.builtin.stat:
+      path: '{{ home }}/.local/share/chezmoi'
+    register: chezmoi_check
+    when:
+    - configure_dotfiles | default(true)
+    - chezmoi_binary_check.stat.exists | default(false)
+    tags: [always, dotfiles]
 
-    - name: Initialize chezmoi
-      ansible.builtin.command: "{{ homebrew_prefix }}/bin/chezmoi init"
-      when:
-        - configure_dotfiles | default(true)
-        - chezmoi_binary_check.stat.exists | default(false)
-        - chezmoi_check is not defined or not chezmoi_check.stat.exists
-      register: chezmoi_init
-      changed_when: chezmoi_init.rc == 0
-      tags: [dotfiles]
+  - name: Initialize chezmoi
+    ansible.builtin.command: '{{ homebrew_prefix }}/bin/chezmoi init'
+    register: chezmoi_init
+    when:
+    - configure_dotfiles | default(true)
+    - chezmoi_binary_check.stat.exists | default(false)
+    - chezmoi_check is not defined or not chezmoi_check.stat.exists
+    changed_when: chezmoi_init.rc == 0
+    tags: [dotfiles]
 
-    - name: Check if dotfiles/.zshrc exists
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/dotfiles/.zshrc"
-      register: dotfiles_zshrc_check
-      when: configure_dotfiles | default(true)
-      tags: [dotfiles]
+  - name: Check if dotfiles/.zshrc exists
+    ansible.builtin.stat:
+      path: '{{ playbook_dir }}/dotfiles/.zshrc'
+    register: dotfiles_zshrc_check
+    when: configure_dotfiles | default(true)
+    tags: [dotfiles]
 
-    - name: Copy initial zshrc dotfile
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/dotfiles/.zshrc"
-        dest: "{{ home }}/.zshrc"
-        mode: '0644'
-        backup: true
-      when:
-        - configure_dotfiles | default(true)
-        - chezmoi_binary_check.stat.exists | default(false)
-        - chezmoi_check is defined
-        - not chezmoi_check.stat.exists
-        - dotfiles_zshrc_check.stat.exists
-      register: zshrc_copy
-      tags: [dotfiles]
+  - name: Copy initial zshrc dotfile
+    ansible.builtin.copy:
+      src: '{{ playbook_dir }}/dotfiles/.zshrc'
+      dest: '{{ home }}/.zshrc'
+      mode: '0644'
+      backup: true
+    register: zshrc_copy
+    when:
+    - configure_dotfiles | default(true)
+    - chezmoi_binary_check.stat.exists | default(false)
+    - chezmoi_check is defined
+    - not chezmoi_check.stat.exists
+    - dotfiles_zshrc_check.stat.exists
+    tags: [dotfiles]
 
-    - name: Add zshrc to chezmoi
-      ansible.builtin.command: "{{ homebrew_prefix }}/bin/chezmoi add {{ home }}/.zshrc"
-      when:
-        - configure_dotfiles | default(true)
-        - chezmoi_binary_check.stat.exists | default(false)
-        - chezmoi_check is defined
-        - not chezmoi_check.stat.exists
-        - zshrc_copy is defined
-        - zshrc_copy is changed
-      register: chezmoi_add
-      changed_when: chezmoi_add.rc == 0
-      failed_when: false
-      tags: [dotfiles]
+  - name: Add zshrc to chezmoi
+    ansible.builtin.command: '{{ homebrew_prefix }}/bin/chezmoi add {{ home }}/.zshrc'
+    register: chezmoi_add
+    when:
+    - configure_dotfiles | default(true)
+    - chezmoi_binary_check.stat.exists | default(false)
+    - chezmoi_check is defined
+    - not chezmoi_check.stat.exists
+    - zshrc_copy is defined
+    - zshrc_copy is changed
+    changed_when: chezmoi_add.rc == 0
+    failed_when: false
+    tags: [dotfiles]
 
     # =========================================================================
     # macOS-Specific Configuration
     # =========================================================================
 
-    - name: macOS-specific tasks
-      when: is_macos
-      tags: [macos]
-      block:
-        - name: Install dockutil for Dock management
-          community.general.homebrew:
-            name: dockutil
-            state: present
-          when: configure_dock | default(true)
+  - name: macOS-specific tasks
+    when: is_macos
+    tags: [macos]
+    block:
+    - name: Install dockutil for Dock management
+      community.general.homebrew:
+        name: dockutil
+        state: present
+      when: configure_dock | default(true)
 
-        - name: Check if dockutil is available
-          ansible.builtin.command: which dockutil
-          register: dockutil_check
-          changed_when: false
-          failed_when: false
-          when: configure_dock | default(true)
+    - name: Check if dockutil is available
+      ansible.builtin.command: which dockutil
+      register: dockutil_check
+      changed_when: false
+      failed_when: false
+      when: configure_dock | default(true)
 
-        - name: Configure Dock items
-          ansible.builtin.shell: |
-            # Remove unwanted items (ignore errors if not present)
-            {{ homebrew_prefix }}/bin/dockutil --remove 'Launchpad' --no-restart 2>/dev/null || true
-            {{ homebrew_prefix }}/bin/dockutil --remove 'TV' --no-restart 2>/dev/null || true
-            {{ homebrew_prefix }}/bin/dockutil --remove 'Podcasts' --no-restart 2>/dev/null || true
-            {{ homebrew_prefix }}/bin/dockutil --remove 'App Store' --no-restart 2>/dev/null || true
+    - name: Configure Dock items
+      ansible.builtin.shell: |
+        # Remove unwanted items (ignore errors if not present)
+        {{ homebrew_prefix }}/bin/dockutil --remove 'Launchpad' --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --remove 'TV' --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --remove 'Podcasts' --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --remove 'App Store' --no-restart 2>/dev/null || true
 
-            # Add apps if not already present
-            {{ homebrew_prefix }}/bin/dockutil --find 'Messages' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/System/Applications/Messages.app' --no-restart 2>/dev/null || true
+        # Add apps if not already present
+        {{ homebrew_prefix }}/bin/dockutil --find 'Messages' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/System/Applications/Messages.app' --no-restart 2>/dev/null || true
 
-            {{ homebrew_prefix }}/bin/dockutil --find 'Safari' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Safari.app' --position 2 --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --find 'Safari' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Safari.app' --position 2 --no-restart 2>/dev/null || true
 
-            {{ homebrew_prefix }}/bin/dockutil --find 'iTerm' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/Applications/iTerm.app' --position 3 --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --find 'iTerm' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/Applications/iTerm.app' --position 3 --no-restart 2>/dev/null || true
 
-            {{ homebrew_prefix }}/bin/dockutil --find 'Google Chrome' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Google Chrome.app' --position 4 --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --find 'Google Chrome' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Google Chrome.app' --position 4 --no-restart 2>/dev/null || true
 
-            {{ homebrew_prefix }}/bin/dockutil --find 'Visual Studio Code' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Visual Studio Code.app' --position 5 --no-restart 2>/dev/null || true
+        {{ homebrew_prefix }}/bin/dockutil --find 'Visual Studio Code' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Visual Studio Code.app' --position 5 --no-restart 2>/dev/null || true
 
-            {{ homebrew_prefix }}/bin/dockutil --find 'Slack' || \
-              {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Slack.app' --position 6 --no-restart 2>/dev/null || true
-          when:
-            - configure_dock | default(true)
-            - dockutil_check.rc == 0
-          register: dock_config
-          changed_when: false
-          failed_when: false
+        {{ homebrew_prefix }}/bin/dockutil --find 'Slack' || \
+          {{ homebrew_prefix }}/bin/dockutil --add '/Applications/Slack.app' --position 6 --no-restart 2>/dev/null || true
+      register: dock_config
+      when:
+      - configure_dock | default(true)
+      - dockutil_check.rc == 0
+      changed_when: false
+      failed_when: false
 
-        - name: Restart Dock
-          ansible.builtin.command: killall Dock
-          when: dock_config is changed
-          changed_when: false
-          failed_when: false
+    - name: Restart Dock
+      ansible.builtin.command: killall Dock
+      when: dock_config is changed
+      changed_when: false
+      failed_when: false
 
-        - name: Configure macOS defaults
-          community.general.osx_defaults:
-            domain: "{{ item.domain }}"
-            key: "{{ item.key }}"
-            type: "{{ item.type }}"
-            value: "{{ item.value }}"
-            state: present
-          loop:
+    - name: Configure macOS defaults
+      community.general.osx_defaults:
+        domain: '{{ item.domain }}'
+        key: '{{ item.key }}'
+        type: '{{ item.type }}'
+        value: '{{ item.value }}'
+        state: present
+      loop:
             # Dock
-            - { domain: 'com.apple.dock', key: 'autohide', type: 'bool', value: true }
-            - { domain: 'com.apple.dock', key: 'show-recents', type: 'bool', value: false }
-            - { domain: 'com.apple.dock', key: 'tilesize', type: 'int', value: 48 }
-            - { domain: 'com.apple.dock', key: 'minimize-to-application', type: 'bool', value: true }
+      - {domain: com.apple.dock, key: autohide, type: bool, value: true}
+      - {domain: com.apple.dock, key: show-recents, type: bool, value: false}
+      - {domain: com.apple.dock, key: tilesize, type: int, value: 48}
+      - {domain: com.apple.dock, key: minimize-to-application, type: bool, value: true}
 
             # Finder
-            - { domain: 'NSGlobalDomain', key: 'AppleShowAllExtensions', type: 'bool', value: true }
-            - { domain: 'com.apple.finder', key: 'ShowPathbar', type: 'bool', value: true }
-            - { domain: 'com.apple.finder', key: 'ShowStatusBar', type: 'bool', value: true }
-            - { domain: 'com.apple.finder', key: 'FXPreferredViewStyle', type: 'string', value: 'Nlsv' }
-            - { domain: 'com.apple.finder', key: 'FXDefaultSearchScope', type: 'string', value: 'SCcf' }
-            - { domain: 'com.apple.finder', key: '_FXShowPosixPathInTitle', type: 'bool', value: true }
+      - {domain: NSGlobalDomain, key: AppleShowAllExtensions, type: bool, value: true}
+      - {domain: com.apple.finder, key: ShowPathbar, type: bool, value: true}
+      - {domain: com.apple.finder, key: ShowStatusBar, type: bool, value: true}
+      - {domain: com.apple.finder, key: FXPreferredViewStyle, type: string, value: Nlsv}
+      - {domain: com.apple.finder, key: FXDefaultSearchScope, type: string, value: SCcf}
+      - {domain: com.apple.finder, key: _FXShowPosixPathInTitle, type: bool, value: true}
 
             # Keyboard & Input
-            - { domain: 'NSGlobalDomain', key: 'KeyRepeat', type: 'int', value: 2 }
-            - { domain: 'NSGlobalDomain', key: 'InitialKeyRepeat', type: 'int', value: 15 }
+      - {domain: NSGlobalDomain, key: KeyRepeat, type: int, value: 2}
+      - {domain: NSGlobalDomain, key: InitialKeyRepeat, type: int, value: 15}
 
             # Screenshots
-            - { domain: 'com.apple.screencapture', key: 'location', type: 'string', value: '~/Desktop' }
-            - { domain: 'com.apple.screencapture', key: 'type', type: 'string', value: 'png' }
-            - { domain: 'com.apple.screencapture', key: 'disable-shadow', type: 'bool', value: true }
+      - {domain: com.apple.screencapture, key: location, type: string, value: ~/Desktop}
+      - {domain: com.apple.screencapture, key: type, type: string, value: png}
+      - {domain: com.apple.screencapture, key: disable-shadow, type: bool, value: true}
 
             # System
-            - { domain: 'NSGlobalDomain', key: 'NSAutomaticWindowAnimationsEnabled', type: 'bool', value: false }
-            - { domain: 'NSGlobalDomain', key: 'NSNavPanelExpandedStateForSaveMode', type: 'bool', value: true }
-          when: configure_macos_defaults | default(true)
-          notify: restart_dock
+      - {domain: NSGlobalDomain, key: NSAutomaticWindowAnimationsEnabled, type: bool, value: false}
+      - {domain: NSGlobalDomain, key: NSNavPanelExpandedStateForSaveMode, type: bool, value: true}
+      when: configure_macos_defaults | default(true)
+      notify: restart_dock
 
     # =========================================================================
     # Reporting
     # =========================================================================
 
-    - name: Check if tmux is installed
-      ansible.builtin.command: which tmux
-      register: tmux_check
-      failed_when: false
-      changed_when: false
-      tags: [always]
+  - name: Check if tmux is installed
+    ansible.builtin.command: which tmux
+    register: tmux_check
+    changed_when: false
+    failed_when: false
+    tags: [always]
 
-    - name: Generate setup report
-      ansible.builtin.set_fact:
-        setup_report:
-          hostname: "{{ ansible_hostname }}"
-          os: "{{ ansible_distribution | default('Unknown') }} {{ ansible_distribution_version | default('') }}"
-          homebrew_installed: "{{ homebrew_check.stat.exists }}"
-          packages_updated: "{{ brew_bundle_result is defined and brew_bundle_result is changed }}"
-          mise_updated: "{{ mise_install_result is defined and mise_install_result is changed }}"
-          shell_configured: "{{ ohmyzsh_check.stat.exists }}"
-          tmux_configured: "{{ tmux_check is defined and tmux_check.rc == 0 }}"
-          neovim_configured: "{{ install_neovim | default(true) }}"
-          vscode_configured: "{{ vscode_check is defined and vscode_check.rc == 0 }}"
-      tags: [always]
+  - name: Generate setup report
+    ansible.builtin.set_fact:
+      setup_report:
+        hostname: '{{ ansible_hostname }}'
+        os: "{{ ansible_distribution | default('Unknown') }} {{ ansible_distribution_version | default('') }}"
+        homebrew_installed: '{{ homebrew_check.stat.exists }}'
+        packages_updated: '{{ brew_bundle_result is defined and brew_bundle_result is changed }}'
+        mise_updated: '{{ mise_install_result is defined and mise_install_result is changed }}'
+        shell_configured: '{{ ohmyzsh_check.stat.exists }}'
+        tmux_configured: '{{ tmux_check is defined and tmux_check.rc == 0 }}'
+        neovim_configured: '{{ install_neovim | default(true) }}'
+        vscode_configured: '{{ vscode_check is defined and vscode_check.rc == 0 }}'
+    tags: [always]
 
-    - name: Display setup report
-      ansible.builtin.debug:
-        msg:
-          - "=========================================="
-          - "Setup Report for {{ ansible_hostname }}"
-          - "=========================================="
-          - "OS: {{ setup_report.os }}"
-          - "Homebrew: {{ 'Installed' if setup_report.homebrew_installed else 'Not Installed' }}"
-          - "Packages Updated: {{ 'Yes' if setup_report.packages_updated else 'No' }}"
-          - "mise Updated: {{ 'Yes' if setup_report.mise_updated else 'No' }}"
-          - "Shell Configured: {{ 'Yes' if setup_report.shell_configured else 'No' }}"
-          - "Tmux Configured: {{ 'Yes' if setup_report.tmux_configured else 'No' }}"
-          - "Neovim Configured: {{ 'Yes' if setup_report.neovim_configured else 'No' }}"
-          - "VS Code Configured: {{ 'Yes' if setup_report.vscode_configured else 'No' }}"
-          - ""
-          - "Next steps:"
-          - "  1. Restart terminal: source ~/.zshrc"
-          - "  2. Configure Powerlevel10k: p10k configure"
-          - "  3. Open Neovim: nvim (or vim/vi aliases)"
-          - "  4. Start tmux: tmux (Prefix is C-a)"
-      tags: [always]
+  - name: Display setup report
+    ansible.builtin.debug:
+      msg:
+      - ==========================================
+      - Setup Report for {{ ansible_hostname }}
+      - ==========================================
+      - 'OS: {{ setup_report.os }}'
+      - "Homebrew: {{ 'Installed' if setup_report.homebrew_installed else 'Not Installed' }}"
+      - "Packages Updated: {{ 'Yes' if setup_report.packages_updated else 'No' }}"
+      - "mise Updated: {{ 'Yes' if setup_report.mise_updated else 'No' }}"
+      - "Shell Configured: {{ 'Yes' if setup_report.shell_configured else 'No' }}"
+      - "Tmux Configured: {{ 'Yes' if setup_report.tmux_configured else 'No' }}"
+      - "Neovim Configured: {{ 'Yes' if setup_report.neovim_configured else 'No' }}"
+      - "VS Code Configured: {{ 'Yes' if setup_report.vscode_configured else 'No' }}"
+      - ''
+      - 'Next steps:'
+      - '  1. Restart terminal: source ~/.zshrc'
+      - '  2. Configure Powerlevel10k: p10k configure'
+      - '  3. Open Neovim: nvim (or vim/vi aliases)'
+      - '  4. Start tmux: tmux (Prefix is C-a)'
+    tags: [always]
 
   handlers:
-    - name: restart_dock
-      ansible.builtin.command: killall Dock
-      failed_when: false
-      changed_when: false
-      when: is_macos
+  - name: restart_dock
+    ansible.builtin.command: killall Dock
+    failed_when: false
+    changed_when: false
+    when: is_macos

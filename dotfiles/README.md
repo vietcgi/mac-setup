@@ -83,4 +83,4 @@ chezmoi init --apply YOUR_USERNAME
 
 - chezmoi stores dotfiles in `~/.local/share/chezmoi`
 - It uses templates for machine-specific configurations
-- See: https://www.chezmoi.io/
+- See: <https://www.chezmoi.io/>

@@ -22,9 +22,9 @@ declare -A RESULTS
 
 print_header() {
     echo -e "\n${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║$(printf '%63s' | tr ' ' ' ')║${NC}"
+    echo -e "${CYAN}║$(printf '%63s' "" | tr ' ' ' ')║${NC}"
     echo -e "${CYAN}║  $(printf '%-59s' "$1")  ║${NC}"
-    echo -e "${CYAN}║$(printf '%63s' | tr ' ' ' ')║${NC}"
+    echo -e "${CYAN}║$(printf '%63s' "" | tr ' ' ' ')║${NC}"
     echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}\n"
 }
 
@@ -69,14 +69,16 @@ test_distribution() {
     echo ""
 
     # Run the test
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
 
     if docker run --rm -v "$(pwd):/workspace" -w /workspace "$docker_image" bash -c "
         export DEBIAN_FRONTEND=noninteractive
         chmod +x bootstrap-ansible.sh
         ./bootstrap-ansible.sh 2>&1
     " > "$log_file" 2>&1; then
-        local end_time=$(date +%s)
+        local end_time
+        end_time=$(date +%s)
         local duration=$((end_time - start_time))
 
         # Check for Ansible RECAP
@@ -95,7 +97,8 @@ test_distribution() {
             grep "PLAY RECAP" -A 1 "$log_file" || echo "RECAP not found"
         fi
     else
-        local end_time=$(date +%s)
+        local end_time
+        end_time=$(date +%s)
         local duration=$((end_time - start_time))
 
         print_error "$distro_name: FAILED (${duration}s)"
