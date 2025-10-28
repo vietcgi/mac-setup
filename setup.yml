@@ -206,8 +206,6 @@
       url: https://mise.run
       dest: /tmp/mise-installer.sh
       mode: '0755'
-      owner: root
-      group: root
     when:
     - ansible_os_family != "Darwin"
     - install_dev_tools | default(true)
@@ -244,12 +242,19 @@
       mise_bin: "{{ homebrew_prefix ~ '/bin/mise' if ansible_os_family == 'Darwin' else home ~ '/.local/bin/mise' }}"
     tags: [always, mise]
 
+  - name: Check if mise binary exists
+    ansible.builtin.stat:
+      path: '{{ mise_bin }}'
+    register: mise_binary_check
+    tags: [always, mise]
+
   - name: Trust mise config file
     ansible.builtin.command: '{{ mise_bin }} trust'
     args:
       chdir: '{{ playbook_dir }}'
     register: mise_trust_result
     when:
+    - mise_binary_check.stat.exists
     - mise_toml_check.stat.exists
     - install_dev_tools | default(true)
     changed_when: mise_trust_result.rc == 0 and 'trusted' in mise_trust_result.stdout
@@ -262,6 +267,7 @@
       chdir: '{{ playbook_dir }}'
     register: mise_install_result
     when:
+    - mise_binary_check.stat.exists
     - mise_toml_check.stat.exists
     - install_dev_tools | default(true)
     changed_when: "'installed' in mise_install_result.stdout or 'Installing' in mise_install_result.stdout"
