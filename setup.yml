@@ -80,7 +80,7 @@
 
   - name: Install packages from Brewfile
     ansible.builtin.shell: |
-      {{ homebrew_prefix }}/bin/brew bundle install --file={{ brewfile_path }} --no-lock || true
+      {{ homebrew_prefix }}/bin/brew bundle install --file={{ brewfile_path }} || true
     args:
       chdir: '{{ playbook_dir }}'
     environment:
