@@ -56,7 +56,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 
 ### Core Files (All Created)
 
-```
+```text
 - Brewfile (98 packages)
 - Brewfile.sre (115 packages)
 - setup.yml (main playbook)
@@ -68,7 +68,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 
 ### Dotfiles (All Created)
 
-```
+```text
 - dotfiles/.zshrc (with 9 GNU PATH exports)
 - dotfiles/.tmux.conf (with TPM + 6 plugins)
 - dotfiles/.inputrc (readline configuration)
@@ -79,7 +79,7 @@ cp ~/.config/nvim ~/.config/nvim.backup -r 2>/dev/null || true
 
 ### Documentation (All Created)
 
-```
+```text
 - README.md
 - QUICKSTART-ANSIBLE.md
 - DEPLOYMENT-GUIDE.md (this file)
@@ -664,6 +664,7 @@ These packages should ONLY be in `Brewfile.sre`:
 ### Automated Sync (Future Enhancement)
 
 Consider creating a script to auto-generate `Brewfile.sre` from `Brewfile`:\n\n```bash
+
 # !/usr/bin/env bash
 
 # generate-sre-brewfile.sh (example - not yet implemented)

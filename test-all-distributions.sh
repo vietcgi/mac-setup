@@ -182,7 +182,7 @@ main() {
     echo "  4. Arch family only (Arch Linux)"
     echo "  5. Custom selection"
     echo ""
-    read -p "Choice [1]: " choice
+    read -r -p "Choice [1]: " choice
     choice=${choice:-1}
 
     case "$choice" in

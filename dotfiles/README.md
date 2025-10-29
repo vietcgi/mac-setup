@@ -27,7 +27,7 @@ chezmoi add ~/.zshrc
 chezmoi add ~/.gitconfig
 chezmoi add ~/.vimrc
 chezmoi add ~/.tmux.conf
-```
+```text
 
 ### Or Import from This Directory
 
@@ -56,7 +56,7 @@ chezmoi edit --apply ~/.zshrc
 
 # See what chezmoi manages
 chezmoi managed
-```
+```text
 
 ### Backup to Git
 
@@ -77,7 +77,7 @@ git push -u origin main
 ```bash
 # Install chezmoi and apply dotfiles in one command
 chezmoi init --apply YOUR_USERNAME
-```
+```text
 
 ## Notes
 

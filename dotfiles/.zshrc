@@ -1,3 +1,4 @@
+#!/bin/zsh
 # Modern .zshrc configuration
 # Migrated from Ansible mac-setup
 
@@ -20,10 +21,10 @@ export ZSH="$HOME/.oh-my-zsh"
 
 # Powerlevel10k theme
 # To configure: p10k configure
-ZSH_THEME="powerlevel10k/powerlevel10k"
+export ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Oh My Zsh plugins
-plugins=(
+export plugins=(
   git
   kubectl
   kubectx
@@ -40,7 +41,8 @@ plugins=(
   zsh-completions
 )
 
-source $ZSH/oh-my-zsh.sh
+# shellcheck source=/dev/null
+source "$ZSH/oh-my-zsh.sh"
 
 # User configuration
 
@@ -66,9 +68,11 @@ if [ -f "$HOME/.dircolors" ]; then
 fi
 
 # FZF - Fuzzy finder
+# shellcheck source=/dev/null
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # GRC - Generic Colouriser (colorize command output)
+# shellcheck source=/dev/null
 [ -f /opt/homebrew/etc/grc.zsh ] && source /opt/homebrew/etc/grc.zsh
 
 # Powerlevel10k instant prompt
@@ -78,4 +82,5 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$(whoami).zsh" ]];
 fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
+# shellcheck source=/dev/null
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

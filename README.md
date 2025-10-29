@@ -2,8 +2,8 @@
 
 **Fast, cross-platform, reproducible development environment for desktop machines.**
 
-[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue)](#)
-[![Setup Time](https://img.shields.io/badge/setup%20time-~2%20min-green)](#)
+![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue)
+![Setup Time](https://img.shields.io/badge/setup%20time-~2%20min-green)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
@@ -113,13 +113,14 @@
 
 ### Essential Guides (Start Here)
 
-- **[QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)** - Complete setup guide (start here)
+- **[QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)** - Complete setup guide
 - **[KNOWN-ISSUES.md](KNOWN-ISSUES.md)** - Troubleshooting & common problems
 - **[verify-setup.sh](verify-setup.sh)** - Verify your installation
 
 ### Production & Migration
 
-- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Production deployment & fleet management for 20+ machines
+- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - Production deployment &
+  fleet management for 20+ machines
 - **[ANSIBLE-MIGRATION.md](ANSIBLE-MIGRATION.md)** - Migrate from old Ansible setup
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history & breaking changes
 

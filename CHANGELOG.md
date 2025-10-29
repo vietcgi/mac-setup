@@ -95,7 +95,6 @@ the repository from B grade to **A++**.
 
 #### Removed (6 redundant files)
 
-
 - **Deleted**:
   - DESKTOP-RECOMMENDATION.md (info integrated into README.md)
   - FLEET-MANAGEMENT.md (info integrated into DEPLOYMENT-GUIDE.md)
