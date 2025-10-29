@@ -178,7 +178,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [shellcheck, ansible-lint, markdown-lint, test-macos, test-ubuntu, verify-config, pre-commit]
+    needs: [shellcheck, ansible-lint, markdown-lint, test-macos, test-ubuntu, verify-config, link-check, pre-commit]
     if: always()
     steps:
     - name: Check all jobs succeeded
