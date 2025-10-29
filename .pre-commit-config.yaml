@@ -42,10 +42,10 @@ repos:
     name: Shellcheck (bash/sh linting)
     args: [--severity=warning]
 
-  # Ansible linting (disabled locally due to Python 3.14 compatibility issues)
-  # Will be checked in CI workflow instead
+  # Ansible linting (disabled locally due to dependency conflicts with Python 3.14)
+  # Will catch issues in CI workflow instead - see .github/workflows/ci.yml
   # - repo: https://github.com/ansible/ansible-lint
-  #   rev: v6.22.1
+  #   rev: v5.24.2
   #   hooks:
   #   - id: ansible-lint
   #     name: Ansible-lint
