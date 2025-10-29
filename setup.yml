@@ -15,6 +15,10 @@
     is_macos: "{{ ansible_os_family == 'Darwin' }}"
     is_linux: "{{ ansible_os_family != 'Darwin' }}"
 
+    # User and home directory
+    user: '{{ ansible_user_id }}'
+    home: '{{ ansible_env.HOME }}'
+
     # Homebrew paths (can be overridden in group_vars)
     homebrew_prefix: "{{ '/opt/homebrew' if is_macos else '/home/linuxbrew/.linuxbrew' }}"
 
