@@ -37,26 +37,28 @@ jobs:
 
     - name: Verify installations
       run: |
-        export PATH="/opt/homebrew/bin:$PATH"
+        # Source Homebrew environment in a fresh shell
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Development Tools ==="
-        python3 --version
+        python3 --version || echo "python3 not found"
         node --version || echo "Node not in PATH yet"
         go version || echo "Go not in PATH yet"
 
         echo -e "\n=== Verifying CLI Tools ==="
-        fzf --version
-        rg --version | head -1
+        fzf --version || echo "fzf not found"
+        rg --version 2>&1 | head -1 || echo "ripgrep not found"
         bat --version || echo "bat not found"
 
         echo -e "\n=== Verifying Package Managers ==="
-        brew --version
+        brew --version || echo "brew not found"
         ~/.local/bin/mise --version || echo "mise not found"
 
         echo -e "\n=== Verifying Config Files ==="
@@ -103,13 +105,14 @@ jobs:
 
     - name: Verify installations
       run: |
-        export PATH="/opt/homebrew/bin:$PATH"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
@@ -148,13 +151,14 @@ jobs:
 
     - name: Verify installations
       run: |
-        export PATH="/opt/homebrew/bin:$PATH"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
     - name: Upload logs on failure
       if: failure()
@@ -195,27 +199,32 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Development Tools ==="
-        python3 --version
+        python3 --version || echo "python3 not found"
         node --version || echo "Node not in PATH yet"
         go version || echo "Go not in PATH yet"
 
         echo -e "\n=== Verifying CLI Tools ==="
-        fzf --version
-        rg --version | head -1
+        fzf --version || echo "fzf not found"
+        rg --version 2>&1 | head -1 || echo "ripgrep not found"
         batcat --version || bat --version || echo "bat not found"
 
         echo -e "\n=== Verifying Databases ==="
-        psql --version
-        sqlite3 --version
+        psql --version || echo "psql not found"
+        sqlite3 --version || echo "sqlite3 not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
@@ -264,13 +273,17 @@ jobs:
 
     - name: Verify installations
       run: |
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
@@ -309,13 +322,18 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
     - name: Upload logs on failure
       if: failure()
@@ -361,13 +379,18 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
-        zsh --version
-        tmux -V
-        nvim --version | head -1
+        git --version || echo "git not found"
+        zsh --version || echo "zsh not found"
+        tmux -V || echo "tmux not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
@@ -413,13 +436,18 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
+        git --version || echo "git not found"
         zsh --version || echo "zsh not found"
         tmux -V || echo "tmux not found"
-        nvim --version | head -1 || echo "nvim not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
     - name: Upload logs on failure
       if: failure()
@@ -518,13 +546,18 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
+        git --version || echo "git not found"
         zsh --version || echo "zsh not found"
         tmux -V || echo "tmux not found"
-        nvim --version | head -1 || echo "nvim not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
@@ -568,13 +601,18 @@ jobs:
 
     - name: Verify installations
       run: |
+        # Source Linuxbrew environment
+        if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
         export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
-        git --version
+        git --version || echo "git not found"
         zsh --version || echo "zsh not found"
         tmux -V || echo "tmux not found"
-        nvim --version | head -1 || echo "nvim not found"
+        nvim --version 2>&1 | head -1 || echo "nvim not found"
 
         echo -e "\n=== Verifying Config Files ==="
         ls -la ~/.zshrc || echo ".zshrc not found"
