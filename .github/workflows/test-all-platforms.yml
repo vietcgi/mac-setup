@@ -37,6 +37,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/opt/homebrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -58,9 +60,9 @@ jobs:
         ~/.local/bin/mise --version || echo "mise not found"
 
         echo -e "\n=== Verifying Config Files ==="
-        ls -la ~/.zshrc
-        ls -la ~/.tmux.conf
-        ls -la ~/.config/nvim/
+        ls -la ~/.zshrc || echo ".zshrc not found"
+        ls -la ~/.tmux.conf || echo ".tmux.conf not found"
+        ls -la ~/.config/nvim/ || echo "nvim config not found"
 
     - name: Check Ansible RECAP
       run: |
@@ -101,6 +103,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/opt/homebrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -108,8 +112,8 @@ jobs:
         nvim --version | head -1
 
         echo -e "\n=== Verifying Config Files ==="
-        ls -la ~/.zshrc
-        ls -la ~/.tmux.conf
+        ls -la ~/.zshrc || echo ".zshrc not found"
+        ls -la ~/.tmux.conf || echo ".tmux.conf not found"
 
     - name: Upload logs on failure
       if: failure()
@@ -144,6 +148,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/opt/homebrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -189,6 +195,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -210,9 +218,9 @@ jobs:
         sqlite3 --version
 
         echo -e "\n=== Verifying Config Files ==="
-        ls -la ~/.zshrc
-        ls -la ~/.tmux.conf
-        ls -la ~/.config/nvim/
+        ls -la ~/.zshrc || echo ".zshrc not found"
+        ls -la ~/.tmux.conf || echo ".tmux.conf not found"
+        ls -la ~/.config/nvim/ || echo "nvim config not found"
 
         echo -e "\n=== Verifying Vim Symlinks ==="
         ls -la /usr/local/bin/vim || echo "vim symlink not found"
@@ -256,6 +264,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -263,8 +273,8 @@ jobs:
         nvim --version | head -1
 
         echo -e "\n=== Verifying Config Files ==="
-        ls -la ~/.zshrc
-        ls -la ~/.tmux.conf
+        ls -la ~/.zshrc || echo ".zshrc not found"
+        ls -la ~/.tmux.conf || echo ".tmux.conf not found"
 
     - name: Upload logs on failure
       if: failure()
@@ -299,6 +309,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -349,6 +361,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version
@@ -399,6 +413,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version || echo "zsh not found"
@@ -502,6 +518,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version || echo "zsh not found"
@@ -550,6 +568,8 @@ jobs:
 
     - name: Verify installations
       run: |
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
         echo "=== Verifying Core Tools ==="
         git --version
         zsh --version || echo "zsh not found"

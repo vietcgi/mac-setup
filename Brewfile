@@ -40,6 +40,7 @@ brew "ccat"
 brew "lsd"                      # Better ls
 brew "tree"
 brew "fzf"                      # Fuzzy finder
+brew "ripgrep"                  # Fast grep replacement (rg)
 brew "jq"                       # JSON processor
 brew "yq"                       # YAML processor
 brew "thefuck"                  # Command correction
