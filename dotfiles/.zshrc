@@ -1,3 +1,4 @@
+# shellcheck shell=zsh
 # Modern .zshrc configuration
 # Migrated from Ansible mac-setup
 # This file is sourced by zsh, not executed directly
@@ -77,6 +78,7 @@ fi
 
 # Powerlevel10k instant prompt
 # Should stay close to the top of ~/.zshrc
+# shellcheck disable=SC1090
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$(whoami).zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$(whoami).zsh"
 fi

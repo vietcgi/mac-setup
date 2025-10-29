@@ -254,7 +254,7 @@ of GNU versions.
 
 ### Solution: Verify .zshrc PATH
 
-**AUTOMATICALLY FIXED IN PLAYBOOK**
+#### Status: Automatically Fixed in Playbook
 
 The .zshrc includes 9 PATH exports (setup.yml:160-183). If not working:
 
@@ -326,7 +326,7 @@ Commands like `ping`, `dig`, `netstat` aren't colorized.
 
 ### Solution: Verify grc.zsh Sourcing
 
-**AUTOMATICALLY FIXED IN PLAYBOOK**
+#### Status: Automatically Fixed in Playbook
 
 The .zshrc now sources grc.zsh (setup.yml:71). If not working:
 
