@@ -22,7 +22,7 @@ security vulnerability, please report it to us as described below.
 Instead, please report security vulnerabilities by:
 
 1. **Email**: Send details to the repository maintainer
-2. **GitHub Security Advisories**: Use the [Security tab](../../security/advisories/new)
+2. **GitHub Security Advisories**: Use the [Security tab](https://github.com/vietcgi/mac-setup/security/advisories/new)
     in this repository
 
 ### What to Include
@@ -208,7 +208,7 @@ the README.
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks/)
-- [Homebrew Security](https://docs.brew.sh/Security)
+- [Homebrew Documentation](https://docs.brew.sh/)
 - [GitHub Security Best Practices](https://docs.github.com/en/code-security)
 
 ---

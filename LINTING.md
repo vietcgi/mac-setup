@@ -7,6 +7,7 @@ This document explains the linting setup and known limitations.
 All linting checks are configured in `.pre-commit-config.yaml`:
 
 ### Enabled Hooks ✅
+
 - **Shellcheck** - Bash/sh script linting
 - **Markdownlint** - Markdown file validation
 - **YAML validation** - YAML syntax checking
@@ -16,6 +17,7 @@ All linting checks are configured in `.pre-commit-config.yaml`:
 - **Gitlint** - Commit message linting
 
 ### Disabled Hooks ⚠️
+
 - **ansible-lint** - Disabled locally due to Python 3.14 incompatibility
   - (ansible-core 2.19.3 vs required 2.20.0)
   - Checked in CI instead (see `.github/workflows/ci.yml`)
@@ -24,18 +26,21 @@ All linting checks are configured in `.pre-commit-config.yaml`:
 
 ## Running Linting Locally
 
-### Run all checks:
+### Run all checks
+
 ```bash
 pre-commit run --all-files
 ```
 
-### Run specific hook:
+### Run specific hook
+
 ```bash
 pre-commit run shellcheck --all-files
 pre-commit run markdownlint --all-files
 ```
 
-### Install pre-commit hooks:
+### Install pre-commit hooks
+
 ```bash
 pip install pre-commit
 pre-commit install
@@ -45,17 +50,19 @@ pre-commit install
 
 ## Ansible Linting (CI Only)
 
-### Why Disabled Locally?
+### Why Disabled Locally
 
 **Python 3.14 Incompatibility:**
+
 - System Python: 3.14
 - ansible-core installed: 2.19.3
 - ansible-lint requires: ansible-core >= 2.20.0
 - ansible-core 2.20.0: Not yet released (release candidate only)
 
-### Solution: Use CI
+### Solution Use CI
 
 Ansible-lint runs in GitHub Actions CI:
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Run ansible-lint
@@ -63,19 +70,22 @@ Ansible-lint runs in GitHub Actions CI:
 ```
 
 This is sufficient because:
-✅ Issues caught before merge
-✅ No local development friction
-✅ Part of required CI checks
 
-### Re-enable Locally When:
+- Issues caught before merge
+- No local development friction
+- Part of required CI checks
+
+### Re-enable Locally When
 
 1. **ansible-core 2.20.0 is released** (recommended)
+
    ```bash
    pip install ansible-core>=2.20.0
    # Uncomment ansible-lint in .pre-commit-config.yaml
    ```
 
 2. **Or downgrade Python to 3.13**
+
    ```bash
    # Use Python 3.13 for pre-commit
    pre-commit run --all-files
@@ -86,6 +96,7 @@ This is sufficient because:
 ## Ansible Linting Configuration
 
 Lenient rules in `.ansible-lint`:
+
 ```yaml
 disabled_rules:
   - indentation      # Allow flexible indentation
@@ -93,6 +104,7 @@ disabled_rules:
 ```
 
 Rationale:
+
 - Ansible playbooks use 2-space indentation
 - Documentation/comments often exceed 80 characters
 - Strict rules would require excessive reformatting
@@ -103,6 +115,7 @@ Rationale:
 ## Markdown Linting Configuration
 
 Relaxed constraints in `.markdownlint.json`:
+
 ```json
 {
   "MD001": false,  // Allow heading level jumps (e.g., # to ###)
@@ -117,6 +130,7 @@ Relaxed constraints in `.markdownlint.json`:
 ```
 
 Rationale:
+
 - Documentation often has flexible structure
 - Long URLs shouldn't break lines
 - CHANGELOGs legitimately have repeated "Added/Fixed/Changed"
@@ -134,6 +148,7 @@ Rationale:
 ---
 
 ## See Also
+
 - `.pre-commit-config.yaml` - Hook configuration
 - `.ansible-lint` - Ansible-specific linting rules
 - `.markdownlint.json` - Markdown linting rules
