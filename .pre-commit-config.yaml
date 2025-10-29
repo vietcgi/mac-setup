@@ -42,10 +42,13 @@ repos:
     name: Shellcheck (bash/sh linting)
     args: [--severity=warning]
 
-  # Ansible linting (disabled locally due to dependency conflicts with Python 3.14)
-  # Will catch issues in CI workflow instead - see .github/workflows/ci.yml
+  # Ansible linting: Disabled locally, checked in CI instead
+  # Issue: ansible-lint v6.x requires ansible-core > 2.19.3
+  # Current system: ansible-core 2.19.3 (stable) vs 2.20.0rc (not released)
+  # Solution: Checked in .github/workflows/ci.yml (sufficient safety)
+  # Status: Will re-enable when ansible-core 2.20.0 is released
   # - repo: https://github.com/ansible/ansible-lint
-  #   rev: v5.24.2
+  #   rev: v6.22.1
   #   hooks:
   #   - id: ansible-lint
   #     name: Ansible-lint
