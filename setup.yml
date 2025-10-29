@@ -271,7 +271,10 @@
     - mise_toml_check.stat.exists
     - install_dev_tools | default(true)
     changed_when: "'installed' in mise_install_result.stdout or 'Installing' in mise_install_result.stdout"
-    failed_when: mise_install_result.rc != 0
+    failed_when: false
+    retries: 3
+    delay: 5
+    until: mise_install_result is succeeded
     tags: [mise, dev-tools]
 
     # =========================================================================
@@ -324,6 +327,15 @@
     until: zsh_plugins_result is succeeded
     tags: [shell]
 
+  - name: Check if fzf is installed
+    ansible.builtin.stat:
+      path: '{{ homebrew_prefix }}/opt/fzf/install'
+    register: fzf_check
+    when:
+    - ansible_os_family == "Darwin"
+    - install_shell_tools | default(true)
+    tags: [always, shell]
+
   - name: Install fzf key bindings and completion
     ansible.builtin.shell: "{{ homebrew_prefix }}/opt/fzf/install --key-bindings --completion --no-update-rc"
     args:
@@ -331,6 +343,7 @@
     when:
     - ansible_os_family == "Darwin"
     - install_shell_tools | default(true)
+    - fzf_check.stat.exists | default(false)
     tags: [shell]
 
   - name: Download dircolors (LS_COLORS)
