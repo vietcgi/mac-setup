@@ -1,4 +1,4 @@
-# shellcheck shell=zsh
+# shellcheck shell=bash
 # Modern .zshrc configuration
 # Migrated from Ansible mac-setup
 # This file is sourced by zsh, not executed directly

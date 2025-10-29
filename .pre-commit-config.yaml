@@ -42,14 +42,15 @@ repos:
     name: Shellcheck (bash/sh linting)
     args: [--severity=warning]
 
-  # Ansible linting
-- repo: https://github.com/ansible/ansible-lint
-  rev: v24.12.0
-  hooks:
-  - id: ansible-lint
-    name: Ansible-lint
-    files: setup\.yml|inventory\.yml
-    args: [--strict]
+  # Ansible linting (disabled locally due to Python 3.14 compatibility issues)
+  # Will be checked in CI workflow instead
+  # - repo: https://github.com/ansible/ansible-lint
+  #   rev: v6.22.1
+  #   hooks:
+  #   - id: ansible-lint
+  #     name: Ansible-lint
+  #     files: setup\.yml|inventory\.yml
+  #     args: [--strict]
 
   # Markdown linting
 - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -72,6 +73,7 @@ repos:
       (?x)^(
         setup\.yml|
         inventory\.yml|
+        \.ansible-lint|
         \.github/workflows/.*\.yml
       )$
 

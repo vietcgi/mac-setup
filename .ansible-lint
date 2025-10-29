@@ -8,7 +8,7 @@ disabled_rules:
 
 # Skip checking certain files
 skip_list:
-  - '501'
+  - '501'  # Allow become_user without become
 
 # Verbosity level
 verbosity: 0
