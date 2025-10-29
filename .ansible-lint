@@ -1,0 +1,19 @@
+# Ansible-lint configuration
+# Lenient rules for development setup
+
+# Disable rules that are too strict for this repo
+disabled_rules:
+  # Indentation rules - allow flexible indentation
+  - indentation
+  # Line length - allow longer lines in Ansible
+  - line-too-long
+
+# Skip checking certain files
+skip_list:
+  - '501'  # Allow become_user without become
+
+# Verbosity level
+verbosity: 0
+
+# Use "full" unless you want a summary report
+format: quiet

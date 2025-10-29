@@ -58,7 +58,7 @@ repos:
     name: Markdownlint
     args: [--fix]
 
-  # YAML formatting
+  # YAML formatting (exclude Ansible files - they have their own linting)
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
   rev: v2.11.0
   hooks:
@@ -67,6 +67,12 @@ repos:
     args:
     - --autofix
     - --indent=2
+    exclude: |
+      (?x)^(
+        setup\.yml|
+        inventory\.yml|
+        \.github/workflows/.*\.yml
+      )$
 
   # Git commit message linting
 - repo: https://github.com/jorisroovers/gitlint
