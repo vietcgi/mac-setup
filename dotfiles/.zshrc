@@ -1,6 +1,6 @@
-#!/bin/zsh
 # Modern .zshrc configuration
 # Migrated from Ansible mac-setup
+# This file is sourced by zsh, not executed directly
 
 # Path configuration for GNU tools (prefer GNU over macOS)
 export PATH="/opt/homebrew/opt/libtool/libexec/gnubin:$PATH"
