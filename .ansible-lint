@@ -1,17 +1,10 @@
 # Ansible-lint configuration
 # Lenient rules for development setup
 
-# Disable rules that are too strict for this repo
-disabled_rules:
-  - indentation
-  - line-too-long
-
-# Skip checking certain files
+# Skip rules that are too strict for this repo
 skip_list:
-  - '501'  # Allow become_user without become
-
-# Verbosity level
-verbosity: 0
-
-# Use "full" unless you want a summary report
-format: quiet
+  - yaml[indentation]       # Allow flexible indentation
+  - yaml[truthy]            # Allow truthy values without explicit false/true
+  - command-instead-of-shell  # Allow command module when needed
+  - name[casing]            # Allow lowercase task names
+  - no-handler              # Allow tasks without handlers

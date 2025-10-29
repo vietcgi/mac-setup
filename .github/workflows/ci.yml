@@ -39,8 +39,8 @@ jobs:
 
     - name: Install Ansible and ansible-lint
       run: |
-        # Note: ansible-core 2.20.0 stable not yet released, using latest available
-        pip install 'ansible-core<2.20.0' ansible-lint
+        # Use compatible versions: ansible-core 2.20.0+ supports Python 3.14
+        pip install ansible ansible-lint
 
     - name: Run ansible-lint
       run: |
