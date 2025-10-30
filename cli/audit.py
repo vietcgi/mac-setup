@@ -183,7 +183,7 @@ class AuditLogger:
             status=status,
         )
 
-    def log_permission_changed(self, path: str, old_perms: str, new_perms: str) -> Dict:
+    def log_permission_changed(self, path: str, old_perms: str, new_perms: str) -> Dict[str, Any]:
         """Log permission change."""
         return self.log_action(
             AuditAction.PERMISSION_CHANGED,
@@ -194,12 +194,12 @@ class AuditLogger:
             },
         )
 
-    def log_verification(self, passed: bool, details: Optional[Dict] = None) -> Dict:
+    def log_verification(self, passed: bool, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Log setup verification."""
         action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
         return self.log_action(action, details=details, status="success" if passed else "failure")
 
-    def log_health_check(self, status: str, details: Optional[Dict] = None) -> Dict:
+    def log_health_check(self, status: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Log health check result."""
         return self.log_action(AuditAction.HEALTH_CHECK, details=details, status=status)
 

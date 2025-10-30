@@ -355,7 +355,7 @@ class GitConfigManager:
             self.print_status(f"Credential helper error: {e}", "ERROR")
             return False
 
-    def generate_report(self) -> Dict:
+    def generate_report(self) -> Dict[str, Any]:
         """Generate detailed reload report.
 
         Returns:
@@ -386,7 +386,7 @@ class GitConfigManager:
 
         return report
 
-    def display_report(self, report: Dict) -> None:
+    def display_report(self, report: Dict[str, Any]) -> None:
         """Display formatted reload report.
 
         Args:
@@ -482,7 +482,7 @@ class GitConfigManager:
             return False
 
 
-def main():
+def main() -> int:
     """CLI entry point."""
     import argparse
 

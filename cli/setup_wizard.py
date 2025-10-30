@@ -392,7 +392,7 @@ class SetupWizard:
         return str(path)
 
 
-def main():
+def main() -> int:
     """Run setup wizard."""
     import argparse
 
