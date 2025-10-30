@@ -26,10 +26,26 @@
     # Initialize variables (must be first task)
     # =========================================================================
 
-  - name: Set user and home variables from environment
+  - name: Get current user
+    ansible.builtin.shell: |
+      whoami
+    register: whoami_result
+    changed_when: false
+    check_mode: no
+    tags: [always]
+
+  - name: Get home directory
+    ansible.builtin.shell: |
+      eval echo ~$(whoami)
+    register: home_result
+    changed_when: false
+    check_mode: no
+    tags: [always]
+
+  - name: Set user and home variables
     ansible.builtin.set_fact:
-      user: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root' }}"
-      home: "{{ lookup('env', 'HOME') or '/root' }}"
+      user: "{{ whoami_result.stdout | trim }}"
+      home: "{{ home_result.stdout | trim }}"
     tags: [always]
 
     # =========================================================================
