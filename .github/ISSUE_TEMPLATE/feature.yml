@@ -1,0 +1,107 @@
+name: Feature Request
+description: Suggest an idea for improvement
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Please describe what you'd like to see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Describe the problem or limitation you're experiencing
+      placeholder: "Currently, ... is difficult because ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe how this feature would solve the problem
+      placeholder: "If we had ... feature, then ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Are there other ways to solve this? What are the tradeoffs?
+      placeholder: |
+        - Alternative 1: ..., but this would ...
+        - Alternative 2: ..., but this would ...
+      value: |
+        -
+        -
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: What would you use this for?
+      placeholder: |
+        - Use case 1: ...
+        - Use case 2: ...
+      value: |
+        -
+        -
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Approach (Optional)
+      description: If you have ideas on how to implement this
+      placeholder: "We could modify ... to ..."
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - "Low - Nice to have"
+        - "Medium - Would improve workflow"
+        - "High - Blocking issue"
+        - "Critical - Essential feature"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: What areas would this affect?
+      options:
+        - label: Installation/Setup
+        - label: Configuration
+        - label: Performance
+        - label: Security
+        - label: Documentation
+        - label: CLI/API
+        - label: Plugin System
+        - label: Health Monitoring
+        - label: Testing
+        - label: Other
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other details or context
+      placeholder: "I saw this in project X, which does ..., or this relates to issue #..."
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing feature requests for duplicates
+          required: true
+        - label: This feature is in scope for Devkit (development environment automation)
+          required: true

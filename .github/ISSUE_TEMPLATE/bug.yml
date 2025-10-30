@@ -1,0 +1,125 @@
+name: Bug Report
+description: Report a bug to help us improve
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill out this form to help us investigate.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clear description of what the bug is
+      placeholder: "When I try to ..., the system ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the bug
+      placeholder: |
+        1. Run `./bootstrap.sh`
+        2. Configure with `...`
+        3. Execute `...`
+        4. See error
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen
+      placeholder: "The system should ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens
+      placeholder: "Instead, it ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: Error Logs
+      description: Include relevant error messages from `~/.devkit/logs/setup.log`
+      placeholder: "Paste error logs here"
+      render: bash
+
+  - type: input
+    id: devkit-version
+    attributes:
+      label: Devkit Version
+      description: "Run: `cat VERSION`"
+      placeholder: "3.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: "Run: `uname -a`"
+      placeholder: "Darwin macbook-pro 14.6.1 ..."
+    validations:
+      required: true
+
+  - type: input
+    id: shell
+    attributes:
+      label: Shell
+      description: "Run: `echo $SHELL`"
+      placeholder: "/bin/zsh"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Additional Environment Info
+      description: Any other relevant environment details
+      placeholder: "Python version, Homebrew version, etc."
+      render: bash
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots showing the issue
+      placeholder: "Paste or drag images here"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context about the bug
+      placeholder: "This started happening after ..., it only occurs when ..., etc."
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      description: Please confirm
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: I have checked the TROUBLESHOOTING guide
+          required: true
+        - label: I understand this is a public issue and should not include sensitive information
+          required: true
