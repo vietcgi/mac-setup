@@ -1,0 +1,55 @@
+# Mac-Setup Main Configuration
+# Default settings for development environment setup
+
+global:
+  setup_name: "Development Environment"
+  setup_environment: development
+  enabled_roles:
+    - core
+    - shell
+    - editors
+    - languages
+    - development
+  disabled_roles: []
+
+  logging:
+    enabled: true
+    level: info
+    file: ~/.devkit/logs/setup.log
+    archive: true
+
+  performance:
+    parallel_tasks: 4
+    timeout: 300
+    cache_downloads: true
+
+  backup:
+    enabled: true
+    path: ~/.devkit/backups
+    max_backups: 10
+    compress: true
+
+  verification:
+    enabled: true
+    run_after_setup: true
+    detailed_report: true
+
+  security:
+    enable_ssh_setup: false
+    enable_gpg_setup: false
+    enable_audit_logging: true
+    require_verification: false
+
+  updates:
+    check_for_updates: true
+    auto_update_tools: false
+    update_interval: weekly
+
+roles: {}
+groups: {}
+platforms: {}
+plugins:
+  enabled: true
+  load_custom: true
+  custom_path: ~/.devkit/plugins
+  hooks: {}

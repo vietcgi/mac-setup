@@ -1,0 +1,100 @@
+# Core role - Base system setup, Homebrew installation
+# This role sets up the foundation for all other roles
+
+- name: Initialize variables
+  ansible.builtin.set_fact:
+    os_family: "{{ ansible_os_family }}"
+    is_macos: "{{ ansible_os_family == 'Darwin' }}"
+    is_linux: "{{ ansible_os_family != 'Darwin' }}"
+    homebrew_prefix: "{{ '/opt/homebrew' if ansible_os_family == 'Darwin' else '/home/linuxbrew/.linuxbrew' }}"
+  tags: [always]
+
+- name: Set user and home from environment
+  ansible.builtin.set_fact:
+    current_user: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root' }}"
+    home_dir: "{{ lookup('env', 'HOME') or '/root' }}"
+  tags: [always]
+
+- name: Create mac-setup directories
+  ansible.builtin.file:
+    path: "{{ home_dir }}/.devkit/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - logs
+    - backups
+    - plugins
+    - config
+  tags: [always, setup]
+
+- name: Check if Homebrew is installed
+  ansible.builtin.stat:
+    path: "{{ homebrew_prefix }}/bin/brew"
+  register: homebrew_check
+  tags: [always, homebrew]
+
+- name: Install Homebrew
+  ansible.builtin.shell: |
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  register: homebrew_install
+  when: not homebrew_check.stat.exists
+  retries: 3
+  delay: 5
+  until: homebrew_install is succeeded
+  changed_when: homebrew_install.rc == 0
+  tags: [homebrew]
+
+- name: Ensure Homebrew is in PATH
+  ansible.builtin.set_fact:
+    ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
+  when: not homebrew_check.stat.exists
+  tags: [homebrew]
+
+- name: Update Homebrew
+  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew update"
+  changed_when: false
+  when: homebrew_check.stat.exists
+  tags: [homebrew]
+
+- name: Install core packages via Homebrew
+  ansible.builtin.shell: |
+    {{ homebrew_prefix }}/bin/brew install git curl wget
+  changed_when: false
+  tags: [homebrew, packages]
+
+- name: Install Ansible (if needed)
+  ansible.builtin.shell: |
+    {{ homebrew_prefix }}/bin/brew install ansible
+  changed_when: false
+  when: ansible_version is not defined
+  tags: [homebrew, packages]
+
+- name: Create logging directory structure
+  ansible.builtin.file:
+    path: "{{ home_dir }}/.devkit/logs/archive"
+    state: directory
+    mode: '0755'
+  tags: [setup, logging]
+
+- name: Initialize setup log file
+  ansible.builtin.copy:
+    content: |
+      # Mac-Setup Log
+      # Started: {{ ansible_date_time.iso8601 }}
+      # Platform: {{ os_family }}
+      # User: {{ current_user }}
+      # Host: {{ inventory_hostname }}
+
+    dest: "{{ home_dir }}/.devkit/logs/setup.log"
+    mode: '0644'
+  tags: [setup, logging]
+
+- name: Verify core tools are available
+  ansible.builtin.shell: "{{ item }} --version"
+  register: core_tools_check
+  loop:
+    - git
+    - curl
+    - brew
+  changed_when: false
+  tags: [validation]

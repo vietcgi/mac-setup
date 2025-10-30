@@ -2,7 +2,7 @@
 
 ###############################################################################
 # Comprehensive Multi-Distribution Test Script
-# Tests mac-setup on Debian, Ubuntu, Fedora, Arch, and openSUSE
+# Tests devkit on Debian, Ubuntu, Fedora, Arch, and openSUSE
 ###############################################################################
 
 set -euo pipefail

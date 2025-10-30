@@ -22,7 +22,7 @@ security vulnerability, please report it to us as described below.
 Instead, please report security vulnerabilities by:
 
 1. **Email**: Send details to the repository maintainer
-2. **GitHub Security Advisories**: Use the [Security tab](https://github.com/vietcgi/mac-setup/security/advisories/new)
+2. **GitHub Security Advisories**: Use the [Security tab](https://github.com/vietcgi/devkit/security/advisories/new)
     in this repository
 
 ### What to Include

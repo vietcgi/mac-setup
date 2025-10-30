@@ -1,0 +1,222 @@
+# Mac-Setup Configuration Schema
+# This defines the structure and validation for all configuration files
+
+version: "1.0"
+
+# Global settings applicable to all machines
+global:
+  type: object
+  properties:
+    # Core settings
+    setup_name:
+      type: string
+      description: "Friendly name for this setup"
+      default: "Development Environment"
+
+    setup_environment:
+      type: string
+      enum: ["development", "production", "staging"]
+      default: "development"
+
+    # Feature flags
+    enabled_roles:
+      type: array
+      description: "List of roles to enable"
+      items:
+        type: string
+      default:
+        - core
+        - shell
+        - editors
+        - languages
+        - development
+
+    disabled_roles:
+      type: array
+      description: "List of roles to disable"
+      items:
+        type: string
+      default: []
+
+    # Logging and monitoring
+    logging:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        level:
+          type: string
+          enum: ["debug", "info", "warning", "error"]
+          default: "info"
+        file:
+          type: string
+          default: "~/.devkit/logs/setup.log"
+        archive:
+          type: boolean
+          description: "Archive old logs"
+          default: true
+
+    # Performance settings
+    performance:
+      type: object
+      properties:
+        parallel_tasks:
+          type: integer
+          description: "Number of parallel Ansible tasks"
+          minimum: 1
+          default: 4
+        timeout:
+          type: integer
+          description: "Task timeout in seconds"
+          minimum: 30
+          default: 300
+        cache_downloads:
+          type: boolean
+          description: "Cache Homebrew packages"
+          default: true
+
+    # Backup settings
+    backup:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        path:
+          type: string
+          default: "~/.devkit/backups"
+        max_backups:
+          type: integer
+          minimum: 1
+          default: 10
+        compress:
+          type: boolean
+          default: true
+
+    # Verification settings
+    verification:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        run_after_setup:
+          type: boolean
+          default: true
+        detailed_report:
+          type: boolean
+          default: true
+
+    # Security settings
+    security:
+      type: object
+      properties:
+        enable_ssh_setup:
+          type: boolean
+          default: false
+        enable_gpg_setup:
+          type: boolean
+          default: false
+        enable_audit_logging:
+          type: boolean
+          default: true
+        require_verification:
+          type: boolean
+          description: "Require verification before applying changes"
+          default: false
+
+    # Update settings
+    updates:
+      type: object
+      properties:
+        check_for_updates:
+          type: boolean
+          default: true
+        auto_update_tools:
+          type: boolean
+          default: false
+        update_interval:
+          type: string
+          enum: ["daily", "weekly", "monthly"]
+          default: "weekly"
+
+# Per-role configuration
+roles:
+  type: object
+  additionalProperties:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      priority:
+        type: integer
+        description: "Execution order (lower = earlier)"
+      config:
+        type: object
+        description: "Role-specific configuration"
+        additionalProperties: true
+
+# Group-specific overrides (development, design, qa, sre, etc.)
+groups:
+  type: object
+  additionalProperties:
+    type: object
+    properties:
+      enabled_roles:
+        type: array
+        items:
+          type: string
+      disabled_roles:
+        type: array
+        items:
+          type: string
+      role_configs:
+        type: object
+        additionalProperties: true
+
+# Platform-specific overrides (macos, linux)
+platforms:
+  type: object
+  properties:
+    macos:
+      type: object
+      properties:
+        enabled_roles:
+          type: array
+          items:
+            type: string
+        role_configs:
+          type: object
+          additionalProperties: true
+    linux:
+      type: object
+      properties:
+        enabled_roles:
+          type: array
+          items:
+            type: string
+        role_configs:
+          type: object
+          additionalProperties: true
+
+# Plugin configuration
+plugins:
+  type: object
+  properties:
+    enabled:
+      type: boolean
+      default: true
+    load_custom:
+      type: boolean
+      description: "Load plugins from custom directory"
+      default: true
+    custom_path:
+      type: string
+      default: "~/.devkit/plugins"
+    hooks:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string

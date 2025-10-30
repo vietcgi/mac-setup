@@ -7,7 +7,7 @@
 ### Before (Old Setup)
 
 ```yaml
-mac-setup/
+devkit/
 ├── bootstrap.sh                 # Complex bootstrap
 ├── main.yml                     # Main playbook
 ├── defaults/main.yml            # 200+ lines of config
@@ -35,7 +35,7 @@ mac-setup/
 ### After (New Setup)
 
 ```yaml
-mac-setup/
+devkit/
 ├── setup.yml                    # Single clean playbook (~250 lines)
 ├── bootstrap-ansible.sh         # Simple bootstrap
 ├── Brewfile                     # All packages (Homebrew's native format)
@@ -74,7 +74,7 @@ mac-setup/
 
 ```bash
 # Backup everything (just in case)
-cp -r ~/mac-setup ~/mac-setup-backup
+cp -r ~/mac-setup ~/devkit-backup
 ```
 
 **Note**: The old Ansible files have been removed in v3.0.0. If you're
@@ -313,7 +313,7 @@ ansible-playbook setup.yml
 
 ```bash
 # If you kept the backup
-cp -r ~/mac-setup-backup/* ~/mac-setup/
+cp -r ~/devkit-backup/* ~/devkit/
 
 # Run old bootstrap
 ./bootstrap.sh
@@ -325,7 +325,7 @@ You can run **both** setups side-by-side:
 
 ```bash
 # Old setup (archived)
-cd ~/mac-setup-backup/
+cd ~/devkit-backup/
 ansible-playbook main.yml
 
 # New setup

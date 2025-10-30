@@ -37,8 +37,8 @@ how to get help.
 
 For bugs, feature requests, and questions:
 
-1. **Search existing issues** first: [Search Issues](https://github.com/vietcgi/mac-setup/issues)
-2. **Open a new issue** if needed: [New Issue](https://github.com/vietcgi/mac-setup/issues/new)
+1. **Search existing issues** first: [Search Issues](https://github.com/vietcgi/devkit/issues)
+2. **Open a new issue** if needed: [New Issue](https://github.com/vietcgi/devkit/issues/new)
 
 When opening an issue, please include:
 
@@ -58,7 +58,7 @@ When opening an issue, please include:
 
 ### GitHub Discussions
 
-For general questions and discussions: [Discussions](https://github.com/vietcgi/mac-setup/discussions)
+For general questions and discussions: [Discussions](https://github.com/vietcgi/devkit/discussions)
 
 Topics:
 
@@ -291,7 +291,7 @@ If you've:
 - Searched existing issues
 - Run verification tools
 
-...and still need help, please [open an issue](https://github.com/vietcgi/mac-setup/issues/new) with all the
+...and still need help, please [open an issue](https://github.com/vietcgi/devkit/issues/new) with all the
 details.
 
 ---

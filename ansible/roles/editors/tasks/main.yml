@@ -1,0 +1,193 @@
+# Editors role - Neovim, VS Code, JetBrains IDE configuration
+
+- name: Set variables
+  ansible.builtin.set_fact:
+    home_dir: "{{ lookup('env', 'HOME') or '/root' }}"
+    homebrew_prefix: "{{ '/opt/homebrew' if is_macos else '/home/linuxbrew/.linuxbrew' }}"
+
+- name: Install Neovim
+  block:
+    - name: Install Neovim
+      ansible.builtin.shell: |
+        {{ homebrew_prefix }}/bin/brew install neovim
+      changed_when: false
+      tags: [editors, neovim]
+
+    - name: Create Neovim config directory
+      ansible.builtin.file:
+        path: "{{ home_dir }}/.config/nvim/lua/plugins"
+        state: directory
+        mode: '0755'
+      tags: [editors, neovim, config]
+
+    - name: Install vim-plug (plugin manager)
+      ansible.builtin.shell: |
+        curl -fLo "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim" --create-dirs \
+          https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      args:
+        creates: "{{ home_dir }}/.local/share/nvim/site/autoload/plug.vim"
+      tags: [editors, neovim, plugins]
+
+    - name: Configure Neovim init.lua
+      ansible.builtin.copy:
+        content: |
+          -- Mac-Setup Neovim Configuration
+          -- Modern Lua-based configuration
+
+          -- Basic settings
+          local opt = vim.opt
+          opt.number = true
+          opt.relativenumber = true
+          opt.tabstop = 2
+          opt.shiftwidth = 2
+          opt.expandtab = true
+          opt.smartindent = true
+          opt.wrap = false
+          opt.ignorecase = true
+          opt.smartcase = true
+          opt.incsearch = true
+          opt.hlsearch = true
+          opt.termguicolors = true
+          opt.background = "dark"
+
+          -- Keymaps
+          local keymap = vim.keymap.set
+          local opts = { noremap = true, silent = true }
+
+          keymap('n', '<leader>e', ':Explore<CR>', opts)
+          keymap('n', '<leader>w', ':write<CR>', opts)
+          keymap('n', '<leader>q', ':quit<CR>', opts)
+          keymap('n', 'jk', '<Esc>', opts)
+
+          -- LSP Configuration
+          local capabilities = require('cmp_nvim_lsp').default_capabilities()
+
+          local lspconfig = require('lspconfig')
+
+          -- Setup common LSP servers
+          local servers = {
+            'lua_ls',
+            'pyright',
+            'tsserver',
+            'gopls',
+            'rust_analyzer',
+          }
+
+          for _, server in ipairs(servers) do
+            lspconfig[server].setup({
+              capabilities = capabilities,
+            })
+          end
+
+          -- Autocompletion
+          local cmp = require('cmp')
+          cmp.setup({
+            snippet = {
+              expand = function(args)
+                require('luasnip').lsp_expand(args.body)
+              end,
+            },
+            mapping = cmp.mapping.preset.insert({
+              ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+              ['<C-f>'] = cmp.mapping.scroll_docs(4),
+              ['<C-Space>'] = cmp.mapping.complete(),
+              ['<C-e>'] = cmp.mapping.abort(),
+              ['<CR>'] = cmp.mapping.confirm({ select = true }),
+            }),
+            sources = cmp.config.sources({
+              { name = 'nvim_lsp' },
+              { name = 'luasnip' },
+              { name = 'buffer' },
+            })
+          })
+
+        dest: "{{ home_dir }}/.config/nvim/init.lua"
+        mode: '0644'
+        backup: yes
+      tags: [editors, neovim, config]
+
+  tags: [editors, neovim]
+
+- name: Install VS Code
+  block:
+    - name: Install VS Code
+      ansible.builtin.shell: |
+        {{ homebrew_prefix }}/bin/brew install --cask visual-studio-code
+      changed_when: false
+      when: is_macos
+      tags: [editors, vscode]
+
+    - name: Create VS Code settings directory
+      ansible.builtin.file:
+        path: "{{ home_dir }}/Library/Application Support/Code/User"
+        state: directory
+        mode: '0755'
+      when: is_macos
+      tags: [editors, vscode, config]
+
+    - name: Configure VS Code settings
+      ansible.builtin.copy:
+        content: |
+          {
+            "editor.fontSize": 13,
+            "editor.fontFamily": "MesloLGS NF",
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "esbenp.prettier-vscode",
+            "files.exclude": {
+              "**/.git": true,
+              "**/.DS_Store": true,
+              "**/node_modules": true
+            },
+            "python.linting.enabled": true,
+            "python.linting.pylintEnabled": true,
+            "[python]": {
+              "editor.defaultFormatter": "ms-python.python",
+              "editor.formatOnSave": true
+            },
+            "extensions.recommendations": [
+              "ms-python.python",
+              "wholroyd.jinja",
+              "redhat.vscode-yaml",
+              "streetsidesoftware.code-spell-checker",
+              "esbenp.prettier-vscode",
+              "dbaeumer.vscode-eslint",
+              "eamodio.gitlens",
+              "github.copilot"
+            ]
+          }
+
+        dest: "{{ home_dir }}/Library/Application Support/Code/User/settings.json"
+        mode: '0644'
+        backup: yes
+      when: is_macos
+      tags: [editors, vscode, config]
+
+    - name: Install VS Code extensions
+      ansible.builtin.shell: |
+        code --install-extension {{ item }}
+      loop:
+        - ms-python.python
+        - wholroyd.jinja
+        - redhat.vscode-yaml
+        - streetsidesoftware.code-spell-checker
+        - esbenp.prettier-vscode
+        - dbaeumer.vscode-eslint
+        - eamodio.gitlens
+        - github.copilot
+      changed_when: false
+      when: is_macos
+      tags: [editors, vscode, extensions]
+
+  tags: [editors, vscode]
+
+- name: Verify editors are installed
+  ansible.builtin.shell: "{{ item }} --version"
+  register: editors_check
+  loop:
+    - nvim
+    - code
+  changed_when: false
+  failed_when: false
+  tags: [validation, editors]

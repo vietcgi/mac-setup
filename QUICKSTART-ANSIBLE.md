@@ -6,10 +6,10 @@
 
 ```bash
 # Clone or navigate to this repo
-cd ~/mac-setup
+cd ~/devkit
 
 # Run bootstrap
-./bootstrap-ansible.sh
+./bootstrap.sh
 
 # Done! [OK]
 ```
@@ -74,10 +74,10 @@ cd ~/mac-setup
 ```bash
 # If you don't have this repo yet
 git clone <your-repo-url> ~/mac-setup
-cd ~/mac-setup
+cd ~/devkit
 
 # If you already have it
-cd ~/mac-setup
+cd ~/devkit
 git pull
 ```
 

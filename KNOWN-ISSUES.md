@@ -126,7 +126,7 @@ If you see this warning in your existing config:
 ansible-playbook -i inventory.yml setup.yml --tags neovim
 
 # Or manually copy the updated file
-cp /Users/kevin/mac-setup/dotfiles/nvim/lua/plugins/lsp.lua ~/.config/nvim/lua/plugins/
+cp /Users/kevin/devkit/dotfiles/nvim/lua/plugins/lsp.lua ~/.config/nvim/lua/plugins/
 nvim +":Lazy sync" +qa
 ```
 
@@ -202,7 +202,7 @@ wk.add({
 
 ```bash
 # Copy updated config
-cp /Users/kevin/mac-setup/dotfiles/nvim/lua/plugins/which-key.lua ~/.config/nvim/lua/plugins/
+cp /Users/kevin/devkit/dotfiles/nvim/lua/plugins/which-key.lua ~/.config/nvim/lua/plugins/
 
 # Restart Neovim
 nvim
@@ -461,10 +461,10 @@ ansible-playbook -i inventory.yml setup.yml -vvv
 ls -la ~/.*rc ~/.*config
 
 # Check Brewfile
-cat /Users/kevin/mac-setup/Brewfile
+cat /Users/kevin/devkit/Brewfile
 
 # Check group vars
-cat /Users/kevin/mac-setup/group_vars/all.yml
+cat /Users/kevin/devkit/group_vars/all.yml
 ```
 
 ### Test Individual Components: Targeted Playbook Runs

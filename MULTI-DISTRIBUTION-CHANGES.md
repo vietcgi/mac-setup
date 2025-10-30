@@ -443,8 +443,8 @@ localhost  : ok=XX   changed=XX   unreachable=0   failed=0   skipped=XX
 
 ```bash
 # Works on Debian, Ubuntu, Fedora, Arch, openSUSE, etc.
-git clone https://github.com/YOUR_USERNAME/mac-setup.git
-cd mac-setup
+git clone https://github.com/YOUR_USERNAME/devkit.git
+cd devkit
 chmod +x bootstrap-ansible.sh
 ./bootstrap-ansible.sh
 ```
@@ -502,8 +502,8 @@ The script will:
 
 ```bash
 # Now works out of the box
-git clone https://github.com/YOUR_USERNAME/mac-setup.git
-cd mac-setup
+git clone https://github.com/YOUR_USERNAME/devkit.git
+cd devkit
 ./bootstrap-ansible.sh  # Automatically detects Fedora/Arch
 ```
 

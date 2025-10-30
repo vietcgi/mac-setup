@@ -81,7 +81,7 @@ retry brew install python3 || {
 ### 3. ✅ Configuration Management Updates
 
 #### Directory Structure
-- **Old**: `~/.mac-setup/`
+- **Old**: `~/.devkit/`
 - **New**: `~/.devkit/` (plus `~/.devkit/logs/`)
 - **Benefit**: Clearer project naming and log organization
 
@@ -263,7 +263,7 @@ Display detailed help and examples.
 2. Updated `install_homebrew()` to use retry logic
 3. Updated `install_python()` with better error handling
 4. Updated `install_ansible()` with helpful messages
-5. Changed `~/.mac-setup/` to `~/.devkit/`
+5. Changed `~/.devkit/` to `~/.devkit/`
 6. Updated PROJECT_NAME to "Devkit"
 7. Enhanced help text with better formatting
 8. Updated success messages with new paths
