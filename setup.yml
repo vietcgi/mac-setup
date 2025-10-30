@@ -26,10 +26,10 @@
     # Initialize Variables
     # =========================================================================
 
-  - name: Set user and home variables from environment
+  - name: Set user and home variables
     ansible.builtin.set_fact:
-      user: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root' }}"
-      home: "{{ lookup('env', 'HOME') }}"
+      user: "{{ ansible_user_id }}"
+      home: "{{ ansible_user_dir }}"
     tags: [always]
 
     # =========================================================================
