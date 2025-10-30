@@ -32,6 +32,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_NAME="Devkit"
 PYTHON_REQUIRED=true
 INTERACTIVE_MODE=false
+SKIP_ANSIBLE=false
+VERIFY_ONLY=false
+ENVIRONMENT="development"
+SELECTED_ROLES="core,shell,editors,languages,development"
 
 ################################################################################
 # Utility Functions
