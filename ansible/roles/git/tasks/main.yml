@@ -138,7 +138,9 @@
   notify: reload git config
   tags: [git, config]
 
-# GitHub SSH URL Rewrite (conditional - only if SSH keys are available)
+# GitHub SSH URL Rewrite (LOCAL ONLY - devkit repo only, NOT global)
+# IMPORTANT: Global SSH rewrite breaks Homebrew and other tools
+# Only apply SSH rewrite to devkit repository
 - name: Check if SSH keys exist for git operations
   ansible.builtin.stat:
     path: "{{ item }}"
@@ -149,21 +151,23 @@
     - "{{ home_dir }}/.ssh/id_ecdsa"
   tags: [git, config, ssh]
 
-- name: Configure git to use SSH for GitHub URLs (if SSH keys available)
-  community.general.git_config:
-    name: url."git@github.com:".insteadOf
-    value: "https://github.com/"
-    scope: global
-  when: ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length > 0
+- name: Configure git to use SSH for GitHub URLs in devkit repo (if SSH keys available)
+  ansible.builtin.shell: |
+    cd {{ repo_root }}
+    git config --local url."git@github.com:".insteadOf https://github.com/
+  when:
+    - repo_root is defined
+    - ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length > 0
   notify: reload git config
   tags: [git, config, ssh]
 
-- name: Remove SSH URL rewrite if no SSH keys found (prevent Homebrew failures)
-  community.general.git_config:
-    name: url."git@github.com:".insteadOf
-    scope: global
-    state: absent
-  when: ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 0
+- name: Remove SSH URL rewrite if no SSH keys found (prevent auth failures)
+  ansible.builtin.shell: |
+    cd {{ repo_root }}
+    git config --local --unset url."git@github.com:".insteadOf 2>/dev/null || true
+  when:
+    - repo_root is defined
+    - ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 0
   notify: reload git config
   tags: [git, config, ssh]
 
