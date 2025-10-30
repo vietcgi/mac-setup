@@ -105,6 +105,17 @@
     tags: [homebrew, packages]
 
     # =========================================================================
+    # Dotfiles Management (via role)
+    # =========================================================================
+    # Deploy configuration files from repository to home directories
+    # This ensures all dotfiles are synchronized and up-to-date
+
+  - name: Include dotfiles role
+    ansible.builtin.include_role:
+      name: dotfiles
+    tags: [dotfiles, configuration, always]
+
+    # =========================================================================
     # Linux Package Installation (apt)
     # =========================================================================
 

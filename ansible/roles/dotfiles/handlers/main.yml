@@ -1,0 +1,7 @@
+---
+# Dotfiles role handlers
+
+- name: dotfiles changed
+  ansible.builtin.debug:
+    msg: "Dotfiles have been updated. You may need to reload your shell configuration."
+  listen: dotfiles changed

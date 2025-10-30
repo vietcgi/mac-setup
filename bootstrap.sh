@@ -417,100 +417,6 @@ validate_config_bash() {
 }
 
 ################################################################################
-# Dotfiles Sync (Copy changed dotfiles from repo to home)
-################################################################################
-
-sync_dotfiles() {
-    print_section "Syncing dotfiles"
-
-    local dotfiles_dir="$SCRIPT_DIR/dotfiles"
-    local home_dir="$HOME"
-    local synced=0
-    local skipped=0
-
-    if [[ ! -d "$dotfiles_dir" ]]; then
-        log_warning "Dotfiles directory not found at $dotfiles_dir"
-        return 0
-    fi
-
-    # Array of dotfiles/directories to sync (relative to dotfiles dir)
-    local dotfiles=(
-        ".tmux.conf"
-        ".zshrc"
-        ".direnvrc"
-        ".inputrc"
-        "nvim"
-        "ghostty"
-    )
-
-    log_info "Checking for dotfile changes..."
-
-    for item in "${dotfiles[@]}"; do
-        local src="$dotfiles_dir/$item"
-        local dest=""
-
-        # Determine destination path
-        if [[ "$item" == "nvim" ]] || [[ "$item" == "ghostty" ]]; then
-            dest="$home_dir/.config/$item"
-        else
-            dest="$home_dir/$item"
-        fi
-
-        # Skip if source doesn't exist
-        if [[ ! -e "$src" ]]; then
-            log_warning "Dotfile not found: $src"
-            continue
-        fi
-
-        # Check if destination exists and compare
-        if [[ -e "$dest" ]]; then
-            if cmp -s "$src" "$dest" 2>/dev/null; then
-                log_info "  ✓ $item (no changes)"
-                skipped=$((skipped + 1))
-                continue
-            else
-                log_info "  ↻ $item (updating...)"
-                # Backup existing file
-                cp "$dest" "$dest.backup.$(date +%s)" || true
-            fi
-        else
-            log_info "  + $item (new)"
-        fi
-
-        # Create parent directory if needed
-        mkdir -p "$(dirname "$dest")"
-
-        # Copy file or sync directory
-        if [[ -d "$src" ]]; then
-            # For directories, use rsync if available, otherwise cp
-            if command -v rsync &> /dev/null; then
-                rsync -av --delete "$src/" "$dest/" 2>/dev/null || {
-                    log_warning "  Failed to rsync $item"
-                    continue
-                }
-            else
-                rm -rf "$dest"
-                cp -r "$src" "$dest" || {
-                    log_warning "  Failed to copy $item"
-                    continue
-                }
-            fi
-        else
-            # For files, use cp
-            cp "$src" "$dest" || {
-                log_warning "  Failed to copy $item"
-                continue
-            }
-        fi
-
-        synced=$((synced + 1))
-    done
-
-    echo ""
-    log_info "Dotfiles sync complete: $synced updated, $skipped unchanged"
-}
-
-################################################################################
 # Interactive Setup (Pure Bash - No Python Required)
 ################################################################################
 
@@ -794,27 +700,21 @@ main() {
     create_default_config || exit 1
     validate_config_bash || exit 1
 
-    # Step 6: Sync dotfiles
-    print_section "Step 6: Sync Dotfiles"
-    sync_dotfiles || {
-        log_warning "Dotfiles sync failed. Continuing with setup..."
-    }
-
-    # Step 7: Interactive setup
+    # Step 6: Interactive setup
     if [[ "$INTERACTIVE_MODE" == "true" ]]; then
-        print_section "Step 7: Interactive Setup"
+        print_section "Step 6: Interactive Setup"
         interactive_setup_bash
     fi
 
-    # Step 8: Verification
-    print_section "Step 8: Verification"
+    # Step 7: Verification
+    print_section "Step 7: Verification"
     verify_installation || {
         log_warning "Some checks failed but setup may still work"
     }
 
-    # Step 9: Run Ansible
+    # Step 8: Run Ansible
     if [[ "$SKIP_ANSIBLE" != "true" ]] && [[ "$VERIFY_ONLY" != "true" ]]; then
-        print_section "Step 9: Running Setup"
+        print_section "Step 8: Running Setup"
         run_ansible_setup || exit 1
     fi
 

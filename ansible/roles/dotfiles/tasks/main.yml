@@ -1,0 +1,135 @@
+---
+# Dotfiles role - Deploy configuration files from repository to home directory
+# This role ensures idempotent, auditable configuration management
+
+- name: Set dotfiles facts
+  ansible.builtin.set_fact:
+    dotfiles_source_dir: "{{ playbook_dir }}/dotfiles"
+    dotfiles_changed_count: 0
+    dotfiles_skipped_count: 0
+  tags: [dotfiles, always]
+
+- name: Ensure dotfiles source directory exists
+  ansible.builtin.stat:
+    path: "{{ dotfiles_source_dir }}"
+  register: _dotfiles_source_stat
+  tags: [dotfiles, always]
+
+- name: Fail if dotfiles directory not found
+  ansible.builtin.fail:
+    msg: "Dotfiles source directory not found at {{ dotfiles_source_dir }}"
+  when: not _dotfiles_source_stat.stat.exists
+  tags: [dotfiles]
+
+# ============================================================================
+# Deploy individual files
+# ============================================================================
+
+- name: Create parent directories for dotfiles
+  ansible.builtin.file:
+    path: "{{ item.dest | dirname }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ dotfiles_files_to_sync }}"
+  when: item.dest is defined
+  tags: [dotfiles, files]
+
+- name: Deploy dotfiles (files)
+  ansible.builtin.copy:
+    src: "{{ dotfiles_source_dir }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    owner: "{{ ansible_user_id | default(omit) }}"
+    group: "{{ ansible_user_gid | default(omit) }}"
+    backup: "{{ dotfiles_create_backups }}"
+  register: _dotfiles_copy_result
+  loop: "{{ dotfiles_files_to_sync }}"
+  when:
+    - item.src is defined
+    - item.dest is defined
+  notify: dotfiles changed
+  tags: [dotfiles, files]
+
+# ============================================================================
+# Deploy directories
+# ============================================================================
+
+- name: Create parent directories for dotfile directories
+  ansible.builtin.file:
+    path: "{{ item.dest | dirname }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ dotfiles_dirs_to_sync }}"
+  when: item.dest is defined
+  tags: [dotfiles, directories]
+
+- name: Deploy dotfiles (directories)
+  ansible.builtin.copy:
+    src: "{{ dotfiles_source_dir }}/{{ item.src }}/"
+    dest: "{{ item.dest }}/"
+    mode: preserve
+    directory_mode: '0755'
+    owner: "{{ ansible_user_id | default(omit) }}"
+    group: "{{ ansible_user_gid | default(omit) }}"
+    backup: "{{ dotfiles_create_backups }}"
+  register: _dotfiles_dir_copy_result
+  loop: "{{ dotfiles_dirs_to_sync }}"
+  when:
+    - item.src is defined
+    - item.dest is defined
+  notify: dotfiles changed
+  tags: [dotfiles, directories]
+
+# ============================================================================
+# Validation and Reporting
+# ============================================================================
+
+- name: Validate deployed dotfiles
+  block:
+    - name: Check shell syntax for zsh config
+      ansible.builtin.shell: |
+        zsh -n {{ ansible_user_dir }}/.zshrc
+      changed_when: false
+      failed_when: false
+      register: _zshrc_validate
+      when: dotfiles_files_to_sync | selectattr('dest', 'match', '.zshrc$') | list | length > 0
+      tags: [dotfiles, validation]
+
+    - name: Report zsh config validation status
+      ansible.builtin.debug:
+        msg: "WARNING: zsh config has syntax errors"
+      when:
+        - _zshrc_validate is defined
+        - _zshrc_validate.rc != 0
+      tags: [dotfiles, validation, debug]
+
+  when: dotfiles_validate
+  tags: [dotfiles, validation]
+
+- name: Generate deployment report
+  ansible.builtin.set_fact:
+    _dotfiles_report:
+      files_deployed: "{{ _dotfiles_copy_result | selectattr('changed', 'eq', true) | list | length }}"
+      dirs_deployed: "{{ _dotfiles_dir_copy_result | selectattr('changed', 'eq', true) | list | length }}"
+      files_unchanged: "{{ _dotfiles_copy_result | selectattr('changed', 'eq', false) | list | length }}"
+      dirs_unchanged: "{{ _dotfiles_dir_copy_result | selectattr('changed', 'eq', false) | list | length }}"
+  tags: [dotfiles, debug]
+
+- name: Display deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "Dotfiles Deployment Summary:"
+      - "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      - "Files deployed:   {{ _dotfiles_report.files_deployed }}"
+      - "Files unchanged:  {{ _dotfiles_report.files_unchanged }}"
+      - "Directories deployed:   {{ _dotfiles_report.dirs_deployed }}"
+      - "Directories unchanged:  {{ _dotfiles_report.dirs_unchanged }}"
+      - ""
+      - "Key Configuration Files:"
+      - "  ~/.tmux.conf         → tmux (with soft pink activity highlight)"
+      - "  ~/.zshrc             → zsh shell"
+      - "  ~/.direnvrc          → direnv"
+      - "  ~/.inputrc           → readline"
+      - "  ~/.config/nvim/      → neovim editor"
+      - "  ~/.config/ghostty/   → ghostty terminal"
+  tags: [dotfiles, debug]
