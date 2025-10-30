@@ -1,0 +1,64 @@
+name: Version Check
+
+on:
+  pull_request:
+    paths:
+      - VERSION
+      - CHANGELOG.md
+      - .github/workflows/version-check.yml
+
+jobs:
+  version-validation:
+    name: Validate Version Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check VERSION file format
+        run: |
+          if [ ! -f VERSION ]; then
+            echo "ERROR: VERSION file not found"
+            exit 1
+          fi
+
+          VERSION=$(cat VERSION)
+          if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z (semantic versioning)"
+            exit 1
+          fi
+
+          echo "✓ Version format valid: $VERSION"
+
+      - name: Verify CHANGELOG.md is updated
+        run: |
+          VERSION=$(cat VERSION)
+          if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
+            echo "ERROR: CHANGELOG.md not updated for version $VERSION"
+            echo "Please add a section: ## [$VERSION] - $(date +%Y-%m-%d)"
+            exit 1
+          fi
+          echo "✓ CHANGELOG.md is updated for version $VERSION"
+
+      - name: Check git tags don't conflict
+        run: |
+          VERSION=$(cat VERSION)
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "ERROR: Git tag already exists: $TAG"
+            echo "This version has already been released"
+            exit 1
+          fi
+          echo "✓ Git tag not yet created: $TAG"
+
+      - name: Validate semantic versioning
+        run: |
+          VERSION=$(cat VERSION)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          if ! [[ $MAJOR =~ ^[0-9]+$ ]] || ! [[ $MINOR =~ ^[0-9]+$ ]] || ! [[ $PATCH =~ ^[0-9]+$ ]]; then
+            echo "ERROR: Invalid semantic version: $VERSION"
+            exit 1
+          fi
+
+          echo "✓ Semantic version valid: MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
