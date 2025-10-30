@@ -28,8 +28,8 @@
 
   - name: Set user and home facts
     ansible.builtin.set_fact:
-      user: '{{ ansible_user_id }}'
-      home: '{{ ansible_env.HOME }}'
+      user: '{{ ansible_user_id | default("root") }}'
+      home: '{{ ansible_env.HOME | default(ansible_user_dir) }}'
     tags: [always]
 
     # =========================================================================
