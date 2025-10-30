@@ -1,19 +1,19 @@
-# Modern Development Environment Setup
+# Devkit - Modern Development Environment Setup
 
 **Fast, cross-platform, reproducible development environment for desktop machines.**
 
 ![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue)
-![Setup Time](https://img.shields.io/badge/setup%20time-~2%20min-green)
+![Setup Time](https://img.shields.io/badge/setup%20time-~10%20min-green)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ---
 
-## Quick Start (2 Minutes)
+## Quick Start (One Command)
 
-**One command to set up your entire development environment:**
+**Set up your entire development environment in ~10 minutes:**
 
 ```bash
-./bootstrap-ansible.sh
+./bootstrap.sh
 ```
 
 **Done!** Your desktop is now configured with:
@@ -25,13 +25,21 @@
 - Dotfiles (managed with chezmoi)
 - macOS configuration (Dock, defaults)
 
-**Detailed guide:** [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)
+**Clone and run:**
+
+```bash
+git clone https://github.com/vietcgi/devkit.git
+cd devkit
+./bootstrap.sh
+```
 
 **Verify your setup:**
 
 ```bash
 ./verify-setup.sh
 ```
+
+**For detailed guide:** See [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
@@ -165,21 +173,25 @@
 
 ## Architecture
 
-### Single Playbook Design
+### Single Bootstrap Design
 
-```yaml
-mac-setup/
-├── bootstrap-ansible.sh       # One-command bootstrap
-├── setup.yml                  # Main Ansible playbook (~625 lines)
+```
+devkit/
+├── bootstrap.sh               # PRIMARY ENTRY POINT - Zero-dependency bootstrap
+├── setup.yml                  # Main Ansible playbook
+├── inventory.yml              # Ansible inventory
+├── verify-setup.sh            # Post-setup verification
 ├── Brewfile                   # All packages (Homebrew's native format)
 ├── Brewfile.sre              # SRE-specific additions
 ├── .mise.toml                # Tool version management
-├── inventory.yml             # Fleet management (groups: dev, sre, qa, design)
 ├── group_vars/               # Group-specific configuration
 │   ├── all.yml              # Global settings
 │   ├── development.yml      # Dev machines
 │   └── sre.yml              # SRE machines
 ├── host_vars/               # Host-specific overrides
+├── config/                   # Configuration files
+│   ├── config.yaml          # User configuration
+│   └── schema.yaml          # Configuration schema
 └── dotfiles/                # Managed by chezmoi
     ├── .zshrc
     ├── .tmux.conf
@@ -235,30 +247,31 @@ Manage different machine types with inventory groups:
 
 ---
 
-## Alternative Approaches
+## Setup Options
 
-### Option 1: Modernized Ansible (Recommended)
+### Option 1: Standard Setup (Recommended)
 
-**→ [QUICKSTART-ANSIBLE.md](QUICKSTART-ANSIBLE.md)**
+**→ `./bootstrap.sh`**
 
 Perfect for:
 
 - Desktop machines (Mac/Linux)
 - GUI app installation
-- Fleet management (20+ machines)
-- Declarative configuration
+- Most developers
+- Zero Python dependency in bootstrap
 
-### Option 2: Shell-Only (Minimal Dependencies)
+Includes: 100+ development tools, shell config, editors
 
-**→ Use [Justfile](Justfile) directly**
+### Option 2: Interactive Setup
+
+**→ `./bootstrap.sh --interactive`**
 
 Perfect for:
 
-- Minimal dependencies (no Ansible/Python)
-- Maximum speed
-- Simple single-machine setup
-
-Run: `just bootstrap`
+- First-time users
+- Customized installations
+- Choosing specific roles
+- Learning what gets installed
 
 ### Option 3: SRE/DevOps Setup
 
@@ -272,6 +285,16 @@ Perfect for:
 - Extended monitoring & IaC tools
 
 See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for SRE setup instructions.
+
+### Option 4: Verification Only
+
+**→ `./bootstrap.sh --verify-only`**
+
+Perfect for:
+
+- Checking prerequisites
+- System compatibility test
+- Dry-run before full setup
 
 ---
 
