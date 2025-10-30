@@ -1,3 +1,4 @@
+---
 # Git Configuration Role
 # Manages git configuration, hooks, templates, and reload mechanisms
 # Supports system-wide and user-specific configurations
@@ -194,11 +195,84 @@
           value: "{{ git_ssh_signing_key }}"
         - name: commit.gpgSign
           value: "{{ git_auto_sign_commits | default('false') }}"
-      when: ssh_key_check.stat.exists and git_enable_ssh_signing | default(false)
+      when:
+        - ssh_key_check.stat.exists
+        - git_enable_ssh_signing | default(false)
       notify: reload git config
       tags: [git, ssh]
 
   tags: [git, ssh, optional]
+
+# Pre-Commit Framework Setup (Multi-language quality enforcement)
+- name: Install pre-commit framework
+  block:
+    - name: Install pre-commit via pip
+      ansible.builtin.pip:
+        name: "pre-commit=={{ git_precommit_version }}"
+        state: present
+        extra_args: "--upgrade"
+      environment:
+        HOME: "{{ home_dir }}"
+      register: precommit_install
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, install]
+
+    - name: Verify pre-commit installation
+      ansible.builtin.command: pre-commit --version
+      register: precommit_version
+      changed_when: false
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, verify]
+
+    - name: Copy .pre-commit-config.yaml to repo root
+      ansible.builtin.copy:
+        src: >-
+          {{ role_path }}/../../../.pre-commit-config.yaml
+        dest: "{{ repo_root }}/.pre-commit-config.yaml"
+        mode: '0644'
+        owner: "{{ current_user }}"
+        group: staff
+      when:
+        - git_enable_precommit | default(true)
+        - repo_root is defined
+      tags: [git, precommit, config]
+
+    - name: Unset core.hooksPath if set (pre-commit requirement)
+      ansible.builtin.shell: |
+        if git config --global core.hooksPath > /dev/null 2>&1; then
+          git config --global --unset core.hooksPath
+          echo "unset"
+        else
+          echo "not-set"
+        fi
+      register: hooks_path_status
+      changed_when: hooks_path_status.stdout == "unset"
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, config]
+
+    - name: Initialize pre-commit hooks in repository
+      ansible.builtin.shell: |
+        cd {{ repo_root | default(lookup('env', 'PWD')) }}
+        pre-commit install
+      environment:
+        HOME: "{{ home_dir }}"
+      register: precommit_init
+      changed_when: false
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, init]
+
+    - name: Display pre-commit installation status
+      ansible.builtin.debug:
+        msg: |
+          Pre-Commit Framework Status:
+          =============================
+          Installed: {{ precommit_version.stdout | default('N/A') }}
+          Hooks Configured:
+            {{ precommit_init.stdout_lines | default(['Not initialized']) }}
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, verify]
+
+  tags: [git, precommit, optional]
 
 # Git Aliases
 - name: Configure git aliases
@@ -260,7 +334,8 @@
 - name: Create backup of git config
   ansible.builtin.shell: |
     if [ -f "{{ git_global_config }}" ]; then
-      cp "{{ git_global_config }}" "{{ home_dir }}/.devkit/git/gitconfig.backup.$(date +%s)"
+      cp "{{ git_global_config }}" \
+        "{{ home_dir }}/.devkit/git/gitconfig.backup.$(date +%s)"
     fi
   changed_when: false
   tags: [git, backup]

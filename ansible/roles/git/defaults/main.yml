@@ -1,3 +1,4 @@
+---
 # Git Role Default Variables
 # These can be overridden in group_vars, host_vars, or playbook
 
@@ -44,9 +45,12 @@ git_aliases:
   last: "log -1 HEAD"
   logs: "log --oneline"
   loga: "log --all --graph --oneline"
-  graph: "log --all --decorate --oneline --graph"
+  graph: >-
+    log --all --decorate --oneline --graph
   root: "rev-parse --show-toplevel"
-  cleanup: "branch -vv | grep 'gone' | awk '{print $1}' | xargs -r git branch -d"
+  cleanup: >-
+    branch -vv | grep 'gone' | awk '{print $1}' |
+    xargs -r git branch -d
   sync: "fetch --all --prune"
 
 # Core Configuration
@@ -77,7 +81,8 @@ git_pre_commit_script: |
   set -e
 
   # Check for trailing whitespace
-  if git diff --cached --name-only | xargs grep -l '[[:space:]]$' 2>/dev/null; then
+  if git diff --cached --name-only | \
+      xargs grep -l '[[:space:]]$' 2>/dev/null; then
     echo "❌ Error: Trailing whitespace found"
     exit 1
   fi
@@ -109,7 +114,8 @@ git_commit_msg_script: |
   fi
 
   # Check for conventional commit format (optional)
-  if ! echo "$COMMIT_MSG" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?:'; then
+  if ! echo "$COMMIT_MSG" | grep -qE \
+    '^(feat|fix|docs|style|refactor|test|chore|perf)(\(.+\))?:'; then
     echo "⚠️  Warning: Commit message doesn't follow conventional commit format"
     echo "   Expected format: <type>(<scope>): <subject>"
     echo "   Example: feat(auth): add two-factor authentication"
@@ -127,7 +133,8 @@ git_post_commit_script: |
   COMMIT_MSG=$(git log -1 --pretty=%B)
   TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
 
-  echo "[${TIMESTAMP}] Committed: ${COMMIT_HASH} - ${COMMIT_MSG}" >> .git/logs/commits.log 2>/dev/null || true
+  echo "[${TIMESTAMP}] Committed: ${COMMIT_HASH}" >> \
+    .git/logs/commits.log 2>/dev/null || true
 
 git_prepare_commit_msg_script: |
   #!/bin/bash
@@ -151,6 +158,11 @@ git_prepare_commit_msg_script: |
       rm -f "$COMMIT_MSG_FILE.bak"
     fi
   fi
+
+# Pre-Commit Framework Configuration
+git_enable_precommit: true
+git_precommit_version: "4.3.0"
+git_precommit_config_repo: ".pre-commit-config.yaml"
 
 # Feature Flags
 configure_git: true
