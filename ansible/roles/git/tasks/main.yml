@@ -130,6 +130,15 @@
   notify: reload git config
   tags: [git, config]
 
+# GitHub SSH URL Rewrite (for seamless SSH authentication)
+- name: Configure git to use SSH for GitHub URLs
+  community.general.git_config:
+    name: url."git@github.com:".insteadOf
+    value: "https://github.com/"
+    scope: global
+  notify: reload git config
+  tags: [git, config, ssh]
+
 # User Configuration
 - name: Configure git user info from variables
   community.general.git_config:
