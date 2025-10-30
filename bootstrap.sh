@@ -61,6 +61,47 @@ log_error() {
     echo -e "${RED}✗${NC} $1" >&2
 }
 
+suggest_fix() {
+    local issue="$1"
+    local suggestion="$2"
+    echo -e "${YELLOW}💡 Suggestion:${NC} $suggestion" >&2
+}
+
+show_help() {
+    local topic="$1"
+    case "$topic" in
+        "brew")
+            log_info "Homebrew installation help:"
+            log_info "  1. Check: /opt/homebrew/bin/brew --version"
+            log_info "  2. Add to PATH: echo 'eval \"\$(/opt/homebrew/bin/brew shellenv)\"' >> ~/.zshrc"
+            log_info "  3. Apply: eval \"\$(/opt/homebrew/bin/brew shellenv)\""
+            ;;
+        "python")
+            log_info "Python installation help:"
+            log_info "  1. Install: brew install python@3.12"
+            log_info "  2. Verify: python3 --version"
+            log_info "  3. Link: brew link python@3.12"
+            ;;
+        "ansible")
+            log_info "Ansible installation help:"
+            log_info "  1. Check Homebrew: brew --version"
+            log_info "  2. Install: brew install ansible"
+            log_info "  3. Verify: ansible --version"
+            ;;
+        "space")
+            log_info "Disk space solutions:"
+            log_info "  1. Check usage: df -h"
+            log_info "  2. Clean brew: brew cleanup --all"
+            log_info "  3. Clear cache: rm -rf ~/Library/Caches/*"
+            log_info "  4. Remove downloads: rm -rf ~/Downloads/*"
+            log_info "  5. Check large dirs: du -sh ~/"
+            ;;
+        *)
+            log_warning "Unknown help topic: $topic"
+            ;;
+    esac
+}
+
 print_header() {
     echo ""
     echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -193,12 +234,25 @@ install_homebrew() {
     if [[ "$OS" == "macos" ]]; then
         retry do_install_homebrew || {
             log_error "Failed to install Homebrew on macOS after 3 attempts"
+            log_error ""
+            log_error "This could be caused by:"
+            log_error "  • Network connectivity issues"
+            log_error "  • Firewall blocking GitHub access"
+            log_error "  • Insufficient disk space (5+ GB needed)"
+            log_error "  • Missing required command line tools"
+            suggest_fix "homebrew" "Run 'show_help brew' or check https://brew.sh"
             return 1
         }
     elif [[ "$OS" == "linux" ]]; then
         retry do_install_homebrew || {
             log_error "Failed to install Homebrew on Linux after 3 attempts"
-            log_info "You may need to install additional dependencies manually"
+            log_error ""
+            log_error "Common solutions:"
+            log_error "  • Check disk space: df -h"
+            log_error "  • Install build tools: sudo apt-get install build-essential"
+            log_error "  • Install git: sudo apt-get install git"
+            log_error "  • Check network: ping github.com"
+            suggest_fix "homebrew-linux" "See https://docs.brew.sh/Homebrew-on-Linux"
             return 1
         }
     fi
@@ -219,13 +273,24 @@ install_python() {
 
     if ! command -v brew &> /dev/null; then
         log_error "Homebrew is required to install Python"
-        log_info "Please install Homebrew first: https://brew.sh"
+        log_error ""
+        log_error "Please install Homebrew first:"
+        log_error "  /bin/bash -c \"\$(curl -fsSL https://brew.sh/install.sh)\""
+        log_error ""
+        suggest_fix "python" "Install Homebrew before installing Python"
         return 1
     fi
 
     # Use retry for network-dependent brew install
     retry brew install python3 || {
         log_error "Failed to install Python3 after 3 attempts"
+        log_error ""
+        log_error "Possible solutions:"
+        log_error "  • Check network connection: ping github.com"
+        log_error "  • Check disk space: df -h (need 2+ GB free)"
+        log_error "  • Update Homebrew: brew update"
+        log_error "  • Check Homebrew state: brew doctor"
+        suggest_fix "python" "Try manual installation: brew install python@3.12"
         return 1
     }
 
@@ -245,14 +310,30 @@ install_ansible() {
 
     if ! command -v brew &> /dev/null; then
         log_error "Homebrew is required to install Ansible"
-        log_info "Please install Homebrew first: https://brew.sh"
+        log_error ""
+        log_error "Please install Homebrew first: https://brew.sh"
+        suggest_fix "ansible" "Install Homebrew before attempting Ansible installation"
+        return 1
+    fi
+
+    if ! command -v python3 &> /dev/null; then
+        log_error "Python 3 is required to install Ansible"
+        log_error "Please install Python first via: brew install python3"
+        suggest_fix "ansible" "Install Python 3 before attempting Ansible installation"
         return 1
     fi
 
     # Use retry for network-dependent brew install
     retry brew install ansible || {
         log_error "Failed to install Ansible after 3 attempts"
-        log_info "You may need to install Ansible manually: brew install ansible"
+        log_error ""
+        log_error "Troubleshooting steps:"
+        log_error "  1. Check if Homebrew is working: brew --version"
+        log_error "  2. Update Homebrew: brew update"
+        log_error "  3. Check Python: python3 --version"
+        log_error "  4. Try individual install: brew install ansible"
+        log_error "  5. Check brew logs: brew log --file install.log"
+        suggest_fix "ansible" "See https://docs.ansible.com/ansible/latest/installation_guide/"
         return 1
     }
 
