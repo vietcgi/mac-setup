@@ -87,14 +87,6 @@ jobs:
         brew bundle check --file=Brewfile || true
         brew bundle check --file=Brewfile.sre || true
 
-    - name: Debug environment (macOS)
-      run: |
-        echo "USER: $USER"
-        echo "HOME: $HOME"
-        echo "LOGNAME: $LOGNAME"
-        whoami
-        id
-
     - name: Dry run Ansible playbook
       run: |
         ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
@@ -116,14 +108,6 @@ jobs:
     - name: Install Ansible
       run: |
         pip install ansible
-
-    - name: Debug environment (Ubuntu)
-      run: |
-        echo "USER: $USER"
-        echo "HOME: $HOME"
-        echo "LOGNAME: $LOGNAME"
-        whoami
-        id
 
     - name: Dry run Ansible playbook
       run: |
