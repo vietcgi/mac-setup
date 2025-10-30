@@ -23,16 +23,21 @@
 
   tasks:
     # =========================================================================
-    # Debug: Check what facts are available
+    # Initialize user and home directory using system commands
     # =========================================================================
 
-  - name: Show available facts
-    debug:
-      msg: |
-        ansible_user_id: {{ ansible_user_id | default('UNDEFINED') }}
-        ansible_user_dir: {{ ansible_user_dir | default('UNDEFINED') }}
-        ansible_home: {{ ansible_home | default('UNDEFINED') }}
-        ansible_env.HOME: {{ ansible_env.HOME | default('UNDEFINED') }}
+  - name: Get home directory using shell expansion
+    ansible.builtin.shell: |
+      eval echo ~{{ ansible_user_id | default(lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root') }}
+    register: home_result
+    changed_when: false
+    check_mode: no
+    tags: [always]
+
+  - name: Set home and user variables
+    ansible.builtin.set_fact:
+      home: "{{ home_result.stdout | trim }}"
+      user: "{{ ansible_user_id | default(lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root') }}"
     tags: [always]
 
     # =========================================================================
@@ -227,7 +232,7 @@
   - name: Install mise on Linux
     ansible.builtin.shell: /tmp/mise-installer.sh
     args:
-      creates: '{{ ansible_user_dir }}/.local/bin/mise'
+      creates: '{{ home }}/.local/bin/mise'
     when:
     - ansible_os_family != "Darwin"
     - install_dev_tools | default(true)
@@ -235,7 +240,7 @@
 
   - name: Add mise to PATH for Linux
     ansible.builtin.lineinfile:
-      path: '{{ ansible_user_dir }}/.bashrc'
+      path: '{{ home }}/.bashrc'
       line: eval "$(~/.local/bin/mise activate bash)"
       create: true
       mode: '0644'
@@ -296,7 +301,7 @@
 
   - name: Check Oh My Zsh installation
     ansible.builtin.stat:
-      path: '{{ ansible_user_dir }}/.oh-my-zsh'
+      path: '{{ home }}/.oh-my-zsh'
     register: ohmyzsh_check
     tags: [always, shell]
 
@@ -315,7 +320,7 @@
   - name: Clone Powerlevel10k theme
     ansible.builtin.git:
       repo: https://github.com/romkatv/powerlevel10k.git
-      dest: '{{ ansible_user_dir }}/.oh-my-zsh/custom/themes/powerlevel10k'
+      dest: '{{ home }}/.oh-my-zsh/custom/themes/powerlevel10k'
       depth: 1
       version: master
       update: true
@@ -329,7 +334,7 @@
   - name: Clone zsh plugins
     ansible.builtin.git:
       repo: '{{ item.repo }}'
-      dest: '{{ ansible_user_dir }}/.oh-my-zsh/custom/plugins/{{ item.name }}'
+      dest: '{{ home }}/.oh-my-zsh/custom/plugins/{{ item.name }}'
       version: master
       update: true
     loop: '{{ zsh_plugins }}'
@@ -352,7 +357,7 @@
   - name: Install fzf key bindings and completion
     ansible.builtin.shell: '{{ homebrew_prefix }}/opt/fzf/install --key-bindings --completion --no-update-rc'
     args:
-      creates: '{{ ansible_user_dir }}/.fzf.zsh'
+      creates: '{{ home }}/.fzf.zsh'
     when:
     - ansible_os_family == "Darwin"
     - install_shell_tools | default(true)
@@ -362,7 +367,7 @@
   - name: Download dircolors (LS_COLORS)
     ansible.builtin.get_url:
       url: https://raw.githubusercontent.com/trapd00r/LS_COLORS/master/LS_COLORS
-      dest: '{{ ansible_user_dir }}/.dircolors'
+      dest: '{{ home }}/.dircolors'
       mode: '0644'
     register: dircolors_result
     when: install_shell_tools | default(true)
@@ -380,7 +385,7 @@
   - name: Copy .inputrc configuration
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/.inputrc'
-      dest: '{{ ansible_user_dir }}/.inputrc'
+      dest: '{{ home }}/.inputrc'
       mode: '0644'
       backup: true
     when:
@@ -397,7 +402,7 @@
   - name: Copy .direnvrc configuration
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/.direnvrc'
-      dest: '{{ ansible_user_dir }}/.direnvrc'
+      dest: '{{ home }}/.direnvrc'
       mode: '0644'
       backup: true
     when:
@@ -407,7 +412,7 @@
 
   - name: Enable direnv in zsh
     ansible.builtin.lineinfile:
-      path: '{{ ansible_user_dir }}/.zshrc'
+      path: '{{ home }}/.zshrc'
       line: eval "$(direnv hook zsh)"
       state: present
       create: no
@@ -421,9 +426,9 @@
   - name: Configure passwordless sudo
     ansible.builtin.copy:
       content: |
-        # Allow {{ ansible_user_id }} to use sudo with no password
-        {{ ansible_user_id }} ALL=(ALL) NOPASSWD: ALL
-      dest: /etc/sudoers.d/{{ ansible_user_id }}
+        # Allow {{ user }} to use sudo with no password
+        {{ user }} ALL=(ALL) NOPASSWD: ALL
+      dest: /etc/sudoers.d/{{ user }}
       mode: '0440'
       validate: visudo -cf %s
     become: true
@@ -436,7 +441,7 @@
 
   - name: Check if TPM (Tmux Plugin Manager) is installed
     ansible.builtin.stat:
-      path: '{{ ansible_user_dir }}/.tmux/plugins/tpm'
+      path: '{{ home }}/.tmux/plugins/tpm'
     register: tpm_check
     when: install_shell_tools | default(true)
     tags: [always, tmux]
@@ -444,7 +449,7 @@
   - name: Clone TPM (Tmux Plugin Manager)
     ansible.builtin.git:
       repo: https://github.com/tmux-plugins/tpm
-      dest: '{{ ansible_user_dir }}/.tmux/plugins/tpm'
+      dest: '{{ home }}/.tmux/plugins/tpm'
       depth: 1
       version: master
       update: true
@@ -467,7 +472,7 @@
   - name: Copy tmux configuration
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/.tmux.conf'
-      dest: '{{ ansible_user_dir }}/.tmux.conf'
+      dest: '{{ home }}/.tmux.conf'
       mode: '0644'
       backup: true
     when:
@@ -498,7 +503,7 @@
 
   - name: Create neovim config directory
     ansible.builtin.file:
-      path: '{{ ansible_user_dir }}/.config/nvim'
+      path: '{{ home }}/.config/nvim'
       state: directory
       mode: '0755'
     when:
@@ -509,7 +514,7 @@
   - name: Copy neovim configuration
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/nvim/'
-      dest: '{{ ansible_user_dir }}/.config/nvim/'
+      dest: '{{ home }}/.config/nvim/'
       mode: '0644'
       directory_mode: '0755'
     when:
@@ -566,7 +571,7 @@
 
   - name: Ensure VS Code User directory exists
     ansible.builtin.file:
-      path: '{{ ansible_user_dir }}/Library/Application Support/Code/User'
+      path: '{{ home }}/Library/Application Support/Code/User'
       state: directory
       mode: '0755'
     when:
@@ -577,7 +582,7 @@
 
   - name: Ensure VS Code User directory exists (Linux)
     ansible.builtin.file:
-      path: '{{ ansible_user_dir }}/.config/Code/User'
+      path: '{{ home }}/.config/Code/User'
       state: directory
       mode: '0755'
     when:
@@ -589,7 +594,7 @@
   - name: Configure VS Code settings.json (macOS)
     ansible.builtin.copy:
       content: '{{ vscode_settings | to_nice_json }}'
-      dest: '{{ ansible_user_dir }}/Library/Application Support/Code/User/settings.json'
+      dest: '{{ home }}/Library/Application Support/Code/User/settings.json'
       mode: '0644'
       backup: true
     when:
@@ -602,7 +607,7 @@
   - name: Configure VS Code settings.json (Linux)
     ansible.builtin.copy:
       content: '{{ vscode_settings | to_nice_json }}'
-      dest: '{{ ansible_user_dir }}/.config/Code/User/settings.json'
+      dest: '{{ home }}/.config/Code/User/settings.json'
       mode: '0644'
       backup: true
     when:
@@ -618,13 +623,13 @@
 
   - name: Check if Ghostty config directory exists
     ansible.builtin.stat:
-      path: '{{ ansible_user_dir }}/.config/ghostty'
+      path: '{{ home }}/.config/ghostty'
     register: ghostty_dir_check
     tags: [always, ghostty]
 
   - name: Create Ghostty config directory
     ansible.builtin.file:
-      path: '{{ ansible_user_dir }}/.config/ghostty'
+      path: '{{ home }}/.config/ghostty'
       state: directory
       mode: '0755'
     when: install_shell_tools | default(true)
@@ -639,7 +644,7 @@
   - name: Deploy Ghostty configuration
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/ghostty/config'
-      dest: '{{ ansible_user_dir }}/.config/ghostty/config'
+      dest: '{{ home }}/.config/ghostty/config'
       mode: '0644'
       backup: true
     register: ghostty_config_deployed
@@ -669,7 +674,7 @@
 
   - name: Check if chezmoi is initialized
     ansible.builtin.stat:
-      path: '{{ ansible_user_dir }}/.local/share/chezmoi'
+      path: '{{ home }}/.local/share/chezmoi'
     register: chezmoi_check
     when:
     - configure_dotfiles | default(true)
@@ -696,7 +701,7 @@
   - name: Copy initial zshrc dotfile
     ansible.builtin.copy:
       src: '{{ playbook_dir }}/dotfiles/.zshrc'
-      dest: '{{ ansible_user_dir }}/.zshrc'
+      dest: '{{ home }}/.zshrc'
       mode: '0644'
       backup: true
     register: zshrc_copy
@@ -709,7 +714,7 @@
     tags: [dotfiles]
 
   - name: Add zshrc to chezmoi
-    ansible.builtin.command: '{{ homebrew_prefix }}/bin/chezmoi add {{ ansible_user_dir }}/.zshrc'
+    ansible.builtin.command: '{{ homebrew_prefix }}/bin/chezmoi add {{ home }}/.zshrc'
     register: chezmoi_add
     when:
     - configure_dotfiles | default(true)
