@@ -14,6 +14,8 @@
     os_family: '{{ ansible_os_family }}'
     is_macos: "{{ ansible_os_family == 'Darwin' }}"
     is_linux: "{{ ansible_os_family != 'Darwin' }}"
+    user: '{{ ansible_user_id }}'
+    home: '{{ ansible_user_dir }}'
 
     # Homebrew paths (can be overridden in group_vars)
     homebrew_prefix: "{{ '/opt/homebrew' if is_macos else '/home/linuxbrew/.linuxbrew' }}"
@@ -22,24 +24,6 @@
     brewfile_path: "{{ playbook_dir }}/{{ brewfile_name | default('Brewfile') }}"
 
   tasks:
-    # =========================================================================
-    # Initialize user and home directory using system commands
-    # =========================================================================
-
-  - name: Get home directory using shell expansion
-    ansible.builtin.shell: |
-      eval echo ~{{ ansible_user_id | default(lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root') }}
-    register: home_result
-    changed_when: false
-    check_mode: no
-    tags: [always]
-
-  - name: Set home and user variables
-    ansible.builtin.set_fact:
-      home: "{{ home_result.stdout | trim }}"
-      user: "{{ ansible_user_id | default(lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root') }}"
-    tags: [always]
-
     # =========================================================================
     # Homebrew Installation
     # =========================================================================
