@@ -264,7 +264,7 @@ class SetupWizard:
             ("jetbrains", "JetBrains IDEs (IntelliJ, PyCharm, etc)"),
         ]
 
-        selected = []
+        selected: list[str] = []
         for editor, desc in editors:
             response = (
                 input(f"{Colors.PROMPT}Install {desc}? (y/n): {Colors.RESET}").strip().lower()
@@ -272,10 +272,9 @@ class SetupWizard:
             if response in ("y", "yes"):
                 selected.append(editor)
 
-        self.config["editors"] = selected if selected else ["neovim"]
-        editors = self.config.get("editors", [])
-        editors_len = len(editors) if isinstance(editors, list) else 1
-        print(f"{Colors.SUCCESS}✓ Selected {editors_len} editors{Colors.RESET}")
+        editors_list: list[str] = selected if selected else ["neovim"]
+        self.config["editors"] = editors_list
+        print(f"{Colors.SUCCESS}✓ Selected {len(editors_list)} editors{Colors.RESET}")
 
     def _ask_security(self) -> None:
         """Ask for security options."""

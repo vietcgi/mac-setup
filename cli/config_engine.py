@@ -466,8 +466,11 @@ class ConfigurationEngine:
 
     def get_role_config(self, role: str) -> Dict[str, Any]:
         """Get configuration for specific role."""
-        role_config = self.get(f"roles.{role}", {})
-        return role_config.get("config", {}) if isinstance(role_config, dict) else {}
+        role_config: Any = self.get(f"roles.{role}", {})
+        if isinstance(role_config, dict):
+            config_value: Any = role_config.get("config", {})
+            return config_value if isinstance(config_value, dict) else {}
+        return {}
 
 
 def main():

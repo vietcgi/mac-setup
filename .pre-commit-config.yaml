@@ -56,19 +56,17 @@ repos:
   # =========================================================================
   # Python - Type Checking (Latest version, reasonable standards)
   # =========================================================================
-  # Configured but disabled: mypy has 36 remaining errors in test/plugin files
-  # Run "mypy --config-file=mypy.ini cli/" to check application code
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.11.1
-  #   hooks:
-  #     - id: mypy
-  #       additional_dependencies:
-  #         - types-PyYAML
-  #         - types-requests
-  #         - types-setuptools
-  #       args:
-  #         - --config-file=mypy.ini
-  #         - --warn-unused-ignores
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+          - types-setuptools
+        args:
+          - --config-file=mypy.ini
+          - --warn-unused-ignores
 
   # =========================================================================
   # Python - Security (Bandit for Python vulnerability detection)

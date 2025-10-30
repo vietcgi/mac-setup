@@ -13,7 +13,7 @@ import hashlib
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import logging
 
 
@@ -63,7 +63,7 @@ class CacheManager:
         except Exception as e:
             self.logger.warning(f"Failed to cache {key}: {e}")
 
-    def get(self, key: str) -> Optional[dict]:
+    def get(self, key: str) -> Optional[Any]:
         """
         Retrieve value from cache if valid.
 
@@ -80,7 +80,7 @@ class CacheManager:
 
         try:
             with open(cache_file, "r") as f:
-                cache_data = json.load(f)
+                cache_data: dict[str, Any] = json.load(f)
 
             expires = datetime.fromisoformat(cache_data["expires"])
             if datetime.now() > expires:
@@ -89,7 +89,8 @@ class CacheManager:
                 return None
 
             self.logger.debug(f"Cache hit for {key}")
-            return cache_data["value"]
+            value: Any = cache_data["value"]
+            return value
         except Exception as e:
             self.logger.warning(f"Failed to read cache for {key}: {e}")
             return None
@@ -313,7 +314,7 @@ class ParallelInstaller:
             List of installation waves (each wave can be parallel)
         """
         # Build dependency graph
-        dependency_map = {}
+        dependency_map: dict[Any, dict[str, Any]] = {}
         for pkg in packages:
             name = pkg.get("name")
             depends_on = pkg.get("depends_on", [])
@@ -324,14 +325,14 @@ class ParallelInstaller:
             }
 
         # Perform topological sort
-        waves = []
+        waves: list[list[dict[str, Any]]] = []
         remaining = set(dependency_map.keys())
 
         while remaining:
             # Find packages with no remaining dependencies
-            current_wave = []
+            current_wave: list[dict[str, Any]] = []
             for name in remaining:
-                entry = dependency_map[name]
+                entry: dict[str, Any] = dependency_map[name]
                 if not entry["dependencies"]:
                     current_wave.append(entry["package"])
 
@@ -349,7 +350,10 @@ class ParallelInstaller:
 
                 # Remove from other packages' dependencies
                 for entry in dependency_map.values():
-                    entry["dependencies"].discard(name)
+                    entry_dict: dict[str, Any] = entry
+                    dependencies = entry_dict["dependencies"]
+                    if isinstance(dependencies, set):
+                        dependencies.discard(name)
 
         return waves
 
