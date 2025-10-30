@@ -10,15 +10,15 @@ Tests for configuration file security, including:
 """
 
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.config_engine import ConfigurationEngine
+from cli.config_engine import ConfigurationEngine  # noqa: E402
 
 
 class TestConfigSecurityPermissions(unittest.TestCase):
@@ -104,8 +104,9 @@ class TestConfigSecurityPermissions(unittest.TestCase):
                 # Verify fixed to 0600
                 mode = os.stat(test_file).st_mode & 0o777
                 self.assertEqual(
-                    mode, 0o600,
-                    f"File with {oct(insecure_mode)} should be fixed to 0600"
+                    mode,
+                    0o600,
+                    f"File with {oct(insecure_mode)} should be fixed to 0600",
                 )
 
     def test_ownership_verification(self):
@@ -183,14 +184,16 @@ class TestConfigSecurityIntegration(unittest.TestCase):
         engine = ConfigurationEngine()
 
         config_file = self.temp_path / "sensitive.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 database:
   password: "secret123"
   api_key: "sk-1234567890"
 
 aws:
   secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-""")
+"""
+        )
 
         # Make it world-readable initially (bad!)
         os.chmod(config_file, 0o644)
@@ -227,10 +230,7 @@ aws:
         # Verify all are 0600
         for filename, path in config_paths.items():
             mode = os.stat(path).st_mode & 0o777
-            self.assertEqual(
-                mode, 0o600,
-                f"{filename} should be 0600, got {oct(mode)}"
-            )
+            self.assertEqual(mode, 0o600, f"{filename} should be 0600, got {oct(mode)}")
 
 
 class TestConfigSecurityEdgeCases(unittest.TestCase):
@@ -301,5 +301,5 @@ class TestConfigSecurityEdgeCases(unittest.TestCase):
         self.assertTrue(len(config_file.read_text()) > 1000000)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -19,10 +19,7 @@ from typing import Generator
 @pytest.fixture(scope="session", autouse=True)
 def configure_logging():
     """Configure logging for test session."""
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
 
 
 # Temporary directories
@@ -70,7 +67,8 @@ def temp_log_dir(temp_dir) -> Path:
 def sample_config_file(temp_config_dir) -> Path:
     """Create a sample configuration file for testing."""
     config_file = temp_config_dir / "config.yaml"
-    config_file.write_text("""
+    config_file.write_text(
+        """
 global:
   setup_name: "Test Setup"
   setup_environment: development
@@ -91,7 +89,8 @@ global:
     enable_ssh_setup: false
     enable_gpg_setup: false
     enable_audit_logging: true
-""")
+"""
+    )
     config_file.chmod(0o600)
     return config_file
 
@@ -100,53 +99,49 @@ global:
 def invalid_yaml_file(temp_config_dir) -> Path:
     """Create an invalid YAML file for testing."""
     invalid_file = temp_config_dir / "invalid.yaml"
-    invalid_file.write_text("""
+    invalid_file.write_text(
+        """
 global:
   invalid yaml: [
   unclosed: list
-""")
+"""
+    )
     return invalid_file
 
 
 # Markers
 def pytest_configure(config):
     """Register custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "edge_case: mark test as testing edge cases"
-    )
-    config.addinivalue_line(
-        "markers", "security: mark test as security-focused"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as performance test"
-    )
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "edge_case: mark test as testing edge cases")
+    config.addinivalue_line("markers", "security: mark test as security-focused")
+    config.addinivalue_line("markers", "performance: mark test as performance test")
 
 
 # Test utilities
 @pytest.fixture
 def create_file():
     """Factory fixture to create files with specific content."""
+
     def _create(path: Path, content: str = "", mode: int = 0o644):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content)
         path.chmod(mode)
         return path
+
     return _create
 
 
 @pytest.fixture
 def create_dir():
     """Factory fixture to create directories with specific permissions."""
+
     def _create(path: Path, mode: int = 0o755):
         path.mkdir(parents=True, exist_ok=True)
         path.chmod(mode)
         return path
+
     return _create
 
 

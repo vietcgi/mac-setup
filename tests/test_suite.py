@@ -13,10 +13,9 @@ Tests all components of mac-setup including:
 import os
 import sys
 import subprocess
-import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import List, Optional
 from dataclasses import dataclass
 from enum import Enum
 import yaml
@@ -24,6 +23,7 @@ import yaml
 
 class TestStatus(Enum):
     """Test result status."""
+
     PASS = "✓ PASS"
     FAIL = "✗ FAIL"
     SKIP = "⊘ SKIP"
@@ -33,6 +33,7 @@ class TestStatus(Enum):
 @dataclass
 class TestResult:
     """Single test result."""
+
     name: str
     status: TestStatus
     message: str
@@ -75,9 +76,9 @@ class TestSuite:
         Returns:
             Exit code (0 = all passed, 1 = some failed)
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("MAC-SETUP COMPREHENSIVE TEST SUITE")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
         # Configuration Tests
         print("Running configuration tests...")
@@ -110,18 +111,12 @@ class TestSuite:
 
         # Test schema exists
         schema_path = self.project_root / "config" / "schema.yaml"
-        result = self._check_file_exists(
-            "Schema file exists",
-            schema_path
-        )
+        result = self._check_file_exists("Schema file exists", schema_path)
         self._record_result(result)
 
         # Test schema is valid YAML
         if schema_path.exists():
-            result = self._check_yaml_valid(
-                "Schema is valid YAML",
-                schema_path
-            )
+            result = self._check_yaml_valid("Schema is valid YAML", schema_path)
             self._record_result(result)
 
         # Test configuration engine
@@ -138,7 +133,7 @@ class TestSuite:
                 name="Configuration engine loads defaults",
                 status=status,
                 message="Default configuration loaded and validated",
-                details=f"Errors: {errors}" if errors else None
+                details=f"Errors: {errors}" if errors else None,
             )
             self._record_result(result)
         except Exception as e:
@@ -157,8 +152,7 @@ class TestSuite:
         playbook_path = self.project_root / "setup.yml"
         if playbook_path.exists():
             result = self._check_ansible_syntax(
-                "Main playbook syntax is valid",
-                playbook_path
+                "Main playbook syntax is valid", playbook_path
             )
             self._record_result(result)
 
@@ -171,10 +165,10 @@ class TestSuite:
         if roles_path.exists():
             roles = [d for d in roles_path.iterdir() if d.is_dir()]
             result = TestResult(
-                name=f"Role directories found",
+                name="Role directories found",
                 status=TestStatus.PASS if roles else TestStatus.WARN,
                 message=f"Found {len(roles)} role directories",
-                details=", ".join(r.name for r in roles)
+                details=", ".join(r.name for r in roles),
             )
             self._record_result(result)
 
@@ -191,8 +185,7 @@ class TestSuite:
                 tasks_path = role_path / "tasks" / "main.yml"
                 if tasks_path.exists():
                     result = self._check_yaml_valid(
-                        f"Role '{role}' tasks are valid YAML",
-                        tasks_path
+                        f"Role '{role}' tasks are valid YAML", tasks_path
                     )
                 else:
                     result = TestResult(
@@ -224,7 +217,7 @@ class TestSuite:
                 name="Plugin loader initializes",
                 status=TestStatus.PASS,
                 message="Plugin system loaded successfully",
-                details=f"Can discover {len(plugins)} plugins"
+                details=f"Can discover {len(plugins)} plugins",
             )
             self._record_result(result)
         except Exception as e:
@@ -244,7 +237,7 @@ class TestSuite:
         for plugin_dir in plugin_dirs:
             if plugin_dir.exists():
                 result = TestResult(
-                    name=f"Plugin directory exists",
+                    name="Plugin directory exists",
                     status=TestStatus.PASS,
                     message=f"Plugin directory found at {plugin_dir}",
                 )
@@ -282,11 +275,7 @@ class TestSuite:
         required_tools = ["git", "curl", "brew"]
         for tool in required_tools:
             try:
-                subprocess.run(
-                    [tool, "--version"],
-                    capture_output=True,
-                    timeout=5
-                )
+                subprocess.run([tool, "--version"], capture_output=True, timeout=5)
                 result = TestResult(
                     name=f"Required tool '{tool}' available",
                     status=TestStatus.PASS,
@@ -318,12 +307,12 @@ class TestSuite:
     def _check_yaml_valid(self, name: str, path: Path) -> TestResult:
         """Check if YAML file is valid."""
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 yaml.safe_load(f)
             return TestResult(
                 name=name,
                 status=TestStatus.PASS,
-                message=f"Valid YAML syntax",
+                message="Valid YAML syntax",
             )
         except yaml.YAMLError as e:
             return TestResult(
@@ -344,7 +333,7 @@ class TestSuite:
             result = subprocess.run(
                 ["ansible-playbook", "--syntax-check", str(path)],
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode == 0:
                 return TestResult(
@@ -377,7 +366,7 @@ class TestSuite:
             result = subprocess.run(
                 ["ansible-lint", str(self.project_root / "setup.yml")],
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode == 0:
                 return TestResult(
@@ -391,7 +380,7 @@ class TestSuite:
                     name="ansible-lint passes",
                     status=TestStatus.WARN,
                     message="Some ansible-lint warnings found",
-                    details=errors[:200]
+                    details=errors[:200],
                 )
         except FileNotFoundError:
             return TestResult(
@@ -429,20 +418,20 @@ class TestSuite:
     def _print_results(self) -> None:
         """Print test summary."""
         total = len(self.results)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST SUMMARY")
-        print("="*60)
+        print("=" * 60)
         print(f"\nTotal Tests:  {total}")
         print(f"Passed:       {self.passed} ✓")
         print(f"Failed:       {self.failed} ✗")
         print(f"Skipped:      {self.skipped} ⊘")
 
         if self.failed == 0:
-            print(f"\n✓ All tests passed!")
+            print("\n✓ All tests passed!")
         else:
             print(f"\n✗ {self.failed} test(s) failed")
 
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
 
 def main():

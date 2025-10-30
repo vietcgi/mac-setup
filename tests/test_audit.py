@@ -12,18 +12,12 @@ Validates:
 import sys
 import unittest
 import tempfile
-import json
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.audit import (
-    AuditAction,
-    AuditLogger,
-    ComplianceReport
-)
+from cli.audit import AuditAction, AuditLogger, ComplianceReport  # noqa: E402
 
 
 class TestAuditAction(unittest.TestCase):
@@ -40,15 +34,28 @@ class TestAuditAction(unittest.TestCase):
     def test_audit_action_count(self):
         """Test that all expected actions are defined."""
         expected_actions = [
-            "INSTALL_STARTED", "INSTALL_COMPLETED", "INSTALL_FAILED",
-            "CONFIG_CHANGED", "PLUGIN_INSTALLED", "PLUGIN_REMOVED",
-            "SYSTEM_CHECK", "VERIFICATION_PASSED", "VERIFICATION_FAILED",
-            "SECURITY_CHECK", "PERMISSION_CHANGED", "CACHE_CLEARED",
-            "HEALTH_CHECK", "ERROR_DETECTED", "WARNING_DETECTED"
+            "INSTALL_STARTED",
+            "INSTALL_COMPLETED",
+            "INSTALL_FAILED",
+            "CONFIG_CHANGED",
+            "PLUGIN_INSTALLED",
+            "PLUGIN_REMOVED",
+            "SYSTEM_CHECK",
+            "VERIFICATION_PASSED",
+            "VERIFICATION_FAILED",
+            "SECURITY_CHECK",
+            "PERMISSION_CHANGED",
+            "CACHE_CLEARED",
+            "HEALTH_CHECK",
+            "ERROR_DETECTED",
+            "WARNING_DETECTED",
         ]
 
-        actual_actions = [attr for attr in dir(AuditAction)
-                         if not attr.startswith("_") and attr.isupper()]
+        actual_actions = [
+            attr
+            for attr in dir(AuditAction)
+            if not attr.startswith("_") and attr.isupper()
+        ]
 
         self.assertEqual(len(actual_actions), len(expected_actions))
 
@@ -65,6 +72,7 @@ class TestAuditLogger(unittest.TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_logger_creation(self):
@@ -75,8 +83,7 @@ class TestAuditLogger(unittest.TestCase):
     def test_log_action(self):
         """Test logging an action."""
         entry = self.logger.log_action(
-            AuditAction.INSTALL_STARTED,
-            details={"roles": ["core", "shell"]}
+            AuditAction.INSTALL_STARTED, details={"roles": ["core", "shell"]}
         )
 
         self.assertIn("timestamp", entry)
@@ -117,11 +124,7 @@ class TestAuditLogger(unittest.TestCase):
 
     def test_log_security_check(self):
         """Test logging security checks."""
-        self.logger.log_security_check(
-            "checksum_verification",
-            "success",
-            findings=[]
-        )
+        self.logger.log_security_check("checksum_verification", "success", findings=[])
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 1)
@@ -130,11 +133,7 @@ class TestAuditLogger(unittest.TestCase):
 
     def test_log_permission_changed(self):
         """Test logging permission changes."""
-        self.logger.log_permission_changed(
-            "~/.devkit/config.yaml",
-            "0644",
-            "0600"
-        )
+        self.logger.log_permission_changed("~/.devkit/config.yaml", "0644", "0600")
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 1)
@@ -153,8 +152,7 @@ class TestAuditLogger(unittest.TestCase):
     def test_log_verification_failed(self):
         """Test logging failed verification."""
         self.logger.log_verification(
-            passed=False,
-            details={"missing": ["python", "git"]}
+            passed=False, details={"missing": ["python", "git"]}
         )
 
         entries = self.logger.get_audit_logs()
@@ -164,10 +162,7 @@ class TestAuditLogger(unittest.TestCase):
 
     def test_log_health_check(self):
         """Test logging health check results."""
-        self.logger.log_health_check(
-            "healthy",
-            details={"checks": 5, "passed": 5}
-        )
+        self.logger.log_health_check("healthy", details={"checks": 5, "passed": 5})
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 1)
@@ -176,10 +171,7 @@ class TestAuditLogger(unittest.TestCase):
     def test_get_audit_logs(self):
         """Test retrieving audit logs."""
         for i in range(10):
-            self.logger.log_action(
-                AuditAction.SYSTEM_CHECK,
-                details={"iteration": i}
-            )
+            self.logger.log_action(AuditAction.SYSTEM_CHECK, details={"iteration": i})
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 10)
@@ -242,22 +234,24 @@ class TestAuditLogger(unittest.TestCase):
     def test_log_entry_structure(self):
         """Test that log entries have expected structure."""
         entry = self.logger.log_action(
-            AuditAction.CONFIG_CHANGED,
-            details={"test": "value"},
-            status="success"
+            AuditAction.CONFIG_CHANGED, details={"test": "value"}, status="success"
         )
 
-        required_fields = ["timestamp", "action", "status", "user", "hostname", "details"]
+        required_fields = [
+            "timestamp",
+            "action",
+            "status",
+            "user",
+            "hostname",
+            "details",
+        ]
         for field in required_fields:
             self.assertIn(field, entry)
 
     def test_multiple_log_entries(self):
         """Test logging multiple entries to same file."""
         for i in range(5):
-            self.logger.log_action(
-                AuditAction.SYSTEM_CHECK,
-                details={"check": i}
-            )
+            self.logger.log_action(AuditAction.SYSTEM_CHECK, details={"check": i})
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 5)
@@ -280,6 +274,7 @@ class TestComplianceReport(unittest.TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_report_creation(self):

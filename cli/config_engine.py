@@ -12,10 +12,9 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 import sys
-import stat
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -23,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 class ConfigEnvironment(Enum):
     """Configuration environment types."""
+
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -31,6 +31,7 @@ class ConfigEnvironment(Enum):
 @dataclass
 class ConfigMetadata:
     """Metadata about a configuration."""
+
     source: str  # File path or "environment", "cli", "default"
     timestamp: str
     version: str
@@ -50,7 +51,11 @@ class ConfigurationEngine:
     7. Schema defaults (lowest priority)
     """
 
-    def __init__(self, project_root: Optional[str] = None, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self,
+        project_root: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+    ):
         """
         Initialize configuration engine.
 
@@ -137,8 +142,13 @@ class ConfigurationEngine:
                 "setup_name": "Development Environment",
                 "setup_environment": "development",
                 "enabled_roles": [
-                    "core", "shell", "editors", "languages",
-                    "development", "containers", "cloud"
+                    "core",
+                    "shell",
+                    "editors",
+                    "languages",
+                    "development",
+                    "containers",
+                    "cloud",
                 ],
                 "disabled_roles": [],
                 "logging": {
@@ -192,7 +202,9 @@ class ConfigurationEngine:
             version="1.0",
         )
 
-    def load_file(self, file_path: str, section: Optional[str] = None) -> Dict[str, Any]:
+    def load_file(
+        self, file_path: str, section: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Load configuration from YAML file.
 
@@ -209,7 +221,7 @@ class ConfigurationEngine:
             return {}
 
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 config = yaml.safe_load(f) or {}
             self._loaded_files.append(path)
             self.logger.debug(f"Loaded config from {path}")
@@ -241,7 +253,7 @@ class ConfigurationEngine:
                 continue
 
             # Convert MAC_SETUP_ENABLED_ROLES to enabled_roles
-            config_key = key[len(prefix):].lower()
+            config_key = key[len(prefix) :].lower()
 
             # Parse value (handle arrays and booleans)
             if value.lower() in ("true", "false"):
@@ -428,7 +440,7 @@ class ConfigurationEngine:
         path = Path(file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(self.export("yaml"))
 
         self.logger.info(f"Configuration saved to {path}")
@@ -445,6 +457,7 @@ class ConfigurationEngine:
     def _get_timestamp() -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     def list_loaded_files(self) -> List[str]:
@@ -473,19 +486,22 @@ def main():
     parser.add_argument("--platform", default="macos", help="Platform (macos/linux)")
     parser.add_argument("--config", help="Custom config file path")
     parser.add_argument("--get", help="Get config value (dot notation)")
-    parser.add_argument("--set", nargs=2, metavar=("KEY", "VALUE"), help="Set config value")
-    parser.add_argument("--validate", action="store_true", help="Validate configuration")
-    parser.add_argument("--export", choices=["yaml", "json"], help="Export configuration")
+    parser.add_argument(
+        "--set", nargs=2, metavar=("KEY", "VALUE"), help="Set config value"
+    )
+    parser.add_argument(
+        "--validate", action="store_true", help="Validate configuration"
+    )
+    parser.add_argument(
+        "--export", choices=["yaml", "json"], help="Export configuration"
+    )
     parser.add_argument("--list-files", action="store_true", help="List loaded files")
     parser.add_argument("--list-roles", action="store_true", help="List enabled roles")
 
     args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
 
     # Create engine and load config
     engine = ConfigurationEngine(args.project_root)

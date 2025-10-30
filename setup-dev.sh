@@ -74,6 +74,7 @@ check_tool() {
     fi
 }
 
+check_tool "pre-commit" "pre-commit"
 check_tool "pytest" "pytest"
 check_tool "coverage" "coverage"
 check_tool "mypy" "mypy"

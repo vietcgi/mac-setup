@@ -2,11 +2,11 @@
 # Git Pre-Commit Hook - Quality Standard Enforcement
 # This hook validates all commits against the quality standards
 # It CANNOT be bypassed with --no-verify
+# shellcheck disable=SC2034  # Variables used in subshells
 
 set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-EXIT_CODE=0
 
 # Color codes
 RED='\033[0;31m'
@@ -28,6 +28,7 @@ echo -n "   Checking Python syntax... "
 
 PYTHON_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
 if [ -n "$PYTHON_FILES" ]; then
+    # shellcheck disable=SC2086  # Word splitting is intentional here
     if python3 -m py_compile $PYTHON_FILES 2>/dev/null; then
         echo -e "${GREEN}✓${NC}"
     else
@@ -48,6 +49,7 @@ echo -n "   Running tests... "
 
 if command -v pytest &> /dev/null; then
     if pytest -q 2>/dev/null; then
+        # shellcheck disable=SC2034  # TEST_COUNT computed but not used in output
         TEST_COUNT=$(pytest --collect-only -q 2>/dev/null | tail -1 | awk '{print $1}' || echo "?")
         echo -e "${GREEN}✓${NC} (all tests passed)"
     else
@@ -66,7 +68,9 @@ echo ""
 echo -e "${BLUE}GATE 3: Test Coverage${NC}"
 echo -n "   Checking coverage (minimum 85%)... "
 
-if command -v coverage &> /dev/null; then
+if [ -z "$PYTHON_FILES" ]; then
+    echo -e "${GREEN}✓${NC} (no Python files changed)"
+elif command -v coverage &> /dev/null; then
     if coverage report --fail-under=85 > /tmp/coverage.txt 2>&1; then
         COVERAGE=$(grep TOTAL /tmp/coverage.txt | awk '{print $(NF-1)}' || echo "?")
         echo -e "${GREEN}✓${NC} ($COVERAGE)"
@@ -87,7 +91,10 @@ echo ""
 echo -e "${BLUE}GATE 4: Type Checking${NC}"
 echo -n "   Checking types (mypy strict)... "
 
-if command -v mypy &> /dev/null; then
+if [ -z "$PYTHON_FILES" ]; then
+    echo -e "${GREEN}✓${NC} (no Python files)"
+elif command -v mypy &> /dev/null; then
+    # shellcheck disable=SC2086  # Word splitting is intentional here
     if mypy --strict $PYTHON_FILES > /tmp/mypy.txt 2>&1; then
         echo -e "${GREEN}✓${NC}"
     else
@@ -107,7 +114,9 @@ echo ""
 echo -e "${BLUE}GATE 5: Security Scan${NC}"
 echo -n "   Scanning for vulnerabilities... "
 
-if command -v bandit &> /dev/null; then
+if [ -z "$PYTHON_FILES" ]; then
+    echo -e "${GREEN}✓${NC} (no Python files)"
+elif command -v bandit &> /dev/null; then
     if bandit -r -ll $PYTHON_FILES > /tmp/bandit.txt 2>&1; then
         echo -e "${GREEN}✓${NC}"
     else
@@ -127,7 +136,9 @@ echo ""
 echo -e "${BLUE}GATE 6: Code Linting${NC}"
 echo -n "   Linting code (minimum 8.0 score)... "
 
-if command -v pylint &> /dev/null; then
+if [ -z "$PYTHON_FILES" ]; then
+    echo -e "${GREEN}✓${NC} (no Python files)"
+elif command -v pylint &> /dev/null; then
     if pylint --exit-zero $PYTHON_FILES > /tmp/pylint.txt 2>&1; then
         SCORE=$(grep -oP 'rated at \K[0-9.]+' /tmp/pylint.txt | head -1 || echo "?")
         if (( $(echo "$SCORE >= 8.0" | bc -l 2>/dev/null || echo 0) )); then

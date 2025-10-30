@@ -6,16 +6,16 @@ Tests for plugin validation, manifest validation, and secure loading.
 """
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "cli"))
 
-from plugin_validator import PluginValidator, PluginManifest, validate_plugin_manifest
+from plugin_validator import PluginValidator, PluginManifest, validate_plugin_manifest  # noqa: E402
 
 
 class TestPluginManifestValidation(unittest.TestCase):
@@ -151,7 +151,7 @@ class TestPluginManifestValidation(unittest.TestCase):
         manifest_path = self.create_manifest(
             homepage="https://example.com",
             repository="https://github.com/example/plugin",
-            license="MIT"
+            license="MIT",
         )
         manifest = PluginManifest(manifest_path)
         is_valid, errors = manifest.validate()
@@ -198,16 +198,21 @@ class TestPluginValidator(unittest.TestCase):
 
         # Create manifest
         manifest_path = plugin_dir / "manifest.json"
-        manifest_path.write_text(json.dumps({
-            "name": name,
-            "version": "1.0.0",
-            "author": "Test Author",
-            "description": "Test plugin",
-        }))
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "name": name,
+                    "version": "1.0.0",
+                    "author": "Test Author",
+                    "description": "Test plugin",
+                }
+            )
+        )
 
         # Create __init__.py
         init_file = plugin_dir / "__init__.py"
-        init_file.write_text('''
+        init_file.write_text(
+            """
 from abc import ABC
 
 class Plugin(ABC):
@@ -225,13 +230,14 @@ class Plugin(ABC):
 
     def validate(self):
         return True, []
-''')
+"""
+        )
 
         return plugin_dir
 
     def test_valid_plugin_passes(self):
         """Test that valid plugin passes validation."""
-        plugin_dir = self.create_valid_plugin("valid-plugin")
+        self.create_valid_plugin("valid-plugin")
         validator = PluginValidator(self.temp_path)
 
         is_valid, message = validator.validate_plugin("valid-plugin")
@@ -255,12 +261,16 @@ class Plugin(ABC):
         """Test that missing __init__.py is detected."""
         plugin_dir = self.temp_path / "no-init"
         plugin_dir.mkdir()
-        (plugin_dir / "manifest.json").write_text(json.dumps({
-            "name": "no-init",
-            "version": "1.0.0",
-            "author": "Test",
-            "description": "Test",
-        }))
+        (plugin_dir / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "name": "no-init",
+                    "version": "1.0.0",
+                    "author": "Test",
+                    "description": "Test",
+                }
+            )
+        )
 
         validator = PluginValidator(self.temp_path)
         is_valid, message = validator.validate_plugin("no-init")
@@ -272,12 +282,16 @@ class Plugin(ABC):
         """Test that missing Plugin class is detected."""
         plugin_dir = self.temp_path / "no-class"
         plugin_dir.mkdir()
-        (plugin_dir / "manifest.json").write_text(json.dumps({
-            "name": "no-class",
-            "version": "1.0.0",
-            "author": "Test",
-            "description": "Test",
-        }))
+        (plugin_dir / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "name": "no-class",
+                    "version": "1.0.0",
+                    "author": "Test",
+                    "description": "Test",
+                }
+            )
+        )
         (plugin_dir / "__init__.py").write_text("# No plugin class")
 
         validator = PluginValidator(self.temp_path)
@@ -330,12 +344,16 @@ class TestStandaloneValidation(unittest.TestCase):
     def test_validate_plugin_manifest_function(self):
         """Test standalone validation function."""
         manifest_path = self.temp_path / "manifest.json"
-        manifest_path.write_text(json.dumps({
-            "name": "test",
-            "version": "1.0.0",
-            "author": "Test",
-            "description": "Test",
-        }))
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "name": "test",
+                    "version": "1.0.0",
+                    "author": "Test",
+                    "description": "Test",
+                }
+            )
+        )
 
         is_valid, errors = validate_plugin_manifest(manifest_path)
 
@@ -362,5 +380,5 @@ class TestStandaloneValidation(unittest.TestCase):
         self.assertEqual(len(errors), 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

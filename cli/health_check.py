@@ -11,11 +11,10 @@ Provides:
 
 import subprocess
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import json
-import re
 
 
 class HealthStatus:
@@ -78,10 +77,7 @@ class DependencyCheck(HealthCheck):
         for tool in self.tools:
             try:
                 result = subprocess.run(
-                    ["which", tool],
-                    capture_output=True,
-                    timeout=2,
-                    check=False
+                    ["which", tool], capture_output=True, timeout=2, check=False
                 )
                 if result.returncode == 0:
                     installed.append(tool)
@@ -95,19 +91,19 @@ class DependencyCheck(HealthCheck):
             return (
                 HealthStatus.HEALTHY,
                 f"All {len(installed)} dependencies installed",
-                {"installed": installed, "missing": []}
+                {"installed": installed, "missing": []},
             )
         elif len(missing) <= len(installed):
             return (
                 HealthStatus.WARNING,
                 f"{len(missing)} of {len(self.tools)} dependencies missing",
-                {"installed": installed, "missing": missing}
+                {"installed": installed, "missing": missing},
             )
         else:
             return (
                 HealthStatus.CRITICAL,
                 f"Most dependencies missing ({len(missing)}/{len(self.tools)})",
-                {"installed": installed, "missing": missing}
+                {"installed": installed, "missing": missing},
             )
 
 
@@ -132,16 +128,12 @@ class DiskSpaceCheck(HealthCheck):
                 capture_output=True,
                 timeout=2,
                 text=True,
-                check=True
+                check=True,
             )
 
             lines = result.stdout.strip().split("\n")
             if len(lines) < 2:
-                return (
-                    HealthStatus.UNKNOWN,
-                    "Could not parse disk space",
-                    {}
-                )
+                return (HealthStatus.UNKNOWN, "Could not parse disk space", {})
 
             # Parse df output
             parts = lines[1].split()
@@ -151,19 +143,19 @@ class DiskSpaceCheck(HealthCheck):
                 return (
                     HealthStatus.HEALTHY,
                     f"{available_gb}GB free space available",
-                    {"available_gb": available_gb, "minimum_gb": self.min_gb}
+                    {"available_gb": available_gb, "minimum_gb": self.min_gb},
                 )
             else:
                 return (
                     HealthStatus.CRITICAL,
                     f"Only {available_gb}GB free (need {self.min_gb}GB)",
-                    {"available_gb": available_gb, "minimum_gb": self.min_gb}
+                    {"available_gb": available_gb, "minimum_gb": self.min_gb},
                 )
         except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check disk space: {e}",
-                {"error": str(e)}
+                {"error": str(e)},
             )
 
 
@@ -186,7 +178,7 @@ class ConfigurationCheck(HealthCheck):
             return (
                 HealthStatus.WARNING,
                 f"Configuration file not found: {self.config_path}",
-                {"path": str(self.config_path), "exists": False}
+                {"path": str(self.config_path), "exists": False},
             )
 
         try:
@@ -198,7 +190,7 @@ class ConfigurationCheck(HealthCheck):
                 return (
                     HealthStatus.WARNING,
                     f"Config has insecure permissions: {perms} (should be 600)",
-                    {"path": str(self.config_path), "permissions": perms}
+                    {"path": str(self.config_path), "permissions": perms},
                 )
 
             # Try to parse YAML
@@ -208,20 +200,24 @@ class ConfigurationCheck(HealthCheck):
                     return (
                         HealthStatus.WARNING,
                         "Configuration missing 'global' section",
-                        {"path": str(self.config_path)}
+                        {"path": str(self.config_path)},
                     )
 
             return (
                 HealthStatus.HEALTHY,
                 f"Configuration healthy: {self.config_path}",
-                {"path": str(self.config_path), "permissions": perms, "size": self.config_path.stat().st_size}
+                {
+                    "path": str(self.config_path),
+                    "permissions": perms,
+                    "size": self.config_path.stat().st_size,
+                },
             )
 
         except Exception as e:
             return (
                 HealthStatus.WARNING,
                 f"Failed to check configuration: {e}",
-                {"path": str(self.config_path), "error": str(e)}
+                {"path": str(self.config_path), "error": str(e)},
             )
 
 
@@ -246,7 +242,7 @@ class LogCheck(HealthCheck):
             return (
                 HealthStatus.UNKNOWN,
                 f"Log file not found: {self.log_file}",
-                {"path": str(self.log_file), "exists": False}
+                {"path": str(self.log_file), "exists": False},
             )
 
         try:
@@ -269,27 +265,35 @@ class LogCheck(HealthCheck):
             if not errors and not warnings:
                 return (
                     HealthStatus.HEALTHY,
-                    f"No errors in logs",
-                    {"path": str(self.log_file), "lines": len(lines)}
+                    "No errors in logs",
+                    {"path": str(self.log_file), "lines": len(lines)},
                 )
             elif errors:
                 return (
                     HealthStatus.CRITICAL,
                     f"Found {len(errors)} errors in logs",
-                    {"path": str(self.log_file), "error_count": len(errors), "recent_errors": errors[:3]}
+                    {
+                        "path": str(self.log_file),
+                        "error_count": len(errors),
+                        "recent_errors": errors[:3],
+                    },
                 )
             else:
                 return (
                     HealthStatus.WARNING,
                     f"Found {len(warnings)} warnings in logs",
-                    {"path": str(self.log_file), "warning_count": len(warnings), "recent_warnings": warnings[:3]}
+                    {
+                        "path": str(self.log_file),
+                        "warning_count": len(warnings),
+                        "recent_warnings": warnings[:3],
+                    },
                 )
 
         except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check logs: {e}",
-                {"path": str(self.log_file), "error": str(e)}
+                {"path": str(self.log_file), "error": str(e)},
             )
 
 
@@ -305,17 +309,14 @@ class SystemCheck(HealthCheck):
         try:
             # Check if system is responsive
             result = subprocess.run(
-                ["uname", "-a"],
-                capture_output=True,
-                timeout=2,
-                text=True,
-                check=True
+                ["uname", "-a"], capture_output=True, timeout=2, text=True, check=True
             )
 
             uname = result.stdout.strip()
 
             # Check load average
             import os
+
             load_avg = os.getloadavg()
 
             # Simple heuristic: if load is too high, flag it
@@ -324,7 +325,9 @@ class SystemCheck(HealthCheck):
 
             if load_ratio > 2.0:
                 status = HealthStatus.WARNING
-                message = f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
+                message = (
+                    f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
+                )
             else:
                 status = HealthStatus.HEALTHY
                 message = f"System healthy: {uname[:40]}..."
@@ -335,15 +338,15 @@ class SystemCheck(HealthCheck):
                 {
                     "load_average": list(load_avg),
                     "cpu_count": cpu_count,
-                    "load_ratio": round(load_ratio, 2)
-                }
+                    "load_ratio": round(load_ratio, 2),
+                },
             )
 
         except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check system: {e}",
-                {"error": str(e)}
+                {"error": str(e)},
             )
 
 
@@ -379,7 +382,7 @@ class HealthMonitor:
                 self.results[check.name] = (
                     HealthStatus.UNKNOWN,
                     f"Check failed: {e}",
-                    {"error": str(e)}
+                    {"error": str(e)},
                 )
 
         return self.results
@@ -413,11 +416,13 @@ class HealthMonitor:
             HealthStatus.HEALTHY: "✅",
             HealthStatus.WARNING: "⚠️",
             HealthStatus.CRITICAL: "❌",
-            HealthStatus.UNKNOWN: "❓"
+            HealthStatus.UNKNOWN: "❓",
         }
 
         print("\n" + "=" * 60)
-        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
+        print(
+            f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}"
+        )
         print("=" * 60 + "\n")
 
         for check_name, (status, message, details) in self.results.items():
@@ -440,14 +445,14 @@ class HealthMonitor:
         report = {
             "timestamp": datetime.now().isoformat(),
             "overall_status": self.get_overall_status(),
-            "checks": {}
+            "checks": {},
         }
 
         for check_name, (status, message, details) in self.results.items():
             report["checks"][check_name] = {
                 "status": status,
                 "message": message,
-                "details": details
+                "details": details,
             }
 
         return json.dumps(report, indent=2)
@@ -458,9 +463,7 @@ def create_default_monitor() -> HealthMonitor:
     monitor = HealthMonitor()
 
     # Add default checks
-    monitor.add_check(DependencyCheck([
-        "bash", "git", "python3", "brew"
-    ]))
+    monitor.add_check(DependencyCheck(["bash", "git", "python3", "brew"]))
     monitor.add_check(DiskSpaceCheck(min_gb=5))
     monitor.add_check(ConfigurationCheck())
     monitor.add_check(LogCheck())

@@ -1,6 +1,9 @@
 # Development and Quality Tools
 # These tools enforce code quality standards on all commits
 
+# Pre-commit Framework (Multi-language quality enforcement)
+pre-commit==4.3.0
+
 # Testing Framework
 pytest==8.3.5
 pytest-asyncio==0.24.0

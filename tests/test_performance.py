@@ -9,21 +9,19 @@ Validates:
 """
 
 import sys
-import unittest
-import time
 import tempfile
-import json
+import time
+import unittest
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.performance import (
+from cli.performance import (  # noqa: E402
     CacheManager,
     PerformanceMonitor,
     InstallationOptimizer,
-    ParallelInstaller
+    ParallelInstaller,
 )
 
 
@@ -38,6 +36,7 @@ class TestCacheManager(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_set_and_get(self):
@@ -123,7 +122,7 @@ class TestCacheManager(unittest.TestCase):
             "list": [1, 2, 3],
             "nested": {"deep": {"data": "value"}},
             "boolean": True,
-            "null": None
+            "null": None,
         }
 
         self.cache.set("complex_key", value)
@@ -207,6 +206,7 @@ class TestInstallationOptimizer(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_should_reinstall_no_cache(self):
@@ -259,7 +259,7 @@ class TestParallelInstaller(unittest.TestCase):
         packages = [
             {"name": "pkg1", "version": "1.0"},
             {"name": "pkg2", "version": "2.0"},
-            {"name": "pkg3", "version": "3.0"}
+            {"name": "pkg3", "version": "3.0"},
         ]
 
         waves = self.installer.get_install_order(packages)
@@ -273,7 +273,7 @@ class TestParallelInstaller(unittest.TestCase):
         packages = [
             {"name": "python", "version": "3.12"},
             {"name": "ansible", "version": "2.14", "depends_on": ["python"]},
-            {"name": "homebrew", "version": "latest"}
+            {"name": "homebrew", "version": "latest"},
         ]
 
         waves = self.installer.get_install_order(packages)
@@ -291,7 +291,7 @@ class TestParallelInstaller(unittest.TestCase):
             {"name": "B", "version": "1.0", "depends_on": ["A"]},
             {"name": "C", "version": "1.0", "depends_on": ["B"]},
             {"name": "D", "version": "1.0", "depends_on": ["B"]},
-            {"name": "E", "version": "1.0"}
+            {"name": "E", "version": "1.0"},
         ]
 
         waves = self.installer.get_install_order(packages)
@@ -309,7 +309,7 @@ class TestParallelInstaller(unittest.TestCase):
         packages = [
             {"name": "pkg1", "version": "1.0"},
             {"name": "pkg2", "version": "2.0"},
-            {"name": "pkg3", "version": "3.0"}
+            {"name": "pkg3", "version": "3.0"},
         ]
 
         duration = self.installer.estimate_duration(packages)
@@ -322,10 +322,7 @@ class TestParallelInstaller(unittest.TestCase):
         """Test max parallel limit is respected."""
         installer = ParallelInstaller(max_parallel=2)
 
-        packages = [
-            {"name": f"pkg{i}", "version": "1.0"}
-            for i in range(10)
-        ]
+        packages = [{"name": f"pkg{i}", "version": "1.0"} for i in range(10)]
 
         waves = installer.get_install_order(packages)
 

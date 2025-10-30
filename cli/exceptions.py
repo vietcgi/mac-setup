@@ -19,7 +19,7 @@ class DevkitException(Exception):
         message: str,
         cause: Optional[str] = None,
         solutions: Optional[List[str]] = None,
-        documentation: Optional[str] = None
+        documentation: Optional[str] = None,
     ):
         """
         Initialize enhanced exception.
@@ -67,9 +67,9 @@ class BootstrapError(DevkitException):
                 "Check your internet connection for corruption",
                 "Verify you're using the correct installation method",
                 "Try downloading again from https://github.com/vietcgi/devkit",
-                "Check if your network is filtering downloads"
+                "Check if your network is filtering downloads",
             ],
-            documentation="See TROUBLESHOOTING.md for network issues"
+            documentation="See TROUBLESHOOTING.md for network issues",
         )
 
     @staticmethod
@@ -82,9 +82,9 @@ class BootstrapError(DevkitException):
                 "Check your internet connection",
                 "Verify GitHub is accessible: curl https://github.com",
                 "Try again with: curl -v to see details",
-                "Use offline mode with DEVKIT_BOOTSTRAP_CHECKSUM env var"
+                "Use offline mode with DEVKIT_BOOTSTRAP_CHECKSUM env var",
             ],
-            documentation="See TROUBLESHOOTING.md for network issues"
+            documentation="See TROUBLESHOOTING.md for network issues",
         )
 
     @staticmethod
@@ -97,9 +97,9 @@ class BootstrapError(DevkitException):
                 "Make script executable: chmod +x bootstrap.sh",
                 "Run with bash explicitly: bash bootstrap.sh",
                 "Check if destination directory is writable: ls -ld $(pwd)",
-                "Try installing in different directory with write access"
+                "Try installing in different directory with write access",
             ],
-            documentation="See TROUBLESHOOTING.md > Permission Issues"
+            documentation="See TROUBLESHOOTING.md > Permission Issues",
         )
 
     @staticmethod
@@ -113,9 +113,9 @@ class BootstrapError(DevkitException):
                 "Free up space: brew cleanup --all",
                 "Remove cache: rm -rf ~/Library/Caches/*",
                 "Remove downloads: rm -rf ~/Downloads/*",
-                "Check what's using space: du -sh ~/"
+                "Check what's using space: du -sh ~/",
             ],
-            documentation="See TROUBLESHOOTING.md > Installation Issues"
+            documentation="See TROUBLESHOOTING.md > Installation Issues",
         )
 
 
@@ -131,9 +131,9 @@ class ConfigError(DevkitException):
             solutions=[
                 "Create config directory: mkdir -p ~/.devkit",
                 "Run bootstrap to create default config: ./bootstrap.sh",
-                "Or copy example: cp config.example.yaml ~/.devkit/config.yaml"
+                "Or copy example: cp config.example.yaml ~/.devkit/config.yaml",
             ],
-            documentation="See TROUBLESHOOTING.md > Configuration Issues"
+            documentation="See TROUBLESHOOTING.md > Configuration Issues",
         )
 
     @staticmethod
@@ -146,9 +146,9 @@ class ConfigError(DevkitException):
                 "Validate YAML: python3 -c \"import yaml; yaml.safe_load(open('~/.devkit/config.yaml'))\"",
                 "Use online validator: https://www.yamllint.com",
                 "Check indentation (must be 2 spaces, not tabs)",
-                "Check for special characters needing quotes"
+                "Check for special characters needing quotes",
             ],
-            documentation="See TROUBLESHOOTING.md > Configuration Issues"
+            documentation="See TROUBLESHOOTING.md > Configuration Issues",
         )
 
     @staticmethod
@@ -161,9 +161,9 @@ class ConfigError(DevkitException):
                 f"Fix permissions: chmod 600 {path}",
                 f"Verify owner: ls -la {path}",
                 "If wrong owner, copy to new file: cp config.yaml config.yaml.new",
-                "Delete old: rm config.yaml && mv config.yaml.new config.yaml"
+                "Delete old: rm config.yaml && mv config.yaml.new config.yaml",
             ],
-            documentation="See TROUBLESHOOTING.md > Configuration Issues"
+            documentation="See TROUBLESHOOTING.md > Configuration Issues",
         )
 
     @staticmethod
@@ -175,9 +175,9 @@ class ConfigError(DevkitException):
             solutions=[
                 f"Fix ownership: chown $USER {path}",
                 f"Verify: ls -la {path}",
-                "Or create new config in your home directory"
+                "Or create new config in your home directory",
             ],
-            documentation="See TROUBLESHOOTING.md > Configuration Issues"
+            documentation="See TROUBLESHOOTING.md > Configuration Issues",
         )
 
 
@@ -195,9 +195,9 @@ class PluginError(DevkitException):
                 "Verify manifest.json exists and is valid JSON",
                 "Verify __init__.py exists and contains Plugin class",
                 "Run validator: python3 -c \"from cli.plugin_validator import validate_plugin_manifest; validate_plugin_manifest('{plugin}')\"",
-                "See PLUGIN_DEVELOPMENT.md for plugin requirements"
+                "See PLUGIN_DEVELOPMENT.md for plugin requirements",
             ],
-            documentation="See docs/PLUGINS.md for plugin system"
+            documentation="See docs/PLUGINS.md for plugin system",
         )
 
     @staticmethod
@@ -208,10 +208,10 @@ class PluginError(DevkitException):
             cause="manifest.json is required for all plugins",
             solutions=[
                 f"Create manifest: ~/.devkit/plugins/{plugin}/manifest.json",
-                "Use template: { \"name\": \"plugin-name\", \"version\": \"1.0.0\", \"author\": \"Your Name\", \"description\": \"Plugin description\" }",
-                "See docs/PLUGINS.md for complete manifest structure"
+                'Use template: { "name": "plugin-name", "version": "1.0.0", "author": "Your Name", "description": "Plugin description" }',
+                "See docs/PLUGINS.md for complete manifest structure",
             ],
-            documentation="See docs/PLUGINS.md > Manifest"
+            documentation="See docs/PLUGINS.md > Manifest",
         )
 
     @staticmethod
@@ -224,9 +224,9 @@ class PluginError(DevkitException):
                 "Use format: MAJOR.MINOR.PATCH (e.g., 1.0.0)",
                 "Examples: 1.0.0, 2.3.5, 0.1.2",
                 "Pre-release: 1.0.0-alpha (optional)",
-                "Build metadata: 1.0.0+20130313144700 (optional)"
+                "Build metadata: 1.0.0+20130313144700 (optional)",
             ],
-            documentation="See semver.org for semantic versioning spec"
+            documentation="See semver.org for semantic versioning spec",
         )
 
     @staticmethod
@@ -240,9 +240,9 @@ class PluginError(DevkitException):
                 "Add import: from cli.plugin_interface import PluginInterface",
                 "Add class: class Plugin(PluginInterface):",
                 "Implement required methods: initialize, get_roles, get_hooks, validate",
-                "See docs/PLUGINS.md for example plugin code"
+                "See docs/PLUGINS.md for example plugin code",
             ],
-            documentation="See docs/PLUGINS.md > Creating Plugins"
+            documentation="See docs/PLUGINS.md > Creating Plugins",
         )
 
 
@@ -260,9 +260,9 @@ class SecurityError(DevkitException):
                 "Check internet connection for packet loss",
                 "Verify you downloaded from official source",
                 "Check if file was partially downloaded",
-                "Try manual installation: git clone + ./bootstrap.sh"
+                "Try manual installation: git clone + ./bootstrap.sh",
             ],
-            documentation="See SECURITY.md for security practices"
+            documentation="See SECURITY.md for security practices",
         )
 
     @staticmethod
@@ -274,9 +274,9 @@ class SecurityError(DevkitException):
             solutions=[
                 f"Fix permissions: chmod {expected.replace('0', '')} {path}",
                 f"Verify: ls -la {path}",
-                "Consider using secure_config() to auto-fix permissions"
+                "Consider using secure_config() to auto-fix permissions",
             ],
-            documentation="See SECURITY.md for file permission requirements"
+            documentation="See SECURITY.md for file permission requirements",
         )
 
 
@@ -294,13 +294,15 @@ class DependencyError(DevkitException):
                 f"Install: {install}",
                 "Verify installation: which {tool}",
                 "Update PATH if needed: source ~/.zshrc",
-                "Check if installed in different location: find /opt -name {tool}"
+                "Check if installed in different location: find /opt -name {tool}",
             ],
-            documentation="See README.md > Requirements"
+            documentation="See README.md > Requirements",
         )
 
     @staticmethod
-    def version_incompatible(tool: str, required: str, current: str) -> "DependencyError":
+    def version_incompatible(
+        tool: str, required: str, current: str
+    ) -> "DependencyError":
         """Create version incompatibility exception."""
         return DependencyError(
             message=f"Tool version incompatible: {tool}",
@@ -309,9 +311,9 @@ class DependencyError(DevkitException):
                 f"Upgrade: brew upgrade {tool}",
                 f"Check version: {tool} --version",
                 "If already latest, check PATH: which {tool}",
-                "Remove old version: brew uninstall {tool} && brew install {tool}"
+                "Remove old version: brew uninstall {tool} && brew install {tool}",
             ],
-            documentation="See README.md > Requirements"
+            documentation="See README.md > Requirements",
         )
 
 
@@ -329,9 +331,9 @@ class VerificationError(DevkitException):
                 f"Install all missing: brew install {install_cmd}",
                 "Verify each installed: which <tool>",
                 "Update PATH: source ~/.zshrc",
-                "Run verification again: ./verify-setup.sh"
+                "Run verification again: ./verify-setup.sh",
             ],
-            documentation="See README.md > Verification"
+            documentation="See README.md > Verification",
         )
 
     @staticmethod
@@ -344,7 +346,7 @@ class VerificationError(DevkitException):
                 "Re-run bootstrap: ./bootstrap.sh",
                 "Check logs: cat ~/.devkit/logs/setup.log",
                 "Fix any errors then verify: ./verify-setup.sh",
-                "Check specific error in logs: grep ERROR ~/.devkit/logs/setup.log"
+                "Check specific error in logs: grep ERROR ~/.devkit/logs/setup.log",
             ],
-            documentation="See TROUBLESHOOTING.md > Verification Issues"
+            documentation="See TROUBLESHOOTING.md > Verification Issues",
         )

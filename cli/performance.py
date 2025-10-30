@@ -13,7 +13,7 @@ import hashlib
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import logging
 
 
@@ -53,7 +53,7 @@ class CacheManager:
             "value": value,
             "created": datetime.now().isoformat(),
             "expires": expires_at.isoformat(),
-            "ttl_hours": ttl_hours
+            "ttl_hours": ttl_hours,
         }
 
         try:
@@ -122,7 +122,7 @@ class CacheManager:
             "entries": len(cache_files),
             "size_bytes": total_size,
             "size_mb": round(total_size / (1024 * 1024), 2),
-            "cache_dir": str(self.cache_dir)
+            "cache_dir": str(self.cache_dir),
         }
 
 
@@ -189,7 +189,7 @@ class PerformanceMonitor:
                 "min": round(min(durations), 2),
                 "max": round(max(durations), 2),
                 "avg": round(sum(durations) / len(durations), 2),
-                "total": round(sum(durations), 2)
+                "total": round(sum(durations), 2),
             }
 
         return summary
@@ -263,8 +263,8 @@ class InstallationOptimizer:
                 "package": package,
                 "version": version,
                 "success": success,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         )
 
     def get_optimization_suggestions(self) -> List[str]:
@@ -322,7 +322,7 @@ class ParallelInstaller:
             dependency_map[name] = {
                 "package": pkg,
                 "dependencies": set(depends_on),
-                "installed": False
+                "installed": False,
             }
 
         # Perform topological sort
@@ -367,6 +367,5 @@ class ParallelInstaller:
         """
         # This is a simple estimate - can be enhanced with historical data
         base_time = 10  # Base time per package
-        num_waves = len(self.get_install_order(packages))
 
         return base_time * len(packages) / min(self.max_parallel, len(packages))

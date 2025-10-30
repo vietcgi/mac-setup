@@ -1,6 +1,7 @@
 #!/bin/bash
 # Git Post-Commit Hook - Audit Trail Logging
 # Records all commits to ~/.devkit/git/commits.log in JSONL format
+# shellcheck disable=SC2034  # Variables captured in subshells for JSON output
 
 set -e
 

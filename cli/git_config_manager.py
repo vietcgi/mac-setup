@@ -15,20 +15,20 @@ Features:
 
 import os
 import sys
-import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from datetime import datetime
 import logging
 
+
 # ANSI color codes
 class Colors:
-    GREEN = '\033[0;32m'
-    RED = '\033[0;31m'
-    YELLOW = '\033[1;33m'
-    BLUE = '\033[0;34m'
-    RESET = '\033[0m'
+    GREEN = "\033[0;32m"
+    RED = "\033[0;31m"
+    YELLOW = "\033[1;33m"
+    BLUE = "\033[0;34m"
+    RESET = "\033[0m"
 
 
 class GitConfigManager:
@@ -63,8 +63,7 @@ class GitConfigManager:
         handler.setLevel(logging.INFO)
 
         formatter = logging.Formatter(
-            '[%(asctime)s] %(levelname)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "[%(asctime)s] %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
@@ -91,10 +90,7 @@ class GitConfigManager:
         }.get(level, "•")
 
         print(f"{color}{symbol} {message}{Colors.RESET}")
-        self.logger.log(
-            getattr(logging, level, logging.INFO),
-            message
-        )
+        self.logger.log(getattr(logging, level, logging.INFO), message)
 
     def validate_git_config_syntax(self) -> bool:
         """Validate git config file syntax.
@@ -111,12 +107,11 @@ class GitConfigManager:
                     ["git", "config", "--list"],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 if result.returncode != 0:
                     self.print_status(
-                        f"Git config validation failed: {result.stderr}",
-                        "ERROR"
+                        f"Git config validation failed: {result.stderr}", "ERROR"
                     )
                     return False
 
@@ -141,14 +136,14 @@ class GitConfigManager:
                 ["git", "config", "--list", "--null"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             config = {}
             if result.returncode == 0:
-                for line in result.stdout.split('\0'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
+                for line in result.stdout.split("\0"):
+                    if "=" in line:
+                        key, value = line.split("=", 1)
                         config[key] = value
 
             return config
@@ -176,24 +171,29 @@ class GitConfigManager:
 
         try:
             result = subprocess.run(
-                ["git", "config", "--file", str(self.git_global_config),
-                 "--list", "--null"],
+                [
+                    "git",
+                    "config",
+                    "--file",
+                    str(self.git_global_config),
+                    "--list",
+                    "--null",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
-                for line in result.stdout.split('\0'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
+                for line in result.stdout.split("\0"):
+                    if "=" in line:
+                        key, value = line.split("=", 1)
                         if current_config.get(key) != value:
                             changed[key] = value
 
             if changed:
                 self.print_status(
-                    f"Found {len(changed)} configuration changes",
-                    "WARNING"
+                    f"Found {len(changed)} configuration changes", "WARNING"
                 )
                 for key, value in list(changed.items())[:5]:
                     print(f"   {key} = {value}")
@@ -220,10 +220,7 @@ class GitConfigManager:
             # Git reads config from files on each invocation
             # We just need to verify it's readable
             result = subprocess.run(
-                ["git", "config", "--list"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["git", "config", "--list"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
@@ -292,8 +289,8 @@ class GitConfigManager:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_path = self.devkit_git_dir / f"gitconfig.backup.{timestamp}"
 
-            with open(self.git_global_config, 'r') as src:
-                with open(backup_path, 'w') as dst:
+            with open(self.git_global_config, "r") as src:
+                with open(backup_path, "w") as dst:
                     dst.write(src.read())
 
             self.print_status(f"Configuration backed up: {backup_path.name}", "SUCCESS")
@@ -320,9 +317,7 @@ class GitConfigManager:
             test_hook = self.git_hooks_dir / "pre-commit"
             if test_hook.exists():
                 result = subprocess.run(
-                    ["bash", "-n", str(test_hook)],
-                    capture_output=True,
-                    timeout=5
+                    ["bash", "-n", str(test_hook)], capture_output=True, timeout=5
                 )
                 if result.returncode != 0:
                     self.print_status("Hook syntax error", "ERROR")
@@ -350,7 +345,7 @@ class GitConfigManager:
                 ["git", "config", "--get", "credential.helper"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0 and result.stdout.strip():
@@ -384,13 +379,15 @@ class GitConfigManager:
                 "pre_commit": (self.git_hooks_dir / "pre-commit").exists(),
                 "commit_msg": (self.git_hooks_dir / "commit-msg").exists(),
                 "post_commit": (self.git_hooks_dir / "post-commit").exists(),
-                "prepare_commit_msg": (self.git_hooks_dir / "prepare-commit-msg").exists(),
+                "prepare_commit_msg": (
+                    self.git_hooks_dir / "prepare-commit-msg"
+                ).exists(),
             },
             "directories": {
                 "config_dir": str(self.git_config_dir),
                 "templates_dir": str(self.git_templates_dir),
                 "hooks_dir": str(self.git_hooks_dir),
-            }
+            },
         }
 
         return report
@@ -401,9 +398,13 @@ class GitConfigManager:
         Args:
             report: Report dictionary from generate_report()
         """
-        print(f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}")
+        print(
+            f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}"
+        )
         print(f"{Colors.BLUE}Git Configuration Reload Report{Colors.RESET}")
-        print(f"{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n")
+        print(
+            f"{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n"
+        )
 
         print(f"{Colors.YELLOW}Configuration Status:{Colors.RESET}")
         for key, value in report["config_status"].items():
@@ -411,14 +412,20 @@ class GitConfigManager:
 
         print(f"\n{Colors.YELLOW}Hooks Status:{Colors.RESET}")
         for hook, exists in report["hooks_status"].items():
-            status = f"{Colors.GREEN}✓{Colors.RESET}" if exists else f"{Colors.RED}✗{Colors.RESET}"
+            status = (
+                f"{Colors.GREEN}✓{Colors.RESET}"
+                if exists
+                else f"{Colors.RED}✗{Colors.RESET}"
+            )
             print(f"  {status} {hook}")
 
         print(f"\n{Colors.YELLOW}Directories:{Colors.RESET}")
         for key, path in report["directories"].items():
             print(f"  {key}: {path}")
 
-        print(f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n")
+        print(
+            f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n"
+        )
 
     def reload_all(self, dry_run: bool = False) -> bool:
         """Perform complete git configuration reload.
@@ -438,7 +445,9 @@ class GitConfigManager:
             return False
 
         if dry_run:
-            print(f"\n{Colors.YELLOW}DRY RUN MODE - No changes will be made{Colors.RESET}\n")
+            print(
+                f"\n{Colors.YELLOW}DRY RUN MODE - No changes will be made{Colors.RESET}\n"
+            )
             self.detect_config_changes()
             self.verify_hooks()
         else:
@@ -464,14 +473,10 @@ class GitConfigManager:
 
         if success:
             self.print_status(
-                "Git configuration reload completed successfully",
-                "SUCCESS"
+                "Git configuration reload completed successfully", "SUCCESS"
             )
         else:
-            self.print_status(
-                "Git configuration reload completed with errors",
-                "ERROR"
-            )
+            self.print_status("Git configuration reload completed with errors", "ERROR")
 
         return success
 
@@ -501,28 +506,17 @@ def main():
     """CLI entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Manage git configuration reload"
-    )
+    parser = argparse.ArgumentParser(description="Manage git configuration reload")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Validate without making changes"
+        "--dry-run", action="store_true", help="Validate without making changes"
     )
     parser.add_argument(
         "--component",
         choices=["config", "hooks", "credentials"],
-        help="Reload specific component"
+        help="Reload specific component",
     )
-    parser.add_argument(
-        "--home",
-        help="Home directory (defaults to $HOME)"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--home", help="Home directory (defaults to $HOME)")
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 

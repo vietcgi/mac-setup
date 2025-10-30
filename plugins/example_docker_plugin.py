@@ -15,6 +15,7 @@ try:
     from cli.plugin_system import PluginInterface, HookInterface, HookContext
 except ImportError:
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent / "cli"))
     from plugin_system import PluginInterface, HookInterface, HookContext
 
@@ -28,6 +29,7 @@ class DockerDevPreSetupHook(HookInterface):
 
         # Check if running on supported OS
         import platform
+
         if platform.system() not in ("Darwin", "Linux"):
             context.error = "Docker Dev plugin only supports macOS and Linux"
             return False
@@ -46,19 +48,13 @@ class DockerDevPostSetupHook(HookInterface):
         try:
             # Check Docker installation
             result = subprocess.run(
-                ["docker", "--version"],
-                capture_output=True,
-                timeout=5,
-                check=True
+                ["docker", "--version"], capture_output=True, timeout=5, check=True
             )
             print(f"  ✓ Docker installed: {result.stdout.decode().strip()}")
 
             # Check Docker daemon
             result = subprocess.run(
-                ["docker", "ps"],
-                capture_output=True,
-                timeout=5,
-                check=True
+                ["docker", "ps"], capture_output=True, timeout=5, check=True
             )
             print("  ✓ Docker daemon is running")
 
@@ -67,13 +63,17 @@ class DockerDevPostSetupHook(HookInterface):
                 ["kubectl", "version", "--client"],
                 capture_output=True,
                 timeout=5,
-                check=True
+                check=True,
             )
             print(f"  ✓ kubectl installed: {result.stdout.decode().split()[3]}")
 
             return True
 
-        except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+        except (
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+        ) as e:
             context.error = f"Docker verification failed: {e}"
             return False
 
@@ -97,9 +97,7 @@ class DockerDevPlugin(PluginInterface):
         """Return custom Ansible roles."""
         # In a real plugin, this would point to actual role directories
         plugin_dir = Path(__file__).parent
-        return {
-            "docker_dev": plugin_dir / "roles" / "docker_dev"
-        }
+        return {"docker_dev": plugin_dir / "roles" / "docker_dev"}
 
     def get_hooks(self) -> Dict[str, List[HookInterface]]:
         """Return hooks for various stages."""

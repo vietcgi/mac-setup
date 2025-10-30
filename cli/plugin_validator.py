@@ -42,9 +42,9 @@ class PluginManifest:
     # Valid permission declarations
     VALID_PERMISSIONS = {
         "filesystem",  # Can read/write files
-        "network",     # Can make network requests
-        "system",      # Can execute system commands
-        "environment", # Can read environment variables
+        "network",  # Can make network requests
+        "system",  # Can execute system commands
+        "environment",  # Can read environment variables
     }
 
     def __init__(self, manifest_path: Path):
@@ -145,7 +145,7 @@ class PluginManifest:
         Returns:
             True if valid semantic version
         """
-        pattern = r'^(\d+)\.(\d+)\.(\d+)(?:-[a-zA-Z0-9.]+)?(?:\+[a-zA-Z0-9.]+)?$'
+        pattern = r"^(\d+)\.(\d+)\.(\d+)(?:-[a-zA-Z0-9.]+)?(?:\+[a-zA-Z0-9.]+)?$"
         return bool(re.match(pattern, version))
 
 
@@ -259,7 +259,9 @@ class PluginValidator:
 
         # Check for PluginInterface import or proper method definitions
         required_methods = ["initialize", "get_roles", "get_hooks", "validate"]
-        method_count = sum(1 for method in required_methods if f"def {method}" in source)
+        method_count = sum(
+            1 for method in required_methods if f"def {method}" in source
+        )
 
         # Should have at least the required methods
         return method_count >= len(required_methods)
@@ -277,8 +279,9 @@ class PluginValidator:
 
         results = {}
         plugin_dirs = [
-            d for d in self.plugins_dir.iterdir()
-            if d.is_dir() and not d.name.startswith('.')
+            d
+            for d in self.plugins_dir.iterdir()
+            if d.is_dir() and not d.name.startswith(".")
         ]
 
         for plugin_dir in plugin_dirs:
@@ -320,9 +323,7 @@ class PluginValidator:
         logger = logging.getLogger("devkit.plugin_validator")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            handler.setFormatter(
-                logging.Formatter("%(levelname)s: %(message)s")
-            )
+            handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger

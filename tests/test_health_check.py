@@ -9,26 +9,24 @@ Validates:
 - System health assessment
 """
 
-import sys
-import unittest
-import tempfile
 import json
+import sys
+import tempfile
+import unittest
 from pathlib import Path
-from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.health_check import (
+from cli.health_check import (  # noqa: E402
     HealthStatus,
-    HealthCheck,
     DependencyCheck,
     DiskSpaceCheck,
     ConfigurationCheck,
     LogCheck,
     SystemCheck,
     HealthMonitor,
-    create_default_monitor
+    create_default_monitor,
 )
 
 
@@ -136,6 +134,7 @@ class TestConfigurationCheck(unittest.TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_config_check_creation(self):
@@ -192,6 +191,7 @@ class TestLogCheck(unittest.TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_log_check_creation(self):

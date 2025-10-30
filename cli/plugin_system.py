@@ -9,12 +9,11 @@ SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
-import os
 import sys
 import logging
 import importlib.util
 from pathlib import Path
-from typing import Dict, List, Callable, Any, Optional
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
@@ -25,6 +24,7 @@ from plugin_validator import PluginValidator
 @dataclass
 class HookContext:
     """Context passed to hooks."""
+
     stage: str  # "pre_setup", "post_setup", "pre_role", "post_role"
     role: Optional[str] = None
     task: Optional[str] = None
@@ -165,7 +165,9 @@ class PluginLoader:
         self.logger.info(f"Discovered {len(discovered)} plugins")
         return discovered
 
-    def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:
+    def load_plugin(
+        self, plugin_path: str, module_name: str
+    ) -> Optional[PluginInterface]:
         """
         Load a single plugin module with security validation.
 
@@ -188,7 +190,9 @@ class PluginLoader:
             is_valid, message = validator.validate_plugin(module_name)
 
             if not is_valid:
-                self.logger.error(f"Plugin validation failed for {module_name}: {message}")
+                self.logger.error(
+                    f"Plugin validation failed for {module_name}: {message}"
+                )
                 return None
 
             self.logger.debug(f"Plugin validation passed for {module_name}")
@@ -197,9 +201,7 @@ class PluginLoader:
             full_module_name = f"mac_setup_plugins.{module_name}"
 
             # Load the module
-            spec = importlib.util.spec_from_file_location(
-                full_module_name, plugin_path
-            )
+            spec = importlib.util.spec_from_file_location(full_module_name, plugin_path)
             if not spec or not spec.loader:
                 self.logger.error(f"Could not load spec for {module_name}")
                 return None
@@ -393,10 +395,7 @@ def main():
     args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     # Create loader
     loader = PluginLoader()
@@ -419,6 +418,7 @@ def main():
     elif args.info:
         info = loader.get_plugin_info()
         import json
+
         print(json.dumps(info, indent=2))
 
     elif args.validate:

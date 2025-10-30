@@ -86,7 +86,7 @@ class AuditLogger:
         action: AuditAction,
         details: Optional[Dict[str, Any]] = None,
         user: Optional[str] = None,
-        status: str = "success"
+        status: str = "success",
     ) -> Dict[str, Any]:
         """
         Log an action to the audit log.
@@ -108,7 +108,7 @@ class AuditLogger:
             "status": status,
             "user": user or os.getenv("USER", "unknown"),
             "hostname": os.uname()[1],
-            "details": details or {}
+            "details": details or {},
         }
 
         # Add signature if enabled
@@ -125,18 +125,22 @@ class AuditLogger:
 
         return entry
 
-    def log_install_started(self, roles: Optional[List[str]] = None, details: Optional[Dict] = None) -> Dict:
+    def log_install_started(
+        self, roles: Optional[List[str]] = None, details: Optional[Dict] = None
+    ) -> Dict:
         """Log installation start."""
         return self.log_action(
             AuditAction.INSTALL_STARTED,
-            details={"roles": roles or [], **(details or {})}
+            details={"roles": roles or [], **(details or {})},
         )
 
-    def log_install_completed(self, duration_seconds: float, details: Optional[Dict] = None) -> Dict:
+    def log_install_completed(
+        self, duration_seconds: float, details: Optional[Dict] = None
+    ) -> Dict:
         """Log successful installation."""
         return self.log_action(
             AuditAction.INSTALL_COMPLETED,
-            details={"duration_seconds": duration_seconds, **(details or {})}
+            details={"duration_seconds": duration_seconds, **(details or {})},
         )
 
     def log_install_failed(self, error: str, details: Optional[Dict] = None) -> Dict:
@@ -144,7 +148,7 @@ class AuditLogger:
         return self.log_action(
             AuditAction.INSTALL_FAILED,
             details={"error": error, **(details or {})},
-            status="failure"
+            status="failure",
         )
 
     def log_config_changed(self, key: str, old_value: Any, new_value: Any) -> Dict:
@@ -154,33 +158,31 @@ class AuditLogger:
             details={
                 "key": key,
                 "old_value": str(old_value),
-                "new_value": str(new_value)
-            }
+                "new_value": str(new_value),
+            },
         )
 
     def log_plugin_installed(self, plugin_name: str, version: str) -> Dict:
         """Log plugin installation."""
         return self.log_action(
             AuditAction.PLUGIN_INSTALLED,
-            details={"plugin": plugin_name, "version": version}
+            details={"plugin": plugin_name, "version": version},
         )
 
     def log_plugin_removed(self, plugin_name: str) -> Dict:
         """Log plugin removal."""
         return self.log_action(
-            AuditAction.PLUGIN_REMOVED,
-            details={"plugin": plugin_name}
+            AuditAction.PLUGIN_REMOVED, details={"plugin": plugin_name}
         )
 
-    def log_security_check(self, check_name: str, status: str, findings: Optional[List[str]] = None) -> Dict:
+    def log_security_check(
+        self, check_name: str, status: str, findings: Optional[List[str]] = None
+    ) -> Dict:
         """Log security check."""
         return self.log_action(
             AuditAction.SECURITY_CHECK,
-            details={
-                "check": check_name,
-                "findings": findings or []
-            },
-            status=status
+            details={"check": check_name, "findings": findings or []},
+            status=status,
         )
 
     def log_permission_changed(self, path: str, old_perms: str, new_perms: str) -> Dict:
@@ -190,26 +192,24 @@ class AuditLogger:
             details={
                 "path": path,
                 "old_permissions": old_perms,
-                "new_permissions": new_perms
-            }
+                "new_permissions": new_perms,
+            },
         )
 
     def log_verification(self, passed: bool, details: Optional[Dict] = None) -> Dict:
         """Log setup verification."""
-        action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
+        action = (
+            AuditAction.VERIFICATION_PASSED
+            if passed
+            else AuditAction.VERIFICATION_FAILED
+        )
         return self.log_action(
-            action,
-            details=details,
-            status="success" if passed else "failure"
+            action, details=details, status="success" if passed else "failure"
         )
 
     def log_health_check(self, status: str, details: Optional[Dict] = None) -> Dict:
         """Log health check result."""
-        return self.log_action(
-            AuditAction.HEALTH_CHECK,
-            details=details,
-            status=status
-        )
+        return self.log_action(AuditAction.HEALTH_CHECK, details=details, status=status)
 
     def get_log_file_path(self) -> Path:
         """Get current audit log file path."""
@@ -260,7 +260,7 @@ class AuditLogger:
             "actions_by_type": {},
             "actions_by_status": {},
             "users": set(),
-            "time_period_hours": hours
+            "time_period_hours": hours,
         }
 
         for entry in entries:
@@ -274,8 +274,12 @@ class AuditLogger:
                 status = entry.get("status", "unknown")
                 user = entry.get("user", "unknown")
 
-                summary["actions_by_type"][action] = summary["actions_by_type"].get(action, 0) + 1
-                summary["actions_by_status"][status] = summary["actions_by_status"].get(status, 0) + 1
+                summary["actions_by_type"][action] = (
+                    summary["actions_by_type"].get(action, 0) + 1
+                )
+                summary["actions_by_status"][status] = (
+                    summary["actions_by_status"].get(status, 0) + 1
+                )
                 summary["users"].add(user)
             except Exception as e:
                 self.logger.debug(f"Error parsing audit entry: {e}")
@@ -337,11 +341,15 @@ Active Users: {len(summary['users'])} ({', '.join(summary['users'])})
 
 Actions by Type:
 """
-        for action, count in sorted(summary["actions_by_type"].items(), key=lambda x: x[1], reverse=True):
+        for action, count in sorted(
+            summary["actions_by_type"].items(), key=lambda x: x[1], reverse=True
+        ):
             report += f"  {action}: {count}\n"
 
         report += "\nActions by Status:\n"
-        for status, count in sorted(summary["actions_by_status"].items(), key=lambda x: x[1], reverse=True):
+        for status, count in sorted(
+            summary["actions_by_status"].items(), key=lambda x: x[1], reverse=True
+        ):
             report += f"  {status}: {count}\n"
 
         return report
@@ -351,11 +359,13 @@ Actions by Type:
         entries = self.audit_logger.get_audit_logs()
 
         security_events = [
-            e for e in entries
-            if e.get("action") in [
+            e
+            for e in entries
+            if e.get("action")
+            in [
                 AuditAction.SECURITY_CHECK.value,
                 AuditAction.PERMISSION_CHANGED.value,
-                AuditAction.VERIFICATION_FAILED.value
+                AuditAction.VERIFICATION_FAILED.value,
             ]
         ]
 

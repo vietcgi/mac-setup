@@ -15,14 +15,14 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.exceptions import (
+from cli.exceptions import (  # noqa: E402
     DevkitException,
     BootstrapError,
     ConfigError,
     PluginError,
     SecurityError,
     DependencyError,
-    VerificationError
+    VerificationError,
 )
 
 
@@ -35,7 +35,7 @@ class TestDevkitException(unittest.TestCase):
             message="Test error",
             cause="Root cause",
             solutions=["Solution 1", "Solution 2"],
-            documentation="See docs"
+            documentation="See docs",
         )
 
         self.assertEqual(exc.message, "Test error")
@@ -58,7 +58,7 @@ class TestDevkitException(unittest.TestCase):
             message="Test error",
             cause="Root cause explanation",
             solutions=["Fix 1", "Fix 2"],
-            documentation="See DOCS.md"
+            documentation="See DOCS.md",
         )
 
         formatted = exc.format_message()
@@ -199,10 +199,7 @@ class TestSecurityError(unittest.TestCase):
 
     def test_checksum_mismatch_error(self):
         """Test checksum mismatch exception."""
-        exc = SecurityError.checksum_mismatch(
-            "abc123",
-            "def456"
-        )
+        exc = SecurityError.checksum_mismatch("abc123", "def456")
 
         self.assertIn("checksum", exc.message.lower())
         self.assertIn("verification failed", exc.message.lower())
@@ -210,11 +207,7 @@ class TestSecurityError(unittest.TestCase):
 
     def test_insecure_permissions_error(self):
         """Test insecure permissions exception."""
-        exc = SecurityError.insecure_permissions(
-            "~/.devkit/secret.key",
-            "0644",
-            "0600"
-        )
+        exc = SecurityError.insecure_permissions("~/.devkit/secret.key", "0644", "0600")
 
         self.assertIn("insecure permissions", exc.message.lower())
         self.assertIn("~/.devkit/secret.key", exc.message)
@@ -237,11 +230,7 @@ class TestDependencyError(unittest.TestCase):
 
     def test_version_incompatible_error(self):
         """Test version incompatibility exception."""
-        exc = DependencyError.version_incompatible(
-            "python3",
-            "3.9+",
-            "3.8.2"
-        )
+        exc = DependencyError.version_incompatible("python3", "3.9+", "3.8.2")
 
         self.assertIn("version incompatible", exc.message.lower())
         self.assertIn("python3", exc.message)
@@ -301,7 +290,7 @@ class TestErrorMessageFormatting(unittest.TestCase):
         exc = DevkitException(
             message="Complex error",
             cause="Multiple reasons",
-            solutions=["First solution", "Second solution", "Third solution"]
+            solutions=["First solution", "Second solution", "Third solution"],
         )
         formatted = exc.format_message()
 
