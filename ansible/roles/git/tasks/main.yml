@@ -66,6 +66,9 @@
   tags: [git, config]
 
 # Git Hooks Setup
+# NOTE: Custom hooks disabled when pre-commit framework is enabled
+# Pre-commit handles all hooks via .pre-commit-config.yaml
+# If needed to create custom hooks, set git_enable_precommit: false
 - name: Create pre-commit hook
   ansible.builtin.template:
     src: hooks/pre-commit.sh.j2
@@ -74,6 +77,7 @@
     owner: "{{ current_user }}"
     group: staff
   notify: reload git hooks
+  when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
 - name: Create commit-msg hook
@@ -84,6 +88,7 @@
     owner: "{{ current_user }}"
     group: staff
   notify: reload git hooks
+  when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
 - name: Create post-commit hook
@@ -93,6 +98,7 @@
     mode: '0755'
     owner: "{{ current_user }}"
     group: staff
+  when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
 - name: Create prepare-commit-msg hook
@@ -102,6 +108,7 @@
     mode: '0755'
     owner: "{{ current_user }}"
     group: staff
+  when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
 # Git Ignore Configuration
@@ -150,7 +157,7 @@
       value: "{{ git_user_name | default('') }}"
     - name: user.email
       value: "{{ git_user_email | default('') }}"
-  when: item.value
+  when: item.value | length > 0
   notify: reload git config
   tags: [git, config, user]
 
@@ -176,7 +183,7 @@
           value: "{{ git_gpg_key_id }}"
         - name: commit.gpgSign
           value: "{{ git_auto_sign_commits | default('false') }}"
-      when: gpg_key_check.rc == 0 and git_enable_gpg_signing | default(false)
+      when: git_enable_gpg_signing | default(false) and gpg_key_check is defined and gpg_key_check.rc == 0
       notify: reload git config
       tags: [git, gpg]
 
@@ -205,8 +212,9 @@
         - name: commit.gpgSign
           value: "{{ git_auto_sign_commits | default('false') }}"
       when:
-        - ssh_key_check.stat.exists
         - git_enable_ssh_signing | default(false)
+        - ssh_key_check is defined
+        - ssh_key_check.stat.exists
       notify: reload git config
       tags: [git, ssh]
 

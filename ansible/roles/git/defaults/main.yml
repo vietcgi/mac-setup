@@ -66,9 +66,9 @@ git_setup_attributes: true
 
 # Hook Configuration
 git_pre_commit_checks:
-  - trailing_whitespace: true
-  - large_files: true
-  - syntax_check: false
+  trailing_whitespace: true
+  large_files: true
+  syntax_check: false
 
 git_commit_msg_maxline: 50
 git_commit_msg_check_scope: true

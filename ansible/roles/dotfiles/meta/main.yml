@@ -1,30 +1,32 @@
 ---
 # Dotfiles role metadata
 
-namespace: devkit
-name: dotfiles
-version: 1.0.0
-description: |
-  Deploy dotfiles (configuration files) from the repository to user home directory.
-  This role ensures that all configuration files are properly synchronized and maintained.
+galaxy_info:
+  author: "Devkit Team"
+  description: |
+    Deploy dotfiles (configuration files) from the repository to user home directory.
+    This role ensures that all configuration files are properly synchronized and maintained.
+  license: MIT
+  min_ansible_version: "2.10"
 
-author: Devkit Team
-license: MIT
+  platforms:
+    - name: Darwin
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+    - name: RedHat
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
 
-# Supported platforms
-platforms:
-  - name: Darwin
-    versions:
-      - all
-  - name: Debian
-    versions:
-      - all
-  - name: RedHat
-    versions:
-      - all
-  - name: Ubuntu
-    versions:
-      - all
+  galaxy_tags:
+    - dotfiles
+    - configuration
+    - files
 
 # Role dependencies
 # Dotfiles role should run early, after basic setup
@@ -33,12 +35,3 @@ dependencies:
     tags:
       - core
       - dotfiles
-
-# Minimum Ansible version
-min_ansible_version: '2.10'
-
-# Tags for this role
-tags:
-  - dotfiles
-  - configuration
-  - files

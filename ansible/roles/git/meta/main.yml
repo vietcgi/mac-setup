@@ -30,5 +30,3 @@ galaxy_info:
 dependencies:
   - role: core
     tags: [always]
-
-documentation_url: "https://docs.example.com/roles/git"
