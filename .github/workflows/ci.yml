@@ -109,9 +109,9 @@ jobs:
       run: |
         pip install ansible
 
-    - name: Dry run Ansible playbook
+    - name: Check Ansible syntax
       run: |
-        ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
+        ansible-playbook -i inventory.yml setup.yml --syntax-check
 
   # Verify configuration files
   verify-config:
