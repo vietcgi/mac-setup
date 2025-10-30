@@ -23,6 +23,19 @@
 
   tasks:
     # =========================================================================
+    # Debug: Check what facts are available
+    # =========================================================================
+
+  - name: Show available facts
+    debug:
+      msg: |
+        ansible_user_id: {{ ansible_user_id | default('UNDEFINED') }}
+        ansible_user_dir: {{ ansible_user_dir | default('UNDEFINED') }}
+        ansible_home: {{ ansible_home | default('UNDEFINED') }}
+        ansible_env.HOME: {{ ansible_env.HOME | default('UNDEFINED') }}
+    tags: [always]
+
+    # =========================================================================
     # Homebrew Installation
     # =========================================================================
 
