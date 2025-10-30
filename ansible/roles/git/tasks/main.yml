@@ -138,12 +138,32 @@
   notify: reload git config
   tags: [git, config]
 
-# GitHub SSH URL Rewrite (for seamless SSH authentication)
-- name: Configure git to use SSH for GitHub URLs
+# GitHub SSH URL Rewrite (conditional - only if SSH keys are available)
+- name: Check if SSH keys exist for git operations
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: ssh_key_stat
+  loop:
+    - "{{ home_dir }}/.ssh/id_rsa"
+    - "{{ home_dir }}/.ssh/id_ed25519"
+    - "{{ home_dir }}/.ssh/id_ecdsa"
+  tags: [git, config, ssh]
+
+- name: Configure git to use SSH for GitHub URLs (if SSH keys available)
   community.general.git_config:
     name: url."git@github.com:".insteadOf
     value: "https://github.com/"
     scope: global
+  when: ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length > 0
+  notify: reload git config
+  tags: [git, config, ssh]
+
+- name: Remove SSH URL rewrite if no SSH keys found (prevent Homebrew failures)
+  community.general.git_config:
+    name: url."git@github.com:".insteadOf
+    scope: global
+    state: absent
+  when: ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 0
   notify: reload git config
   tags: [git, config, ssh]
 
