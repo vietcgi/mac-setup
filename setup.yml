@@ -402,13 +402,6 @@
     - direnvrc_check.stat.exists
     tags: [shell, direnv]
 
-  - name: Check if .zshrc exists
-    ansible.builtin.stat:
-      path: '{{ home }}/.zshrc'
-    register: zshrc_check
-    when: install_dev_tools | default(true)
-    tags: [always, shell, direnv]
-
   - name: Enable direnv in zsh
     ansible.builtin.lineinfile:
       path: '{{ home }}/.zshrc'
