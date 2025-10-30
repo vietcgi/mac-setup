@@ -165,9 +165,7 @@ class PluginLoader:
         self.logger.info(f"Discovered {len(discovered)} plugins")
         return discovered
 
-    def load_plugin(
-        self, plugin_path: str, module_name: str
-    ) -> Optional[PluginInterface]:
+    def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:
         """
         Load a single plugin module with security validation.
 
@@ -190,9 +188,7 @@ class PluginLoader:
             is_valid, message = validator.validate_plugin(module_name)
 
             if not is_valid:
-                self.logger.error(
-                    f"Plugin validation failed for {module_name}: {message}"
-                )
+                self.logger.error(f"Plugin validation failed for {module_name}: {message}")
                 return None
 
             self.logger.debug(f"Plugin validation passed for {module_name}")
@@ -223,9 +219,7 @@ class PluginLoader:
 
                     is_valid, errors = plugin_instance.validate()
                     if not is_valid:
-                        self.logger.warning(
-                            f"Plugin {module_name} validation failed: {errors}"
-                        )
+                        self.logger.warning(f"Plugin {module_name} validation failed: {errors}")
                         return None
 
                     self.logger.info(

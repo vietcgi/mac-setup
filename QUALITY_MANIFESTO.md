@@ -24,6 +24,7 @@ This repository operates under a **high-bar quality standard**. Every commit mus
 ### **Code is a Long-Term Asset**
 
 Code written today will:
+
 - Be maintained for years
 - Be read by other developers
 - Be debugged when it breaks

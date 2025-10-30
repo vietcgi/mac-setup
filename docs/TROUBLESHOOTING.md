@@ -9,6 +9,7 @@
 **Cause:** Homebrew not installed or not in PATH
 
 **Solution:**
+
 ```bash
 # Install Homebrew
 /bin/bash -c "$(curl -fsSL https://brew.sh/install.sh)"
@@ -30,6 +31,7 @@ brew --version
 **Cause:** Not enough free space for packages (~5-10 GB needed)
 
 **Solution:**
+
 ```bash
 # Check disk usage
 df -h
@@ -52,6 +54,7 @@ du -sh /opt/homebrew/
 **Cause:** Ansible not installed
 
 **Solution:**
+
 ```bash
 # Install Ansible
 brew install ansible
@@ -70,6 +73,7 @@ ansible --version
 **Cause:** Config directory doesn't exist
 
 **Solution:**
+
 ```bash
 # Recreate config directory
 mkdir -p ~/.devkit
@@ -83,6 +87,7 @@ mkdir -p ~/.devkit
 **Cause:** Insecure file permissions
 
 **Solution:**
+
 ```bash
 # Fix permissions (done automatically now)
 chmod 600 ~/.devkit/config.yaml
@@ -97,6 +102,7 @@ ls -la ~/.devkit/config.yaml
 **Cause:** Config file has YAML syntax errors
 
 **Solution:**
+
 ```bash
 # Check YAML syntax
 python3 -c "import yaml; yaml.safe_load(open('~/.devkit/config.yaml'))"
@@ -114,6 +120,7 @@ python3 -c "import yaml; yaml.safe_load(open('~/.devkit/config.yaml'))"
 **Cause:** Plugin missing manifest or invalid
 
 **Solution:**
+
 ```bash
 # Check plugin structure
 ls -la ~/.devkit/plugins/your-plugin/
@@ -131,6 +138,7 @@ python3 -c "from cli.plugin_validator import validate_plugin_manifest; validate_
 **Cause:** Plugin doesn't implement Plugin interface
 
 **Solution:**
+
 ```bash
 # Check plugin implementation
 cat ~/.devkit/plugins/your-plugin/__init__.py
@@ -148,6 +156,7 @@ cat ~/.devkit/plugins/your-plugin/__init__.py
 **Cause:** Network or system bottleneck
 
 **Solution:**
+
 ```bash
 # Check network speed
 time curl -o /dev/null https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
@@ -166,6 +175,7 @@ time dd if=/dev/zero of=/tmp/test bs=1m count=100
 **Cause:** Scripts not executable
 
 **Solution:**
+
 ```bash
 # Make scripts executable
 chmod +x bootstrap.sh
@@ -180,6 +190,7 @@ bash bootstrap.sh
 **Cause:** Passwordless sudo is disabled
 
 **Solution:**
+
 ```bash
 # Enter your password when prompted
 # Or enable passwordless sudo (requires security understanding):
@@ -193,6 +204,7 @@ bash bootstrap.sh
 **Cause:** Trying to create release for already-released version
 
 **Solution:**
+
 ```bash
 # Bump version
 scripts/bump-version.sh minor  # or major/patch
@@ -212,6 +224,7 @@ git push origin v$(cat VERSION)
 **Cause:** Git tag version doesn't match VERSION file
 
 **Solution:**
+
 ```bash
 # Check both
 git describe --tags
@@ -232,6 +245,7 @@ git push origin v3.1.0
 **Cause:** Setup incomplete or misconfigured
 
 **Solution:**
+
 ```bash
 # Run verification with verbose output
 ./verify-setup.sh
@@ -249,6 +263,7 @@ brew install tool-name
 **Cause:** Tools not installed or not in PATH
 
 **Solution:**
+
 ```bash
 # List what's missing
 ./verify-setup.sh
@@ -319,21 +334,25 @@ tail -100f ~/.devkit/logs/setup.log
 ## Prevention Tips
 
 1. **Keep backups:**
+
    ```bash
    cp -r ~/.devkit ~/.devkit.backup
    ```
 
 2. **Check before major upgrades:**
+
    ```bash
    ./verify-setup.sh
    ```
 
 3. **Review logs after installation:**
+
    ```bash
    cat ~/.devkit/logs/setup.log
    ```
 
 4. **Test in VM first:**
+
    ```bash
    multipass launch ubuntu:22.04 --name test
    ```

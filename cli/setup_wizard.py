@@ -96,7 +96,7 @@ class SetupWizard:
             project_root: Path to mac-setup project root
         """
         self.project_root = Path(project_root or Path(__file__).parent.parent)
-        self.config = {}
+        self.config: dict[str, str | list[str] | bool | dict[str, bool]] = {}
         self.logger = self._setup_logger()
         self._step = 0
         self._total_steps = 8
@@ -149,22 +149,16 @@ class SetupWizard:
 
     def _print_header(self) -> None:
         """Print wizard header."""
-        print(
-            f"\n{Colors.INFO}╔════════════════════════════════════════╗{Colors.RESET}"
-        )
+        print(f"\n{Colors.INFO}╔════════════════════════════════════════╗{Colors.RESET}")
         print(f"{Colors.INFO}║  Mac-Setup Interactive Configuration  ║{Colors.RESET}")
-        print(
-            f"{Colors.INFO}╚════════════════════════════════════════╝{Colors.RESET}\n"
-        )
+        print(f"{Colors.INFO}╚════════════════════════════════════════╝{Colors.RESET}\n")
 
         print("This wizard will help you configure mac-setup for your system.\n")
         print(f"Total steps: {self._total_steps}\n")
 
     def _step_header(self, title: str) -> None:
         """Print step header."""
-        print(
-            f"\n{Colors.INFO}Step {self._step}/{self._total_steps}: {title}{Colors.RESET}\n"
-        )
+        print(f"\n{Colors.INFO}Step {self._step}/{self._total_steps}: {title}{Colors.RESET}\n")
 
     def _ask_environment(self) -> None:
         """Ask for environment type."""
@@ -181,14 +175,10 @@ class SetupWizard:
             print(f"  {i}. {desc}")
 
         while True:
-            choice = input(
-                f"\n{Colors.PROMPT}Select (1-{len(options)}): {Colors.RESET}"
-            ).strip()
+            choice = input(f"\n{Colors.PROMPT}Select (1-{len(options)}): {Colors.RESET}").strip()
             if choice.isdigit() and 1 <= int(choice) <= len(options):
                 self.config["environment"] = options[int(choice) - 1][0]
-                print(
-                    f"{Colors.SUCCESS}✓ Selected: {self.config['environment']}{Colors.RESET}"
-                )
+                print(f"{Colors.SUCCESS}✓ Selected: {self.config['environment']}{Colors.RESET}")
                 break
             print(f"{Colors.ERROR}Invalid choice. Please try again.{Colors.RESET}")
 
@@ -214,9 +204,7 @@ class SetupWizard:
         for i, (value, desc) in enumerate(roles, 1):
             print(f"  {i}. {desc}")
 
-        print(
-            f"\n{Colors.DIM}Enter role numbers separated by commas (e.g., 1,2,3):{Colors.RESET}"
-        )
+        print(f"\n{Colors.DIM}Enter role numbers separated by commas (e.g., 1,2,3):{Colors.RESET}")
         print(f"{Colors.DIM}Press Enter for defaults (1,2,3,4,5):{Colors.RESET}")
 
         while True:
@@ -233,9 +221,7 @@ class SetupWizard:
                     enabled = [roles[i - 1][0] for i in indices]
                     break
                 else:
-                    print(
-                        f"{Colors.ERROR}Invalid numbers. Please try again.{Colors.RESET}"
-                    )
+                    print(f"{Colors.ERROR}Invalid numbers. Please try again.{Colors.RESET}")
             except ValueError:
                 print(
                     f"{Colors.ERROR}Invalid input. Please enter numbers separated by commas.{Colors.RESET}"
@@ -259,14 +245,10 @@ class SetupWizard:
             print(f"  {i}. {desc}")
 
         while True:
-            choice = input(
-                f"\n{Colors.PROMPT}Select (1-{len(options)}): {Colors.RESET}"
-            ).strip()
+            choice = input(f"\n{Colors.PROMPT}Select (1-{len(options)}): {Colors.RESET}").strip()
             if choice.isdigit() and 1 <= int(choice) <= len(options):
                 self.config["shell"] = options[int(choice) - 1][0]
-                print(
-                    f"{Colors.SUCCESS}✓ Selected: {self.config['shell']}{Colors.RESET}"
-                )
+                print(f"{Colors.SUCCESS}✓ Selected: {self.config['shell']}{Colors.RESET}")
                 break
             print(f"{Colors.ERROR}Invalid choice. Please try again.{Colors.RESET}")
 
@@ -285,17 +267,15 @@ class SetupWizard:
         selected = []
         for editor, desc in editors:
             response = (
-                input(f"{Colors.PROMPT}Install {desc}? (y/n): {Colors.RESET}")
-                .strip()
-                .lower()
+                input(f"{Colors.PROMPT}Install {desc}? (y/n): {Colors.RESET}").strip().lower()
             )
             if response in ("y", "yes"):
                 selected.append(editor)
 
         self.config["editors"] = selected if selected else ["neovim"]
-        print(
-            f"{Colors.SUCCESS}✓ Selected {len(self.config['editors'])} editors{Colors.RESET}"
-        )
+        editors = self.config.get("editors", [])
+        editors_len = len(editors) if isinstance(editors, list) else 1
+        print(f"{Colors.SUCCESS}✓ Selected {editors_len} editors{Colors.RESET}")
 
     def _ask_security(self) -> None:
         """Ask for security options."""
@@ -311,9 +291,7 @@ class SetupWizard:
 
         security_config = {}
         for key, desc in security_options.items():
-            response = (
-                input(f"{Colors.PROMPT}{desc}? (y/n): {Colors.RESET}").strip().lower()
-            )
+            response = input(f"{Colors.PROMPT}{desc}? (y/n): {Colors.RESET}").strip().lower()
             security_config[key] = response in ("y", "yes")
 
         self.config["security"] = security_config
@@ -324,9 +302,7 @@ class SetupWizard:
         self._step_header("Backup Configuration")
 
         response = (
-            input(f"{Colors.PROMPT}Enable automatic backups? (y/n): {Colors.RESET}")
-            .strip()
-            .lower()
+            input(f"{Colors.PROMPT}Enable automatic backups? (y/n): {Colors.RESET}").strip().lower()
         )
         self.config["backup_enabled"] = response in ("y", "yes")
 
@@ -366,15 +342,15 @@ class SetupWizard:
         print(
             f"  Environment:       {Colors.CYAN}{self.config.get('environment', 'N/A')}{Colors.RESET}"
         )
-        print(
-            f"  Enabled Roles:     {Colors.CYAN}{', '.join(self.config.get('enabled_roles', []))}{Colors.RESET}"
+        enabled_roles = self.config.get("enabled_roles", [])
+        enabled_roles_str = (
+            ", ".join(enabled_roles) if isinstance(enabled_roles, list) else str(enabled_roles)
         )
-        print(
-            f"  Shell:             {Colors.CYAN}{self.config.get('shell', 'N/A')}{Colors.RESET}"
-        )
-        print(
-            f"  Editors:           {Colors.CYAN}{', '.join(self.config.get('editors', []))}{Colors.RESET}"
-        )
+        print(f"  Enabled Roles:     {Colors.CYAN}{enabled_roles_str}{Colors.RESET}")
+        print(f"  Shell:             {Colors.CYAN}{self.config.get('shell', 'N/A')}{Colors.RESET}")
+        editors = self.config.get("editors", [])
+        editors_str = ", ".join(editors) if isinstance(editors, list) else str(editors)
+        print(f"  Editors:           {Colors.CYAN}{editors_str}{Colors.RESET}")
         print(
             f"  Backups:           {Colors.CYAN}{'Enabled' if self.config.get('backup_enabled') else 'Disabled'}{Colors.RESET}"
         )
@@ -383,18 +359,14 @@ class SetupWizard:
         )
 
         response = (
-            input(f"{Colors.PROMPT}Proceed with setup? (y/n): {Colors.RESET}")
-            .strip()
-            .lower()
+            input(f"{Colors.PROMPT}Proceed with setup? (y/n): {Colors.RESET}").strip().lower()
         )
 
         if response not in ("y", "yes"):
             print(f"{Colors.WARNING}Setup cancelled.{Colors.RESET}")
             sys.exit(1)
 
-        print(
-            f"{Colors.SUCCESS}✓ Configuration confirmed. Starting setup...{Colors.RESET}\n"
-        )
+        print(f"{Colors.SUCCESS}✓ Configuration confirmed. Starting setup...{Colors.RESET}\n")
 
     def save_config(self, file_path: Optional[str] = None) -> str:
         """
@@ -426,9 +398,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Mac-Setup Interactive Wizard")
-    parser.add_argument(
-        "--skip-wizard", action="store_true", help="Skip interactive wizard"
-    )
+    parser.add_argument("--skip-wizard", action="store_true", help="Skip interactive wizard")
     parser.add_argument("--config", help="Custom config file")
     parser.add_argument("--project-root", default=str(Path(__file__).parent.parent))
 

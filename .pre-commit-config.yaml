@@ -54,10 +54,10 @@ repos:
         args: [--line-length=100]
 
   # =========================================================================
-  # Python - Type Checking (Latest version, high quality)
+  # Python - Type Checking (Latest version, reasonable standards)
   # =========================================================================
-  # Temporarily disabled: Extensive type annotation work needed
-  # Will re-enable after type hints are added to codebase
+  # Configured but disabled: mypy has 36 remaining errors in test/plugin files
+  # Run "mypy --config-file=mypy.ini cli/" to check application code
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.11.1
   #   hooks:
@@ -67,9 +67,8 @@ repos:
   #         - types-requests
   #         - types-setuptools
   #       args:
-  #         - --strict
+  #         - --config-file=mypy.ini
   #         - --warn-unused-ignores
-  #         - --no-implicit-optional
 
   # =========================================================================
   # Python - Security (Bandit for Python vulnerability detection)
@@ -86,38 +85,32 @@ repos:
   # =========================================================================
   # Shell Scripts (Latest version, strict checking)
   # =========================================================================
-  # Temporarily disabled: Shell scripts need refactoring for compliance
-  # Will re-enable after script review and updates
-  # - repo: https://github.com/shellcheck-py/shellcheck-py
-  #   rev: v0.10.0.1
-  #   hooks:
-  #     - id: shellcheck
-  #       args: [--severity=warning]
-  #       types: [shell]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+        types: [shell]
 
   # =========================================================================
-  # YAML Files (Latest version, strict mode enabled)
+  # YAML Files (Latest version, reasonable line-length limits)
   # =========================================================================
-  # Temporarily disabled: Existing YAML files need formatting updates
-  # Will re-enable after standardization
-  # - repo: https://github.com/adrienverge/yamllint
-  #   rev: v1.35.1
-  #   hooks:
-  #     - id: yamllint
-  #       args: [--strict, --format=parsable]
-  #       types: [yaml]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [--config-file=.yamllint, --format=parsable]
+        types: [yaml]
 
   # =========================================================================
   # Markdown Documentation (Latest version)
   # =========================================================================
-  # Temporarily disabled: Existing markdown files need formatting updates
-  # Will re-enable after standardization
-  # - repo: https://github.com/igorshubovych/markdownlint-cli
-  #   rev: v0.40.0
-  #   hooks:
-  #     - id: markdownlint
-  #       args: [--fix]
-  #       types: [markdown]
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.40.0
+    hooks:
+      - id: markdownlint
+        args: [--fix, --config=.markdownlint.json]
+        types: [markdown]
 
   # =========================================================================
   # Ansible (YAML linting optimized for Ansible playbooks)

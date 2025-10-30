@@ -57,11 +57,13 @@ RULE 3: WORKS IN PRODUCTION
 ```
 
 **Test Coverage by Level:**
+
 - **Unit Tests**: 65% of test suite (test individual functions)
 - **Integration Tests**: 25% of test suite (test component interactions)
 - **E2E Tests**: 10% of test suite (test complete workflows)
 
 **Minimum Coverage Thresholds:**
+
 - Overall: 85% code coverage
 - Critical paths: 95% code coverage
 - Security code: 100% code coverage
@@ -110,6 +112,7 @@ class TestUserAuthentication:
 ```
 
 **Unit Test Requirements:**
+
 - ✅ Test normal cases
 - ✅ Test edge cases
 - ✅ Test error cases
@@ -147,6 +150,7 @@ def test_user_signup_flow():
 ```
 
 **Integration Test Requirements:**
+
 - ✅ Test actual database interactions
 - ✅ Test API interactions
 - ✅ Test event handling
@@ -204,6 +208,7 @@ def test_user_authentication_flow():
 ```
 
 **E2E Test Requirements:**
+
 - ✅ Test real workflows
 - ✅ Test end-to-end scenarios
 - ✅ Test error recovery

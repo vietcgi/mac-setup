@@ -4,10 +4,13 @@
   "MD003": { "style": "consistent" },
   "MD004": { "style": "consistent" },
   "MD007": { "indent": 2 },
-  "MD013": { "line_length": 120, "code_block_line_length": 150, "code_blocks": true, "headers": false },
+  "MD013": false,
   "MD024": false,
   "MD025": false,
+  "MD029": false,
   "MD033": false,
+  "MD036": false,
   "MD040": false,
-  "MD041": false
+  "MD041": false,
+  "MD051": false
 }

@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python', 'javascript' ]
+        language: ['python', 'javascript']
     steps:
     - name: Checkout code
       uses: actions/checkout@v4

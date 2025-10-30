@@ -5,6 +5,7 @@
 This guide explains how to upgrade Devkit between versions.
 
 Devkit follows [Semantic Versioning](https://semver.org/):
+
 - **PATCH** (3.1.X): No breaking changes - safe to upgrade
 - **MINOR** (3.X.0): New features - backward compatible
 - **MAJOR** (X.0.0): Breaking changes - may require manual steps
@@ -29,12 +30,14 @@ git pull origin main
 ### Upgrading to 3.1.x from 3.0.x
 
 **What Changed:**
+
 - Configuration security hardening
 - Plugin system validation
 - Bootstrap checksum verification
 - Enhanced documentation
 
 **Migration:**
+
 ```bash
 # No manual migration needed - automatic on first run
 ./bootstrap.sh
@@ -50,6 +53,7 @@ git pull origin main
 ⚠️ **Major Breaking Changes - Manual Migration Required**
 
 **What Changed:**
+
 - Config directory: `~/.mac-setup` → `~/.devkit`
 - Python requirement: 3.9+
 - Ansible requirement: 2.15+
@@ -80,6 +84,7 @@ cp ~/.mac-setup.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
 ```
 
 **Known Issues:**
+
 - Old casks may not auto-install (re-run Brewfile)
 - Custom roles need path updates
 - Some environment variables may need reconfiguring
@@ -153,22 +158,27 @@ multipass exec test-devkit -- bash ~/devkit/verify-setup.sh
 ## Troubleshooting
 
 ### "git: Command not found"
+
 - Reinstall git: `brew install git`
 - Update PATH: Check shell config
 
 ### "Permission denied" on scripts
+
 - Make scripts executable: `chmod +x bootstrap.sh`
 - Or use bash explicitly: `bash bootstrap.sh`
 
 ### "Python version mismatch"
+
 - Check version: `python3 --version`
 - Upgrade if needed: `brew install python@3.12`
 
 ### "Config file conflicts"
+
 - Manually merge configs: `diff ~/.devkit/config.yaml ~/.mac-setup/config.yaml`
 - Or start fresh: `rm ~/.devkit/config.yaml` then re-run
 
 ### "Missing dependencies"
+
 - Reinstall: `brew install ansible`
 - Update mise: `mise upgrade`
 - Check pre-requisites: `./verify-setup.sh`
@@ -177,7 +187,7 @@ multipass exec test-devkit -- bash ~/devkit/verify-setup.sh
 
 - See [SUPPORT.md](SUPPORT.md) for support options
 - Check [FAQ](#faq) below
-- Report issues: https://github.com/vietcgi/devkit/issues
+- Report issues: <https://github.com/vietcgi/devkit/issues>
 
 ## FAQ
 

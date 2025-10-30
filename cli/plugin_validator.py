@@ -259,9 +259,7 @@ class PluginValidator:
 
         # Check for PluginInterface import or proper method definitions
         required_methods = ["initialize", "get_roles", "get_hooks", "validate"]
-        method_count = sum(
-            1 for method in required_methods if f"def {method}" in source
-        )
+        method_count = sum(1 for method in required_methods if f"def {method}" in source)
 
         # Should have at least the required methods
         return method_count >= len(required_methods)
@@ -279,9 +277,7 @@ class PluginValidator:
 
         results = {}
         plugin_dirs = [
-            d
-            for d in self.plugins_dir.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
+            d for d in self.plugins_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
         ]
 
         for plugin_dir in plugin_dirs:

@@ -5,6 +5,7 @@ This document provides detailed migration guides for upgrading between Devkit ve
 ## Overview
 
 Devkit follows [Semantic Versioning](https://semver.org/), so:
+
 - **PATCH versions** (3.1.X): Safe to upgrade, no breaking changes
 - **MINOR versions** (3.X.0): Safe to upgrade, new features only
 - **MAJOR versions** (X.0.0): May have breaking changes
@@ -72,20 +73,25 @@ ansible-playbook ~/.devkit/roles/custom-role/tasks/main.yml
 ### Troubleshooting v2 → v3 Migration
 
 **Issue: Old plugins don't work**
+
 - **Cause**: Plugin structure changed
 - **Solution**: See [PLUGIN_DEVELOPMENT_GUIDE.md](PLUGIN_DEVELOPMENT_GUIDE.md)
 
 **Issue: Environment variables not recognized**
+
 - **Cause**: Shell config not updated for new paths
 - **Solution**: Update shell profile:
+
   ```bash
   sed -i 's|~/.mac-setup|~/.devkit|g' ~/.zshrc ~/.bashrc
   source ~/.zshrc
   ```
 
 **Issue: Old casks won't auto-install**
+
 - **Cause**: Brewfile references updated
 - **Solution**: Re-run bootstrap:
+
   ```bash
   ./bootstrap.sh
   ```
@@ -114,6 +120,7 @@ git pull origin main
 ```
 
 **Auto-migrations that happen:**
+
 - Config file permissions fixed to 0600
 - Plugin manifests validated
 - Security settings applied
@@ -243,11 +250,13 @@ multipass exec test-devkit -- bash ~/devkit/verify-setup.sh
 ---
 
 **Having migration issues?** Check the logs first:
+
 ```bash
 tail -50 ~/.devkit/logs/setup.log
 ```
 
 If you find an issue, [file a bug report](https://github.com/vietcgi/devkit/issues/new?template=bug.yml) with:
+
 - Your current version
 - Your previous version
 - Relevant log lines

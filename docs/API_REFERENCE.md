@@ -17,69 +17,91 @@ engine = ConfigurationEngine(project_root=None, logger=None)
 #### Methods
 
 ##### load_defaults()
+
 Load default configuration from schema.
+
 ```python
 engine.load_defaults()
 ```
 
 ##### load_file(file_path, section=None)
+
 Load configuration from YAML file.
+
 ```python
 config = engine.load_file('~/.devkit/config.yaml')
 ```
 
 ##### load_environment_overrides()
+
 Load configuration from environment variables (MAC_SETUP_*).
+
 ```python
 overrides = engine.load_environment_overrides()
 ```
 
 ##### load_all(group=None, platform=None, local_config=None)
+
 Load all configuration in priority order.
+
 ```python
 config = engine.load_all(group="development", platform="macos")
 ```
 
 ##### get(key, default=None)
+
 Get configuration value using dot notation.
+
 ```python
 level = engine.get("global.logging.level")
 roles = engine.get("global.enabled_roles", [])
 ```
 
 ##### set(key, value)
+
 Set configuration value using dot notation.
+
 ```python
 engine.set("global.logging.level", "debug")
 ```
 
 ##### validate()
+
 Validate configuration against schema.
+
 ```python
 is_valid, errors = engine.validate()
 ```
 
 ##### export(format_type)
+
 Export configuration in YAML or JSON format.
+
 ```python
 yaml_str = engine.export("yaml")
 json_str = engine.export("json")
 ```
 
 ##### save(file_path)
+
 Save current configuration to file.
+
 ```python
 engine.save("~/.devkit/config.yaml")
 ```
 
 ##### get_enabled_roles()
+
 Get list of enabled roles based on current configuration.
+
 ```python
 roles = engine.get_enabled_roles()
 ```
 
 ##### get_role_config(role)
+
 Get configuration for specific role.
+
 ```python
 config = engine.get_role_config("shell")
 ```
@@ -151,56 +173,74 @@ loader = PluginLoader(logger=None)
 #### Methods
 
 ##### add_plugin_path(path)
+
 Add directory to plugin search path.
+
 ```python
 loader.add_plugin_path(Path.home() / ".mac-setup" / "plugins")
 ```
 
 ##### discover_plugins()
+
 Auto-discover plugins in configured paths.
+
 ```python
 discovered = loader.discover_plugins()  # Returns list of (path, module_name)
 ```
 
 ##### load_plugin(plugin_path, module_name)
+
 Load a single plugin module.
+
 ```python
 plugin = loader.load_plugin("/path/to/plugin.py", "plugin_name")
 ```
 
 ##### load_all(plugin_paths=None)
+
 Discover and load all plugins.
+
 ```python
 count = loader.load_all()
 ```
 
 ##### get_plugin(name)
+
 Get plugin by name.
+
 ```python
 plugin = loader.get_plugin("docker_dev")
 ```
 
 ##### list_plugins()
+
 Get list of loaded plugin names.
+
 ```python
 plugins = loader.list_plugins()
 ```
 
 ##### get_plugin_roles()
+
 Get all custom roles from loaded plugins.
+
 ```python
 roles = loader.get_plugin_roles()
 ```
 
 ##### execute_hooks(stage, context=None)
+
 Execute all hooks for a given stage.
+
 ```python
 context = HookContext(stage="pre_setup")
 success = loader.execute_hooks("pre_setup", context)
 ```
 
 ##### get_plugin_info()
+
 Get information about all loaded plugins.
+
 ```python
 info = loader.get_plugin_info()
 ```
@@ -220,13 +260,17 @@ wizard = SetupWizard(project_root=None)
 #### Methods
 
 ##### run()
+
 Run the interactive setup wizard.
+
 ```python
 config = wizard.run()  # Returns Dict[str, Any]
 ```
 
 ##### save_config(file_path=None)
+
 Save configuration to file.
+
 ```python
 path = wizard.save_config("~/.devkit/config.yaml")
 ```
@@ -246,7 +290,9 @@ suite = TestSuite(project_root=None)
 #### Methods
 
 ##### run_all()
+
 Run all test suites.
+
 ```python
 exit_code = suite.run_all()  # Returns 0 for pass, 1 for fail
 ```
@@ -390,18 +436,22 @@ Options:
 ## Exit Codes
 
 ### Configuration Engine
+
 - 0: Success
 - 1: Validation failed
 
 ### Plugin System
+
 - 0: Success
 - 1: Plugin loading failed
 
 ### Setup Wizard
+
 - 0: Setup completed
 - 1: Setup cancelled
 
 ### Test Suite
+
 - 0: All tests passed
 - 1: Some tests failed
 
@@ -426,21 +476,25 @@ Errors are logged and reported clearly to the user.
 ## Best Practices
 
 1. **Always validate** configurations before applying:
+
    ```python
    is_valid, errors = engine.validate()
    ```
 
 2. **Use dot notation** for configuration access:
+
    ```python
    value = engine.get("global.logging.level")
    ```
 
 3. **Load in order** - use load_all() for proper priority:
+
    ```python
    config = engine.load_all(group="dev", platform="macos")
    ```
 
 4. **Implement error handling** in plugins:
+
    ```python
    def execute(self, context: HookContext) -> bool:
        try:
@@ -451,6 +505,7 @@ Errors are logged and reported clearly to the user.
    ```
 
 5. **Save configuration** after changes:
+
    ```python
    engine.set("key", "value")
    engine.save("~/.devkit/config.yaml")

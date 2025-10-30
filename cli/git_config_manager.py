@@ -110,9 +110,7 @@ class GitConfigManager:
                     timeout=5,
                 )
                 if result.returncode != 0:
-                    self.print_status(
-                        f"Git config validation failed: {result.stderr}", "ERROR"
-                    )
+                    self.print_status(f"Git config validation failed: {result.stderr}", "ERROR")
                     return False
 
             self.print_status("Git config syntax valid", "SUCCESS")
@@ -163,7 +161,7 @@ class GitConfigManager:
         current_config = self.get_current_config()
 
         # Read the gitconfig file to compare
-        changed = {}
+        changed: dict[str, str] = {}
 
         if not self.git_global_config.exists():
             self.print_status("No gitconfig found", "WARNING")
@@ -192,9 +190,7 @@ class GitConfigManager:
                             changed[key] = value
 
             if changed:
-                self.print_status(
-                    f"Found {len(changed)} configuration changes", "WARNING"
-                )
+                self.print_status(f"Found {len(changed)} configuration changes", "WARNING")
                 for key, value in list(changed.items())[:5]:
                     print(f"   {key} = {value}")
                 if len(changed) > 5:
@@ -379,9 +375,7 @@ class GitConfigManager:
                 "pre_commit": (self.git_hooks_dir / "pre-commit").exists(),
                 "commit_msg": (self.git_hooks_dir / "commit-msg").exists(),
                 "post_commit": (self.git_hooks_dir / "post-commit").exists(),
-                "prepare_commit_msg": (
-                    self.git_hooks_dir / "prepare-commit-msg"
-                ).exists(),
+                "prepare_commit_msg": (self.git_hooks_dir / "prepare-commit-msg").exists(),
             },
             "directories": {
                 "config_dir": str(self.git_config_dir),
@@ -398,13 +392,9 @@ class GitConfigManager:
         Args:
             report: Report dictionary from generate_report()
         """
-        print(
-            f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}"
-        )
+        print(f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}")
         print(f"{Colors.BLUE}Git Configuration Reload Report{Colors.RESET}")
-        print(
-            f"{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n"
-        )
+        print(f"{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n")
 
         print(f"{Colors.YELLOW}Configuration Status:{Colors.RESET}")
         for key, value in report["config_status"].items():
@@ -412,20 +402,14 @@ class GitConfigManager:
 
         print(f"\n{Colors.YELLOW}Hooks Status:{Colors.RESET}")
         for hook, exists in report["hooks_status"].items():
-            status = (
-                f"{Colors.GREEN}✓{Colors.RESET}"
-                if exists
-                else f"{Colors.RED}✗{Colors.RESET}"
-            )
+            status = f"{Colors.GREEN}✓{Colors.RESET}" if exists else f"{Colors.RED}✗{Colors.RESET}"
             print(f"  {status} {hook}")
 
         print(f"\n{Colors.YELLOW}Directories:{Colors.RESET}")
         for key, path in report["directories"].items():
             print(f"  {key}: {path}")
 
-        print(
-            f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n"
-        )
+        print(f"\n{Colors.BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}\n")
 
     def reload_all(self, dry_run: bool = False) -> bool:
         """Perform complete git configuration reload.
@@ -445,9 +429,7 @@ class GitConfigManager:
             return False
 
         if dry_run:
-            print(
-                f"\n{Colors.YELLOW}DRY RUN MODE - No changes will be made{Colors.RESET}\n"
-            )
+            print(f"\n{Colors.YELLOW}DRY RUN MODE - No changes will be made{Colors.RESET}\n")
             self.detect_config_changes()
             self.verify_hooks()
         else:
@@ -472,9 +454,7 @@ class GitConfigManager:
         self.display_report(report)
 
         if success:
-            self.print_status(
-                "Git configuration reload completed successfully", "SUCCESS"
-            )
+            self.print_status("Git configuration reload completed successfully", "SUCCESS")
         else:
             self.print_status("Git configuration reload completed with errors", "ERROR")
 
@@ -507,9 +487,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Manage git configuration reload")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Validate without making changes"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Validate without making changes")
     parser.add_argument(
         "--component",
         choices=["config", "hooks", "credentials"],

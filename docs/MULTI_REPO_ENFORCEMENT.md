@@ -5,6 +5,7 @@
 **"Will this work with all repos or will we have to set up per repo?"**
 
 ### Short Answer
+
 ✅ **Works across ALL repositories automatically** (with global setup)
 
 ### How It Works
@@ -158,6 +159,7 @@ Result: Hooks automatically present and working
 ```
 
 **Advantage:**
+
 - ✓ Zero configuration
 - ✓ Hooks work immediately
 - ✓ Automatic enforcement from first commit
@@ -176,6 +178,7 @@ Result: Enforcement works immediately
 ```
 
 **Advantage:**
+
 - ✓ Single command
 - ✓ No file copying needed
 - ✓ Hooks are referenced, not copied
@@ -266,16 +269,19 @@ Scenario 3: Organization standard
 ### ✅ Global Setup Complete
 
 **Files in Place:**
+
 - `~/.git-templates/hooks/pre-commit` - Quality enforcement
 - `~/.git-templates/hooks/post-commit` - Audit logging
 - `~/.git-templates/hooks/commit-msg` - Message validation
 - `~/.git-templates/hooks/prepare-commit-msg` - Auto-prefix (optional)
 
 **Configuration:**
+
 - `init.templateDir` = `~/.git-templates`
 - `core.hooksPath` = `~/.git-templates/hooks`
 
 **Verification:**
+
 ```bash
 $ git config --global init.templateDir
 /Users/kevin/.git-templates
@@ -371,6 +377,7 @@ Result:
 ### Scenario A: Developer Has 10 Projects
 
 **Setup:**
+
 ```bash
 # Once
 git config --global core.hooksPath ~/.git-templates/hooks
@@ -386,6 +393,7 @@ done
 ### Scenario B: Team of 5 Developers
 
 **Setup:**
+
 ```bash
 # Each developer runs (or in onboarding script)
 git config --global core.hooksPath ~/.git-templates/hooks
@@ -399,6 +407,7 @@ cp -r ~/.git-templates ~/.git-templates
 ### Scenario C: Organization with 50 Repos
 
 **Setup:**
+
 ```bash
 # Commit hooks to organization dotfiles
 # Teams clone dotfiles during onboarding

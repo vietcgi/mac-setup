@@ -531,7 +531,18 @@ jobs:
 
   test-summary:
     name: Test Summary
-    needs: [test-macos-15, test-macos-14, test-macos-13, test-macos-12, test-ubuntu-24, test-ubuntu-22, test-ubuntu-20, test-debian-12, test-debian-11, test-fedora-40, test-arch-linux]
+    needs:
+      - test-macos-15
+      - test-macos-14
+      - test-macos-13
+      - test-macos-12
+      - test-ubuntu-24
+      - test-ubuntu-22
+      - test-ubuntu-20
+      - test-debian-12
+      - test-debian-11
+      - test-fedora-40
+      - test-arch-linux
     runs-on: ubuntu-latest
     if: always()
 

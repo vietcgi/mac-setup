@@ -435,12 +435,14 @@ git commit --no-verify -m "message"
 ## 📞 Support
 
 **For issues:**
+
 1. Check documentation (start with `GIT_CONFIGURATION_GUIDE.md`)
 2. Review logs: `~/.devkit/logs/git.log`
 3. Run diagnostic: `python3 cli/git_config_manager.py --dry-run`
 4. Check role: `ansible-playbook setup.yml --syntax-check --tags git`
 
 **For customization:**
+
 1. Edit `group_vars/all.yml` for global changes
 2. Edit `group_vars/{group}.yml` for group-specific
 3. Edit `~/.gitconfig.local` for machine-specific

@@ -320,12 +320,14 @@ If in a hurry, do this minimum:
 ## Common Issues
 
 ### **"Coverage is 65%"**
+
 - Add more tests
 - Test edge cases
 - Test error handling
 - Until coverage ≥ 85%
 
 ### **"1 test failed"**
+
 - Which test failed?
 - Why did it fail?
 - Fix the code
@@ -333,12 +335,14 @@ If in a hurry, do this minimum:
 - Retry commit
 
 ### **"Type errors detected"**
+
 - Add type hints
 - Use proper types
 - Run mypy again
 - Until no errors
 
 ### **"Security vulnerability"**
+
 - Don't hardcode secrets
 - Validate input
 - Escape output
@@ -346,6 +350,7 @@ If in a hurry, do this minimum:
 - Rerun bandit
 
 ### **"Commit blocked"**
+
 - This is correct behavior
 - Fix the issue
 - Re-validate

@@ -151,9 +151,7 @@ class TestSuite:
         # Test main playbook syntax
         playbook_path = self.project_root / "setup.yml"
         if playbook_path.exists():
-            result = self._check_ansible_syntax(
-                "Main playbook syntax is valid", playbook_path
-            )
+            result = self._check_ansible_syntax("Main playbook syntax is valid", playbook_path)
             self._record_result(result)
 
         # Test Ansible lint

@@ -160,9 +160,7 @@ class TestPluginManifestValidation(unittest.TestCase):
 
     def test_requires_field(self):
         """Test that requires field is validated."""
-        manifest_path = self.create_manifest(
-            requires={"devkit": ">=3.0.0", "python": ">=3.9"}
-        )
+        manifest_path = self.create_manifest(requires={"devkit": ">=3.0.0", "python": ">=3.9"})
         manifest = PluginManifest(manifest_path)
         is_valid, errors = manifest.validate()
 

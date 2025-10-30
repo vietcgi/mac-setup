@@ -53,9 +53,7 @@ class DockerDevPostSetupHook(HookInterface):
             print(f"  ✓ Docker installed: {result.stdout.decode().strip()}")
 
             # Check Docker daemon
-            result = subprocess.run(
-                ["docker", "ps"], capture_output=True, timeout=5, check=True
-            )
+            result = subprocess.run(["docker", "ps"], capture_output=True, timeout=5, check=True)
             print("  ✓ Docker daemon is running")
 
             # Check Kubernetes

@@ -35,12 +35,14 @@ This document outlines a comprehensive plan to address all audit findings and im
 **Objective:** Prevent malicious bootstrap script injection via MITM attacks
 
 **Deliverables:**
+
 - Checksum verification in bootstrap script
 - CI/CD pipeline generates checksums on release
 - Documentation updated with verification steps
 - Backward compatibility for existing installations
 
 **Files to Modify:**
+
 ```
 bootstrap.sh                          # Add checksum verification
 .github/workflows/release.yml         # Add checksum generation
@@ -51,6 +53,7 @@ docs/SECURITY.md                      # Document checksum verification
 **Implementation Details:**
 
 1. **Generate Checksums on Release**
+
 ```bash
 # In CI/CD (release.yml)
 - name: Generate bootstrap checksum
@@ -62,6 +65,7 @@ docs/SECURITY.md                      # Document checksum verification
 ```
 
 2. **Add Checksum Verification to Bootstrap**
+
 ```bash
 # bootstrap.sh - Add at start
 BOOTSTRAP_CHECKSUM="<SHA256>"  # Injected by CI on release
@@ -89,6 +93,7 @@ verify_bootstrap_integrity || exit 1
 ```
 
 3. **Wrapper Script for Piped Installation**
+
 ```bash
 # scripts/install.sh (new wrapper)
 #!/bin/bash
@@ -118,6 +123,7 @@ bash "$SCRIPT" "$@"
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Checksum generated on every release
 - ✅ Bootstrap verifies checksum before execution
 - ✅ Wrapper script available for piped installation
@@ -135,12 +141,14 @@ bash "$SCRIPT" "$@"
 **Objective:** Ensure sensitive config files have secure file permissions
 
 **Deliverables:**
+
 - Permission validation in config_engine.py
 - Automatic permission fixing
 - Security warnings in logs
 - Unit tests for permission validation
 
 **Files to Modify:**
+
 ```
 cli/config_engine.py                 # Add permission checks
 tests/test_suite.py                  # Add permission tests
@@ -266,6 +274,7 @@ class TestConfigSecurity(unittest.TestCase):
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Config permissions validated on load
 - ✅ Insecure permissions automatically fixed
 - ✅ Ownership verified
@@ -282,12 +291,14 @@ class TestConfigSecurity(unittest.TestCase):
 **Objective:** Validate plugins before loading them
 
 **Deliverables:**
+
 - Plugin manifest validation
 - Signature verification system
 - Secure plugin loading
 - Plugin development guidelines
 
 **Files to Create/Modify:**
+
 ```
 cli/plugin_validator.py               # New - validation logic
 cli/plugin_system.py                  # Modify - integrate validator
@@ -540,6 +551,7 @@ class Plugin(PluginInterface):
 3. **Validate inputs** - Sanitize all user input
 4. **No external downloads** - Should not fetch from internet
 5. **Version constraints** - Specify minimum Devkit version
+
 ```
 
 **Acceptance Criteria:**
@@ -584,11 +596,13 @@ class Plugin(PluginInterface):
 
 **Files to Create/Modify:**
 ```
+
 VERSION                               # New - current version
 .github/workflows/version-check.yml   # New - version validation
 scripts/bump-version.sh               # New - version bumping
 CHANGELOG.md                          # New - change log
 docs/RELEASE_PROCESS.md              # New - release guide
+
 ```
 
 **Implementation:**
@@ -746,12 +760,14 @@ git checkout -b release/v3.2.0
 ```
 
 2. **Update Version**
+
 ```bash
 scripts/bump-version.sh minor  # or major/patch
 git add VERSION
 ```
 
 3. **Update CHANGELOG.md**
+
 ```markdown
 ## [3.2.0] - 2025-11-15
 
@@ -766,23 +782,27 @@ git add VERSION
 ```
 
 4. **Create Pull Request**
+
 - Title: "chore: release v3.2.0"
 - Label: "release"
 - Wait for all checks to pass
 
 5. **Merge PR**
+
 ```bash
 git checkout main
 git pull origin main
 ```
 
 6. **Create Git Tag**
+
 ```bash
 git tag -a v3.2.0 -m "Release version 3.2.0"
 git push origin v3.2.0
 ```
 
 7. **Create GitHub Release**
+
 - GitHub Actions automatically creates release from tag
 - Release notes generated from CHANGELOG.md
 
@@ -800,6 +820,7 @@ git push origin v3.2.0
 - Ansible: 2.15+
 - macOS: 13.0+
 - Linux: Ubuntu 20.04+
+
 ```
 
 **Acceptance Criteria:**
@@ -827,9 +848,11 @@ git push origin v3.2.0
 
 **Files to Create/Modify:**
 ```
+
 .github/workflows/release.yml         # Update - full automation
 .github/workflows/publish.yml         # New - publish to releases
 cliff.toml                            # New - changelog generation config
+
 ```
 
 **Implementation:**
@@ -1013,6 +1036,7 @@ group = "Miscellaneous"
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Tag triggers automated release
 - ✅ Security checks run before release
 - ✅ Checksums generated and included
@@ -1027,6 +1051,7 @@ group = "Miscellaneous"
 ---
 
 **Phase 2 Summary:**
+
 - **Total Duration:** 4 days
 - **Total Effort:** 9 hours
 - **Deliverables:** Versioning system + automated releases
@@ -1046,12 +1071,14 @@ group = "Miscellaneous"
 **Objective:** Establish clear contribution guidelines
 
 **Deliverables:**
+
 - CONTRIBUTING.md file
 - Issue and PR templates
 - Code of conduct
 - Commit message guidelines
 
 **Files to Create/Modify:**
+
 ```
 CONTRIBUTING.md                      # New
 CODE_OF_CONDUCT.md                   # New
@@ -1209,6 +1236,7 @@ For full policy, see our [Security Policy](SECURITY.md).
 ```
 
 **Acceptance Criteria:**
+
 - ✅ CONTRIBUTING.md complete and detailed
 - ✅ Issue templates created
 - ✅ PR template created
@@ -1225,12 +1253,14 @@ For full policy, see our [Security Policy](SECURITY.md).
 **Objective:** Document how to upgrade between versions
 
 **Deliverables:**
+
 - UPGRADE.md with migration instructions
 - Backward compatibility information
 - Breaking change documentation
 - Rollback procedures
 
 **Files to Create:**
+
 ```
 UPGRADE.md                            # New
 docs/MIGRATION_GUIDES.md              # New
@@ -1269,6 +1299,7 @@ git pull origin main
 ### Upgrading from 3.0.x to 3.1.x
 
 **What changed:**
+
 - Configuration directory: `~/.mac-setup` → `~/.devkit`
 - New security features: config permission validation
 - Plugin system hardened
@@ -1293,6 +1324,7 @@ cp ~/.mac-setup/plugins/* ~/.devkit/plugins/
 ⚠️ **Major breaking changes - manual migration required**
 
 **What changed:**
+
 - Config directory moved
 - Python requirements upgraded to 3.9+
 - Ansible 2.15+ required
@@ -1316,6 +1348,7 @@ git fetch origin
 ```
 
 **Known issues:**
+
 - Old casks may not be installed (re-run Brewfile)
 - Custom roles need updating to new paths
 
@@ -1339,6 +1372,7 @@ git checkout <previous-tag>
 - See [SECURITY.md](SECURITY.md) for security updates
 - [Open an issue](https://github.com/vietcgi/devkit/issues) if stuck
 - See [SUPPORT.md](SUPPORT.md) for support options
+
 ```
 
 **Acceptance Criteria:**
@@ -1377,10 +1411,12 @@ git checkout <previous-tag>
 
 **Files to Modify:**
 ```
+
 bootstrap.sh                          # Update all errors
 setup.yml                             # Add handlers
 cli/*.py                              # Improve exceptions
 docs/TROUBLESHOOTING.md               # New
+
 ```
 
 **Implementation:**
@@ -1479,6 +1515,7 @@ except ConfigError as e:
 ```
 
 2. Add Homebrew to PATH:
+
 ```bash
 # For macOS M1/M2/M3
 echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
@@ -1496,7 +1533,9 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 **Cause:** Not enough free disk space for packages
 
 **Solutions:**
+
 1. Check disk usage:
+
 ```bash
 df -h                     # Overall usage
 du -sh ~/                 # Home directory
@@ -1504,6 +1543,7 @@ du -sh /opt/homebrew      # Homebrew cache
 ```
 
 2. Free up space:
+
 ```bash
 # Remove Homebrew cache
 brew cleanup --all
@@ -1522,6 +1562,7 @@ docker system prune
 **Cause:** Config directory doesn't exist or is corrupted
 
 **Solutions:**
+
 ```bash
 # Recreate config directory
 mkdir -p ~/.devkit
@@ -1536,6 +1577,7 @@ mkdir -p ~/.devkit
 - See [SECURITY.md](SECURITY.md) for security issues
 - Open an [issue on GitHub](https://github.com/vietcgi/devkit/issues)
 - See [SUPPORT.md](SUPPORT.md) for support options
+
 ```
 
 **Acceptance Criteria:**
@@ -1561,12 +1603,14 @@ mkdir -p ~/.devkit
 
 **Files to Create/Modify:**
 ```
+
 pytest.ini                            # New
 setup.cfg                             # New
 tests/conftest.py                     # New
 tests/test_config_edge_cases.py      # New
 tests/test_performance.py             # New
 .github/workflows/coverage.yml        # New
+
 ```
 
 **Implementation:**
@@ -1756,6 +1800,7 @@ jobs:
 ```
 
 **Acceptance Criteria:**
+
 - ✅ pytest configured
 - ✅ Coverage reporting set up
 - ✅ 80%+ code coverage
@@ -1769,6 +1814,7 @@ jobs:
 ---
 
 **Phase 4 Summary:**
+
 - **Total Duration:** 6 days
 - **Total Effort:** 9 hours
 - **Deliverables:** Better errors + comprehensive tests
@@ -1786,12 +1832,14 @@ jobs:
 **Objective:** Parallelize package installation where possible
 
 **Deliverables:**
+
 - Batch installation logic
 - Parallel package processing
 - Performance monitoring
 - Before/after benchmarks
 
 **Files to Create/Modify:**
+
 ```
 cli/installer.py                      # New - installation orchestrator
 ansible/roles/core/tasks/main.yml     # Update - parallel installation
@@ -2011,6 +2059,7 @@ echo "Average installation time: ${AVERAGE}s"
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Parallel installation working
 - ✅ Batch size configurable
 - ✅ 20-30% performance improvement
@@ -2027,6 +2076,7 @@ echo "Average installation time: ${AVERAGE}s"
 **Objective:** Enable offline/cached installations
 
 **Deliverables:**
+
 - Package cache system
 - Offline installation mode
 - Cache management CLI
@@ -2138,6 +2188,7 @@ class CacheManager:
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Cache system working
 - ✅ Offline mode functional
 - ✅ Cache CLI tools
@@ -2149,6 +2200,7 @@ class CacheManager:
 ---
 
 **Phase 5 Summary:**
+
 - **Total Duration:** 6 days
 - **Total Effort:** 11 hours
 - **Deliverables:** 20-30% performance improvement + offline mode
@@ -2166,6 +2218,7 @@ class CacheManager:
 **Objective:** Verify setup completeness and health
 
 **Deliverables:**
+
 - Comprehensive health check script
 - Health status dashboard
 - Metrics collection
@@ -2255,6 +2308,7 @@ exit 0
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Health check script complete
 - ✅ Detailed output with version info
 - ✅ Critical vs optional tools distinguished
@@ -2269,6 +2323,7 @@ exit 0
 **Objective:** Collect setup metrics and logs
 
 **Deliverables:**
+
 - Structured logging
 - Metrics collection
 - Log rotation
@@ -2346,6 +2401,7 @@ def setup_logging(
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Structured logging implemented
 - ✅ Metrics collected
 - ✅ Log rotation working
@@ -2356,6 +2412,7 @@ def setup_logging(
 ---
 
 **Phase 6 Summary:**
+
 - **Total Duration:** 5 days
 - **Total Effort:** 7 hours
 - **Deliverables:** Health monitoring + logging/metrics
@@ -2373,6 +2430,7 @@ def setup_logging(
 **Objective:** Track all setup changes for compliance
 
 **Deliverables:**
+
 - Audit log system
 - Change tracking
 - Compliance reporting
@@ -2383,6 +2441,7 @@ def setup_logging(
 **Objective:** Visual fleet management
 
 **Deliverables:**
+
 - Flask-based dashboard
 - Fleet status view
 - Setup history

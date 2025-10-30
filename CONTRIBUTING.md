@@ -33,6 +33,7 @@ python3 -m unittest discover tests -v
 ## Code Standards
 
 ### Bash/Shell
+
 - Use `shellcheck` for linting
 - Follow Google Shell Style Guide
 - Use `set -euo pipefail` for error handling
@@ -40,6 +41,7 @@ python3 -m unittest discover tests -v
 - Add comments for complex logic
 
 ### Python
+
 - Use Python 3.9+
 - Follow PEP 8 style guide
 - Add type hints to all functions
@@ -47,6 +49,7 @@ python3 -m unittest discover tests -v
 - Use meaningful variable names
 
 ### Ansible
+
 - Use `ansible-lint` for validation
 - Write descriptive task names
 - Add proper error handling
@@ -54,6 +57,7 @@ python3 -m unittest discover tests -v
 - Use variables instead of hardcoding
 
 ### YAML
+
 - Use 2-space indentation
 - Keep line length under 100 characters
 - Add comments for non-obvious configuration
@@ -104,6 +108,7 @@ Fixes #<issue-number>
 ```
 
 **Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation
@@ -113,6 +118,7 @@ Fixes #<issue-number>
 - `security:` - Security fixes
 
 **Examples:**
+
 - `feat: add health check script`
 - `fix: resolve config permission issue`
 - `docs: update CONTRIBUTING guide`
@@ -148,6 +154,7 @@ Fixes #<issue-number>
 **DO NOT create public issues for security vulnerabilities.**
 
 Instead:
+
 1. Email security details to the maintainer
 2. Include affected versions
 3. Describe impact
@@ -173,6 +180,7 @@ See [SECURITY.md](SECURITY.md) for detailed policy.
 ## Versioning
 
 We follow [Semantic Versioning](https://semver.org/):
+
 - MAJOR: Breaking changes
 - MINOR: New features (backward-compatible)
 - PATCH: Bug fixes

@@ -156,11 +156,13 @@ run_benchmark() {
         bootstrap_cmd="$bootstrap_cmd --skip-gui"
     fi
 
-    local start_time=$(date +%s%N)
+    local start_time
+    start_time=$(date +%s%N)
     cd "$PROJECT_DIR"
 
     if $bootstrap_cmd > /tmp/bootstrap-$run_num.log 2>&1; then
-        local end_time=$(date +%s%N)
+        local end_time
+        end_time=$(date +%s%N)
         duration=$(echo "scale=2; ($end_time - $start_time) / 1000000000" | bc)
     else
         log_error "Bootstrap failed on run $run_num"
@@ -183,7 +185,8 @@ EOF
 # Generate report
 generate_report() {
     local results_json="$1"
-    local num_runs=$(echo "$results_json" | grep -c '"run":')
+    local num_runs
+    num_runs=$(echo "$results_json" | grep -c '"run":')
     local total_time=0
     local min_time=999999
     local max_time=0
@@ -196,7 +199,8 @@ generate_report() {
     local run_num=0
     while IFS= read -r line; do
         if echo "$line" | grep -q '"duration_seconds":'; then
-            local duration=$(echo "$line" | grep -o '[0-9.]*' | head -1)
+            local duration
+            duration=$(echo "$line" | grep -o '[0-9.]*' | head -1)
             total_time=$(echo "$total_time + $duration" | bc)
 
             if (( $(echo "$duration < $min_time" | bc -l) )); then
@@ -214,8 +218,10 @@ generate_report() {
         fi
     done <<< "$results_json"
 
-    local avg_time=$(echo "scale=2; $total_time / $num_runs" | bc)
-    local improvement=$(echo "scale=1; (($first_run_time - $last_run_time) / $first_run_time) * 100" | bc)
+    local avg_time
+    avg_time=$(echo "scale=2; $total_time / $num_runs" | bc)
+    local improvement
+    improvement=$(echo "scale=1; (($first_run_time - $last_run_time) / $first_run_time) * 100" | bc)
 
     cat <<EOF
 ╔══════════════════════════════════════════════════════════════╗
@@ -282,7 +288,8 @@ main() {
         if [ $i -gt 1 ]; then
             results="$results,"
         fi
-        local run_result=$(run_benchmark $i)
+        local run_result
+        run_result=$(run_benchmark $i)
         results="$results$run_result"
     done
     results="$results]"

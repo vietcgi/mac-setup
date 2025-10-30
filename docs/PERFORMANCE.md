@@ -7,12 +7,14 @@ This document describes Devkit's performance characteristics and optimization st
 ### Timeline
 
 **First Installation (Fresh System)**
+
 - Initial: 5-10 minutes
 - Network download: 2-3 minutes
 - Package installation: 2-5 minutes
 - Setup/configuration: 1-2 minutes
 
 **Subsequent Installations (Cached)**
+
 - With cache: 1-2 minutes (75-80% faster!)
 - Cache hit rate: 70-80%
 - Only installs new/updated packages
@@ -42,6 +44,7 @@ global:
 ```
 
 Then re-run:
+
 ```bash
 ./bootstrap.sh
 ```
@@ -59,11 +62,13 @@ Devkit automatically caches installations. Subsequent runs reuse cached data:
 ```
 
 View cache status:
+
 ```bash
 devkit cache stats
 ```
 
 Clear cache if needed:
+
 ```bash
 devkit cache clear
 ```
@@ -103,6 +108,7 @@ For server-only setups:
 ```
 
 Saves 1-2 minutes by skipping:
+
 - Visual Studio Code
 - iTerm2
 - Other GUI applications
@@ -112,6 +118,7 @@ Saves 1-2 minutes by skipping:
 ### Memory Usage
 
 During installation:
+
 - Peak: 200-500MB
 - After completion: 100-200MB
 - Cache system: <2MB
@@ -119,6 +126,7 @@ During installation:
 ### Disk Usage
 
 After installation:
+
 - Minimum setup: 3GB
 - Full setup: 8-10GB
 - Cache directory: 100-500MB (auto-cleaned)
@@ -126,6 +134,7 @@ After installation:
 ### Network Usage
 
 First installation downloads:
+
 - ~2GB of packages
 - ~200MB of scripts/configs
 - Reused on subsequent runs
@@ -137,6 +146,7 @@ First installation downloads:
 **Symptoms:** Taking 15+ minutes
 
 **Solutions:**
+
 1. Check network: `ping github.com`
 2. Check disk space: `df -h` (need 5GB+)
 3. Check system load: `top -l 1`
@@ -147,6 +157,7 @@ First installation downloads:
 **Symptoms:** Second installation still slow
 
 **Solutions:**
+
 1. Verify cache exists: `ls ~/.devkit/cache/`
 2. Check cache size: `du -sh ~/.devkit/cache/`
 3. Clear and restart: `devkit cache clear && ./bootstrap.sh`
@@ -156,6 +167,7 @@ First installation downloads:
 **Symptoms:** Compilation taking long time
 
 **Solutions:**
+
 1. Reduce parallel jobs: Edit config for `max_parallel: 2`
 2. Run during off-peak: Low system load helps
 3. Use pre-compiled packages when available
@@ -165,6 +177,7 @@ First installation downloads:
 **Symptoms:** Installation fails with "No space left"
 
 **Solutions:**
+
 ```bash
 # Check usage
 df -h /
@@ -181,6 +194,7 @@ rm -rf ~/Library/Caches/*
 ## Benchmark Results
 
 ### Test System Specs
+
 - MacBook Pro 14" (M2 Pro, 10-core)
 - 16GB RAM
 - SSD storage
@@ -313,6 +327,7 @@ For GitHub Actions:
 ## Future Optimizations
 
 Planned improvements:
+
 - Incremental caching (cache individual packages)
 - Compression for distributed cache
 - Predictive pre-caching (download likely-needed packages)

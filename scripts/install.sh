@@ -18,6 +18,7 @@
 set -euo pipefail
 
 # Configuration
+# shellcheck disable=SC2034  # GITHUB_REPO defined for documentation/future use
 GITHUB_REPO="https://github.com/vietcgi/devkit"
 RAW_GITHUB="https://raw.githubusercontent.com/vietcgi/devkit"
 BRANCH="${DEVKIT_BRANCH:-main}"

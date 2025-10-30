@@ -107,23 +107,27 @@ ansible-playbook setup.yml --tags git
 Git reads configuration in this order (highest to lowest priority):
 
 ### **1. Local Repository Config** (`.git/config`)
+
 ```bash
 git config --local key value
 ```
 
 ### **2. User Local Config** (`~/.gitconfig.local`)
+
 ```bash
 # Manually edit or:
 git config --file ~/.gitconfig.local key value
 ```
 
 ### **3. System Config** (`~/.gitconfig`)
+
 ```bash
 # Deployed by Ansible
 # Don't edit directly - modify via variables
 ```
 
 ### **4. System-wide Config** (`/etc/gitconfig`)
+
 ```bash
 # Admin level - rarely used
 ```
@@ -181,6 +185,7 @@ git commit
 #### Pre-Commit Hook
 
 **What it does:**
+
 - Prevents committing code with trailing whitespace
 - Prevents accidentally committing large files (>10MB)
 - Optionally checks Python syntax
@@ -208,6 +213,7 @@ Create custom scripts in `~/.git-templates/scripts/`:
 #### Commit-Msg Hook
 
 **What it does:**
+
 - Validates commit message format
 - Checks conventional commit format
 - Ensures first line is ≤ 50 characters
@@ -246,6 +252,7 @@ Fixes #123
 #### Prepare-Commit-Msg Hook
 
 **What it does:**
+
 - Auto-prefixes commit message with branch name
 - Useful for ticket tracking (GH-123, JIRA-456)
 
@@ -262,6 +269,7 @@ GH-123: Initial message
 #### Post-Commit Hook
 
 **What it does:**
+
 - Logs commit information to audit trail
 - Sends notifications (optional)
 - Can't prevent commits (non-blocking)
@@ -508,6 +516,7 @@ git config --file ~/.gitconfig.local --list
 ### **Problem: Hooks Not Running**
 
 **Symptoms:**
+
 - Pre-commit checks not happening
 - Commit messages not being validated
 
@@ -538,6 +547,7 @@ cd /tmp && mkdir test-repo && cd test-repo && git init
 ### **Problem: Config Not Reloading**
 
 **Symptoms:**
+
 - Changes to ~/.gitconfig don't take effect
 - New aliases not available
 
@@ -564,6 +574,7 @@ ansible-playbook setup.yml --tags git --check
 ### **Problem: Pre-commit Hook Failing**
 
 **Symptoms:**
+
 - Can't commit any code
 - Hook error message appears
 
@@ -590,6 +601,7 @@ tail -50 ~/.devkit/git/logs/git.log
 ### **Problem: Commit Message Hook Failing**
 
 **Symptoms:**
+
 - Commit messages rejected
 - Error about message format
 
@@ -616,6 +628,7 @@ git commit --no-verify -m "Your message"
 ### **Problem: Credential Helper Not Working**
 
 **Symptoms:**
+
 - Git keeps asking for password
 - Can't access GitHub/GitLab
 
@@ -641,6 +654,7 @@ git config --show-origin --get credential.helper
 ### **Problem: GPG Signing Not Working**
 
 **Symptoms:**
+
 - Commit signing fails
 - "Error: Cannot sign" message
 

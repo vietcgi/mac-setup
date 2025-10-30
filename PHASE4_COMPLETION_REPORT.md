@@ -8,6 +8,7 @@
 ## Overview
 
 Phase 4 focused on enhancing error messages throughout the codebase to be more user-friendly and actionable. Users now receive:
+
 - Clear, descriptive error messages
 - Root cause explanations
 - Step-by-step recovery suggestions
@@ -20,6 +21,7 @@ Phase 4 focused on enhancing error messages throughout the codebase to be more u
 Created comprehensive exception hierarchy with 8 exception types:
 
 #### Base Exception
+
 - **DevkitException**: Base class with formatted error message support
   - Includes message, cause, solutions list, and documentation reference
   - `format_message()` method creates user-friendly output with emoji indicators
@@ -66,11 +68,13 @@ show_help(topic)                 # Show contextual help
 ```
 
 Enhanced installation functions with better error messages:
+
 - **install_homebrew()** - Network, space, and permission errors
 - **install_python()** - Dependency and installation errors
 - **install_ansible()** - Prerequisite checking
 
 **Example output:**
+
 ```
 ❌ Failed to install Homebrew on macOS after 3 attempts
 
@@ -88,42 +92,50 @@ This could be caused by:
 25 new tests covering:
 
 #### Exception Creation (4 tests)
+
 - With all fields populated
 - With minimal fields
 - Formatted message includes all parts
 - String representation shows formatted message
 
 #### BootstrapError Tests (4 tests)
+
 - Integrity check failure detection
 - Network error handling
 - Permission denied scenarios
 - Insufficient disk space
 
 #### ConfigError Tests (4 tests)
+
 - Missing configuration detection
 - Invalid YAML error handling
 - Permission denied scenarios
 - Invalid ownership detection
 
 #### PluginError Tests (4 tests)
+
 - Validation failure scenarios
 - Missing manifest detection
 - Invalid semantic versioning
 - Missing plugin class detection
 
 #### SecurityError Tests (2 tests)
+
 - Checksum mismatch handling
 - Insecure permissions detection
 
 #### DependencyError Tests (2 tests)
+
 - Tool not found scenarios
 - Version incompatibility detection
 
 #### VerificationError Tests (2 tests)
+
 - Multiple missing tools detection
 - Setup incomplete scenarios
 
 #### Error Message Formatting (3 tests)
+
 - Emoji indicators present
 - Solutions properly numbered
 - Multi-line formatting correct
@@ -147,11 +159,12 @@ Total: 59 tests (100% pass rate)
 ### User-Friendly Error Messages
 
 All exceptions provide:
+
 1. **Clear Message**: "❌ Configuration file has invalid YAML syntax"
 2. **Root Cause**: "YAML parsing error: Missing colon at line 5"
 3. **Solutions**:
    - "Validate YAML: python3 -c \"import yaml; yaml.safe_load(...)\""
-   - "Use online validator: https://www.yamllint.com"
+   - "Use online validator: <https://www.yamllint.com>"
    - "Check indentation (must be 2 spaces, not tabs)"
 4. **Documentation**: Link to relevant docs
 
@@ -180,6 +193,7 @@ exc = BootstrapError.insufficient_space()
 ### Bootstrap Script Integration
 
 Enhanced error handling in:
+
 - `install_homebrew()` - Network and disk space errors
 - `install_python()` - Dependency and installation errors
 - `install_ansible()` - Prerequisite checking
@@ -187,6 +201,7 @@ Enhanced error handling in:
 ### Future Integration Points
 
 Ready to integrate into:
+
 - `cli/config_engine.py` - Configuration loading/validation
 - `cli/plugin_system.py` - Plugin loading/validation
 - `setup.yml` - Ansible playbook error handling
@@ -195,6 +210,7 @@ Ready to integrate into:
 ## Testing Validation
 
 All 59 tests pass, validating:
+
 - ✅ Exception creation with various field combinations
 - ✅ Factory method correctness
 - ✅ Message formatting with proper emoji usage
@@ -221,6 +237,7 @@ All 59 tests pass, validating:
 ## Next Steps
 
 Phase 4 is complete with:
+
 - ✅ Custom exception module created
 - ✅ Bootstrap script enhanced with better errors
 - ✅ 25 comprehensive tests (all passing)
@@ -228,7 +245,8 @@ Phase 4 is complete with:
 
 **Ready to proceed to Phase 5: Performance Optimization & Caching**
 
-### Recommended Phase 5 Tasks:
+### Recommended Phase 5 Tasks
+
 1. Implement parallel package installation
 2. Add installation caching system
 3. Create health check performance monitoring

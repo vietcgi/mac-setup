@@ -7,6 +7,7 @@ Complete reference for the commit quality standards in this repository.
 **Every commit to this repository MUST be quality, clean, working code.**
 
 This applies to:
+
 - ✅ All developers (junior, senior, contractors)
 - ✅ All code types (features, fixes, tests, docs, automation)
 - ✅ All scenarios (normal work, deadlines, emergencies)
@@ -99,6 +100,7 @@ If ALL gates pass → Commit is allowed
 ### **Layer 1: Automated (Git Hooks)**
 
 Pre-commit hooks automatically run on every `git commit`:
+
 - Syntax check
 - Test execution (must be 100%)
 - Coverage verification (must be 85%+)
@@ -111,6 +113,7 @@ Pre-commit hooks automatically run on every `git commit`:
 ### **Layer 2: Human Review**
 
 Before merging to main:
+
 - Code review (quality, architecture, security)
 - Test review (coverage, completeness)
 - Documentation review (clarity, completeness)
@@ -118,6 +121,7 @@ Before merging to main:
 ### **Layer 3: Audit Trail**
 
 Every commit is logged with:
+
 - Timestamp
 - Author
 - Changes (files, lines)
@@ -237,21 +241,25 @@ A: No. These are the standards.
 ### **How You Know It's Working**
 
 **Week 1:**
+
 - Commits take longer
 - More tests written
 - Some frustration
 
 **Week 4:**
+
 - Fewer bugs discovered
 - Faster debugging
 - Smoother code reviews
 
 **Month 3:**
+
 - System is stable
 - Code is maintainable
 - Team is efficient
 
 **Month 6+:**
+
 - Production quality
 - Minimal firefighting
 - Maximum satisfaction

@@ -7,6 +7,7 @@ The commit quality standard is enforced through **three layers** of automated an
 ## Layer 1: Automated Enforcement (Git Hooks)
 
 ### What It Does
+
 Git hooks automatically run **before** and **after** every commit attempt. If any gate fails, the commit is **blocked immediately** - there's no way around it.
 
 ### The Hook Chain
@@ -70,17 +71,20 @@ All hooks are installed in: `~/.git-templates/hooks/`
 Hooks are deployed via Ansible role `ansible/roles/git/`:
 
 **File: `defaults/main.yml`**
+
 - Configurable quality check thresholds
 - Enable/disable specific checks
 - Set minimum coverage (default: 85%)
 - Set minimum linting score (default: 8.0)
 
 **File: `templates/hooks/pre-commit.sh.j2`**
+
 - Template that renders with configuration values
 - Lines 21-82: Quality gate implementations
 - Colored output (green ✓, red ✗, yellow ⚠)
 
 **File: `handlers/main.yml`**
+
 - Auto-reload on configuration changes
 - Makes hooks executable
 - Verifies hook accessibility
@@ -145,6 +149,7 @@ Hooks are deployed via Ansible role `ansible/roles/git/`:
 ## Layer 2: Supplementary Validation Tool
 
 ### What It Does
+
 `cli/commit_validator.py` is a **standalone Python tool** that developers can run **before attempting a commit** to catch issues early.
 
 ### When to Use It
@@ -268,6 +273,7 @@ Every commit is automatically logged to: `~/.devkit/git/commits.log`
 **Format:** JSONL (one JSON object per line)
 
 **Fields:**
+
 ```json
 {
   "timestamp": "2024-10-30T15:23:45Z",
@@ -442,26 +448,31 @@ $ git commit -m "feat(auth): add password reset"
 ## Why This Works
 
 ### 1. **Automation Removes Debate**
+
 - No negotiating about "just this once"
 - Hooks enforce standards automatically
 - Everyone knows the same rules apply
 
 ### 2. **Fast Feedback**
+
 - Developers know immediately if code is acceptable
 - Failing tests show specific errors
 - Coverage reports show exactly what's untested
 
 ### 3. **No Bypass Possible**
+
 - Hooks run before commit is created (can't skip)
 - `--no-verify` flag is documented as non-functional
 - Standards apply universally
 
 ### 4. **Audit Trail Creates Accountability**
+
 - Every commit is logged with full metadata
 - Can query who committed what and when
 - Compliance is verifiable
 
 ### 5. **Human Review Ensures Quality**
+
 - Automated checks ensure technical standards
 - Human reviewers ensure design quality
 - Combined approach catches issues at multiple levels
@@ -489,6 +500,7 @@ git_commit_msg_check_scope: true
 ### In `ansible/roles/git/templates/hooks/pre-commit.sh.j2`
 
 These values are templated at deployment time:
+
 - Lines 21-66: Configurable checks
 - Each check references configuration values
 - Hooks are regenerated when config changes

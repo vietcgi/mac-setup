@@ -39,7 +39,8 @@ get_yaml_value() {
 
     # Convert dot notation to grep pattern
     # e.g., "global.logging.level" -> "level"
-    local last_key=$(echo "$key" | awk -F. '{print $NF}')
+    local last_key
+    last_key=$(echo "$key" | awk -F. '{print $NF}')
 
     grep "^[[:space:]]*$last_key:" "$file" | head -1 | awk -F: '{print $2}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }

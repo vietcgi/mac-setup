@@ -5,18 +5,22 @@
 **Answer:** It depends on how you set it up:
 
 ### Option 1: Current (Per-Repository) Setup
+
 ```bash
 git config core.hooksPath=/Users/kevin/devkit/.git-templates/hooks
 ```
+
 **Scope:** Only this repository (`/Users/kevin/devkit`)
 **Issue:** Other repos won't have the hooks
 **Need to:** Configure each repo separately
 
 ### Option 2: Global Setup (Recommended) ✓
+
 ```bash
 git config --global init.templateDir ~/.git-templates
 git config --global core.hooksPath ~/.git-templates/hooks
 ```
+
 **Scope:** ALL repositories on this machine
 **Benefit:** Works automatically for every repo
 **No:** Need to configure each repo individually
@@ -78,6 +82,7 @@ git config --global --list | grep -E "init.templateDir|core.hooksPath"
 ```
 
 **Output:**
+
 ```
 init.templateDir=/Users/kevin/.git-templates
 core.hooksPath=/Users/kevin/.git-templates/hooks
@@ -157,12 +162,14 @@ Result: .git/hooks/pre-commit exists automatically
 ### Existing Repository (before global setup)
 
 **Without global hooks:**
+
 ```bash
 cd /path/to/existing/repo
 ls .git/hooks/pre-commit  # Not there
 ```
 
 **After setting global hooks:**
+
 ```bash
 git config core.hooksPath ~/.git-templates/hooks
   ↓
@@ -198,6 +205,7 @@ done
 ```
 
 Usage:
+
 ```bash
 chmod +x apply-hooks-to-repos.sh
 ./apply-hooks-to-repos.sh
@@ -381,10 +389,11 @@ ls -la ~/.git-templates/hooks/
 ✅ Global template directory created: `~/.git-templates`
 ✅ Global hooks path configured: `~/.git-templates/hooks`
 ✅ Hooks copied to global location:
-   - pre-commit
-   - post-commit
-   - commit-msg
-   - prepare-commit-msg
+
+- pre-commit
+- post-commit
+- commit-msg
+- prepare-commit-msg
 ✅ All hooks executable
 
 ### Verification

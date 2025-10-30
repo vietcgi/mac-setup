@@ -6,8 +6,8 @@ This project uses the **pre-commit** framework to automatically enforce code qua
 
 **Pre-commit** is a battle-tested, widely-adopted solution used by 240,000+ projects including Netflix, Google, and major open-source projects.
 
-- **GitHub:** https://github.com/pre-commit/pre-commit
-- **Documentation:** https://pre-commit.com
+- **GitHub:** <https://github.com/pre-commit/pre-commit>
+- **Documentation:** <https://pre-commit.com>
 - **Stars:** 14.5k
 - **License:** MIT (Open Source)
 
@@ -16,6 +16,7 @@ This project uses the **pre-commit** framework to automatically enforce code qua
 ## What Gets Checked
 
 ### General Checks (All Files)
+
 - **JSON/YAML/TOML/XML Syntax** - Validates file format integrity
 - **Whitespace** - Removes trailing whitespace, fixes line endings
 - **Line Endings** - Standardizes to LF (Unix-style)
@@ -25,6 +26,7 @@ This project uses the **pre-commit** framework to automatically enforce code qua
 - **Code Quality** - Detects debug statements and breakpoints
 
 ### Python
+
 - **Ruff** - Fast linter + formatter (replaces Black, Flake8, isort, etc.)
   - Automatic code formatting
   - Code quality linting
@@ -42,18 +44,21 @@ This project uses the **pre-commit** framework to automatically enforce code qua
   - Finds known vulnerabilities
 
 ### Shell Scripts
+
 - **ShellCheck** - Bash/shell linting
   - Detects common errors
   - Suggests improvements
   - Validates syntax
 
 ### YAML/Configuration
+
 - **yamllint** - YAML validation
   - Enforces consistent formatting
   - Validates syntax
   - Checks for common mistakes
 
 ### Markdown/Documentation
+
 - **markdownlint** - Documentation quality
   - Consistent formatting
   - Proper spacing and indentation
@@ -164,7 +169,7 @@ repos:
 
 To add a new hook/tool:
 
-1. Find the hook in the pre-commit registry: https://pre-commit.com/hooks.html
+1. Find the hook in the pre-commit registry: <https://pre-commit.com/hooks.html>
 2. Add it to `.pre-commit-config.yaml`
 3. Run `pre-commit install` to update hooks
 
@@ -201,11 +206,13 @@ git commit -m "chore: update pre-commit hooks"
 ### Issue: "Pre-commit is not installed"
 
 **Error:**
+
 ```
 env: pre-commit: No such file or directory
 ```
 
 **Solution:**
+
 ```bash
 pip install pre-commit
 ```
@@ -213,6 +220,7 @@ pip install pre-commit
 ### Issue: "No such file or directory: .git/hooks/pre-commit"
 
 **Error:**
+
 ```
 hook id: pre-commit
 exit code: 127
@@ -220,6 +228,7 @@ exit code: 127
 
 **Solution:**
 Run the installation again:
+
 ```bash
 pre-commit install
 ```
@@ -227,12 +236,14 @@ pre-commit install
 ### Issue: Hook Fails But You Need to Commit
 
 **Option 1:** Fix the issue (recommended)
+
 ```bash
 # Address the failure and try again
 git commit -m "message"
 ```
 
 **Option 2:** Bypass hooks (only if necessary)
+
 ```bash
 git commit --no-verify -m "message"
 ```
@@ -255,9 +266,11 @@ git commit -m "fix: ruff auto-fixes"
 Some third-party packages don't have type stubs. You can:
 
 **Option 1:** Ignore missing imports globally
+
 - Already configured in `.pre-commit-config.yaml` with `--ignore-missing-imports`
 
 **Option 2:** Ignore specific imports in code
+
 ```python
 from some_package import something  # type: ignore
 ```
@@ -283,9 +296,9 @@ from some_package import something  # type: ignore
 
 For GitHub repositories, you can enable **pre-commit.ci** for automatic checks on pull requests:
 
-https://pre-commit.ci
+<https://pre-commit.ci>
 
-1. Visit https://pre-commit.ci and authorize GitHub
+1. Visit <https://pre-commit.ci> and authorize GitHub
 2. Enable this repository
 3. Pre-commit hooks will automatically run on every PR
 4. PRs won't merge until hooks pass
@@ -323,15 +336,18 @@ You can create custom hooks in addition to pre-built ones:
 ## Comparison with Other Solutions
 
 ### vs SonarQube
+
 - **SonarQube:** Heavy, server-based, expensive for large teams
 - **Pre-commit:** Lightweight, runs locally, free and open-source
 
 ### vs GitHub Actions
+
 - **GitHub Actions:** Runs after push (slower feedback)
 - **Pre-commit:** Runs before commit (immediate feedback)
 - Use both: pre-commit for local development, GitHub Actions for CI
 
 ### vs Husky (Node.js)
+
 - **Husky:** Limited to JavaScript/Node projects
 - **Pre-commit:** Language-agnostic, supports 20+ languages
 
@@ -344,6 +360,7 @@ You can create custom hooks in addition to pre-built ones:
 If hooks are slow:
 
 1. **Check what's slow:**
+
    ```bash
    time pre-commit run --all-files
    ```
@@ -353,6 +370,7 @@ If hooks are slow:
    - Re-enable after fixing issues
 
 3. **Use hook stages:**
+
    ```yaml
    stages: [commit, push]  # Only run on certain stages
    ```
@@ -391,17 +409,20 @@ All checks happen **before commit**, ensuring only quality code reaches the repo
 ## Next Steps
 
 1. **Install pre-commit:**
+
    ```bash
    pip install pre-commit
    pre-commit install
    ```
 
 2. **Verify it works:**
+
    ```bash
    pre-commit run --all-files
    ```
 
 3. **Fix any issues found:**
+
    ```bash
    # Most tools auto-fix, check with git diff
    git diff
@@ -410,6 +431,7 @@ All checks happen **before commit**, ensuring only quality code reaches the repo
    ```
 
 4. **Make commits as normal:**
+
    ```bash
    git commit -m "your message"  # Hooks run automatically
    ```
@@ -418,11 +440,11 @@ All checks happen **before commit**, ensuring only quality code reaches the repo
 
 ## Resources
 
-- **Pre-commit Documentation:** https://pre-commit.com
-- **Available Hooks:** https://pre-commit.com/hooks.html
-- **Pre-commit.ci:** https://pre-commit.ci
-- **Ruff Documentation:** https://github.com/astral-sh/ruff
-- **mypy Handbook:** https://mypy.readthedocs.io
+- **Pre-commit Documentation:** <https://pre-commit.com>
+- **Available Hooks:** <https://pre-commit.com/hooks.html>
+- **Pre-commit.ci:** <https://pre-commit.ci>
+- **Ruff Documentation:** <https://github.com/astral-sh/ruff>
+- **mypy Handbook:** <https://mypy.readthedocs.io>
 
 ---
 

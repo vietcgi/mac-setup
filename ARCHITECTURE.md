@@ -181,7 +181,7 @@ While the current architecture has both inline tasks and roles, the path to full
 - [ ] Add role testing infrastructure (molecule, etc.)
 - [ ] Create role documentation site
 
-##  Best Practices: What We Got Right
+## Best Practices: What We Got Right
 
 ✅ **Single Source of Truth**: Dotfiles in version control
 ✅ **Idempotent Operations**: Safe to run multiple times
@@ -211,6 +211,7 @@ While the current architecture has both inline tasks and roles, the path to full
 ```
 
 This runs:
+
 1. Installs prerequisites (Homebrew, Python, Ansible)
 2. Runs `setup.yml` which:
    - Installs packages

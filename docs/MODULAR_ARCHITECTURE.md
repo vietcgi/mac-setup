@@ -596,6 +596,7 @@ python tests/test_suite.py --verbose
 ### ADR-001: Modular Role-Based Architecture
 
 **Decision**: Split monolithic playbook into modular roles for:
+
 - Reusability
 - Testability
 - Customization
@@ -604,6 +605,7 @@ python tests/test_suite.py --verbose
 ### ADR-002: Configuration Priority Chain
 
 **Decision**: Use configuration priority chain instead of single file:
+
 - Enables CLI overrides
 - Supports environment variables
 - Allows group and host overrides
@@ -612,6 +614,7 @@ python tests/test_suite.py --verbose
 ### ADR-003: Plugin System for Extensibility
 
 **Decision**: Implement plugin system instead of forking:
+
 - Users can add custom functionality
 - No need to modify core code
 - Easy distribution of custom extensions

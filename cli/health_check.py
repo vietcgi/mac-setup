@@ -325,9 +325,7 @@ class SystemCheck(HealthCheck):
 
             if load_ratio > 2.0:
                 status = HealthStatus.WARNING
-                message = (
-                    f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
-                )
+                message = f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
             else:
                 status = HealthStatus.HEALTHY
                 message = f"System healthy: {uname[:40]}..."
@@ -420,9 +418,7 @@ class HealthMonitor:
         }
 
         print("\n" + "=" * 60)
-        print(
-            f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}"
-        )
+        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
         print("=" * 60 + "\n")
 
         for check_name, (status, message, details) in self.results.items():

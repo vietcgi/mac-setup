@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+
 - Configuration file permission validation with auto-fixing
 - Plugin manifest validation system with semantic version checking
 - Health check script for setup verification
@@ -15,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive remediation documentation and implementation guides
 
 ### Fixed
+
 - Bootstrap script integrity verification now prevents MITM attacks
 - Configuration files now secured with proper permissions (0600)
 - Plugin system now validates before loading
 
 ### Security
+
 - Added checksum verification for bootstrap script downloads
 - Implemented config file permission validation (0600)
 - Hardened plugin system with manifest validation
@@ -28,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [3.1.0] - 2025-10-30
 
 ### Added
+
 - Initial security audit and remediation implementation
 - Bootstrap checksum verification system
 - Configuration permission validation
@@ -37,16 +41,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Remediation documentation (7-phase roadmap)
 
 ### Fixed
+
 - Supply chain attack vulnerabilities
 - Configuration data exposure risks
 - Plugin injection risks
 
 ### Changed
+
 - Updated README with secure installation instructions
 - Enhanced bootstrap.sh with integrity checks
 - Improved config_engine.py with security validation
 
 ### Security
+
 - 3 critical security vulnerabilities fixed
 - Security risk reduced from MEDIUM to LOW (40% improvement)
 - 34 new security tests (100% passing)
@@ -54,11 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [3.0.0] - 2025-09-15
 
 ### Breaking Changes
+
 - Changed config directory from ~/.mac-setup to ~/.devkit
 - Removed support for Python < 3.9
 - Renamed MASTER branch to main
 
 ### Added
+
 - Fleet management capabilities
 - Plugin system for extensibility
 - Comprehensive documentation
@@ -66,11 +75,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Multi-platform support (macOS + Linux)
 
 ### Changed
+
 - Refactored bootstrap scripts for modularity
 - Improved error handling and logging
 - Enhanced Ansible playbook structure
 
 ### Fixed
+
 - Various compatibility issues
 - Performance bottlenecks
 - Configuration loading edge cases
@@ -78,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [2.0.0] - 2025-06-01
 
 ### Added
+
 - Initial Devkit release
 - Basic setup automation
 - Package installation via Homebrew
@@ -85,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Editor setup (Neovim + VS Code)
 
 ### Security
+
 - Initial security best practices
 - Safe default configuration
 - No hardcoded credentials

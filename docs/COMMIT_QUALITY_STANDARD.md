@@ -3,6 +3,7 @@
 **Every commit to this repository MUST meet these quality standards.**
 
 This applies to:
+
 - ✅ AI-generated commits
 - ✅ Human-written commits
 - ✅ Automated commits
@@ -504,26 +505,31 @@ git_commit_quality:
 ## Benefits
 
 ✅ **Code Quality**
+
 - Every commit meets standards
 - No technical debt accumulation
 - Consistent codebase
 
 ✅ **Reliability**
+
 - All tests pass (100%)
 - All security scanned
 - All types checked
 
 ✅ **Maintainability**
+
 - Well-documented code
 - No surprises later
 - Easy to understand
 
 ✅ **Accountability**
+
 - Complete audit trail
 - Who committed what
 - When and why
 
 ✅ **Safety**
+
 - No breaking changes
 - No regressions
 - No security issues

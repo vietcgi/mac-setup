@@ -171,9 +171,7 @@ class AuditLogger:
 
     def log_plugin_removed(self, plugin_name: str) -> Dict:
         """Log plugin removal."""
-        return self.log_action(
-            AuditAction.PLUGIN_REMOVED, details={"plugin": plugin_name}
-        )
+        return self.log_action(AuditAction.PLUGIN_REMOVED, details={"plugin": plugin_name})
 
     def log_security_check(
         self, check_name: str, status: str, findings: Optional[List[str]] = None
@@ -198,14 +196,8 @@ class AuditLogger:
 
     def log_verification(self, passed: bool, details: Optional[Dict] = None) -> Dict:
         """Log setup verification."""
-        action = (
-            AuditAction.VERIFICATION_PASSED
-            if passed
-            else AuditAction.VERIFICATION_FAILED
-        )
-        return self.log_action(
-            action, details=details, status="success" if passed else "failure"
-        )
+        action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
+        return self.log_action(action, details=details, status="success" if passed else "failure")
 
     def log_health_check(self, status: str, details: Optional[Dict] = None) -> Dict:
         """Log health check result."""
@@ -255,7 +247,7 @@ class AuditLogger:
         cutoff = datetime.now() - timedelta(hours=hours)
         entries = self.get_audit_logs()
 
-        summary = {
+        summary: dict[str, int | dict[str, int] | set[str] | list[str]] = {
             "total_actions": 0,
             "actions_by_type": {},
             "actions_by_status": {},
@@ -269,22 +261,30 @@ class AuditLogger:
                 if entry_time < cutoff:
                     continue
 
-                summary["total_actions"] += 1
+                total_actions = summary["total_actions"]
+                if isinstance(total_actions, int):
+                    summary["total_actions"] = total_actions + 1
                 action = entry.get("action", "unknown")
                 status = entry.get("status", "unknown")
                 user = entry.get("user", "unknown")
 
-                summary["actions_by_type"][action] = (
-                    summary["actions_by_type"].get(action, 0) + 1
-                )
-                summary["actions_by_status"][status] = (
-                    summary["actions_by_status"].get(status, 0) + 1
-                )
-                summary["users"].add(user)
+                actions_by_type = summary["actions_by_type"]
+                if isinstance(actions_by_type, dict):
+                    actions_by_type[action] = actions_by_type.get(action, 0) + 1
+
+                actions_by_status = summary["actions_by_status"]
+                if isinstance(actions_by_status, dict):
+                    actions_by_status[status] = actions_by_status.get(status, 0) + 1
+
+                users = summary["users"]
+                if isinstance(users, set):
+                    users.add(user)
             except Exception as e:
                 self.logger.debug(f"Error parsing audit entry: {e}")
 
-        summary["users"] = list(summary["users"])
+        users_set = summary["users"]
+        if isinstance(users_set, set):
+            summary["users"] = list(users_set)
         return summary
 
     def rotate_logs(self) -> None:

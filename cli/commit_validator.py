@@ -95,9 +95,7 @@ class CodeQualityValidator:
                             score -= 5
 
             except FileNotFoundError:
-                self.print_status(
-                    "pylint not installed, skipping style check", "WARNING"
-                )
+                self.print_status("pylint not installed, skipping style check", "WARNING")
                 return True, [], 100
             except Exception as e:
                 self.print_status(f"Style check error: {e}", "ERROR")
@@ -185,9 +183,7 @@ class CodeQualityValidator:
             return True, [], 100
 
         except FileNotFoundError:
-            self.print_status(
-                "bandit not installed, skipping security check", "WARNING"
-            )
+            self.print_status("bandit not installed, skipping security check", "WARNING")
             return True, [], 100
         except Exception as e:
             self.print_status(f"Security check error: {e}", "ERROR")
@@ -197,7 +193,7 @@ class CodeQualityValidator:
         """Check code complexity using radon."""
         self.print_status("Checking code complexity...", "INFO")
         issues = []
-        avg_complexity = 0
+        avg_complexity: float = 0
 
         try:
             python_files = [f for f in files if f.endswith(".py")]
@@ -214,11 +210,7 @@ class CodeQualityValidator:
             complexities = []
             for line in result.stdout.split("\n"):
                 if " - " in line and (
-                    "A" in line
-                    or "B" in line
-                    or "C" in line
-                    or "D" in line
-                    or "F" in line
+                    "A" in line or "B" in line or "C" in line or "D" in line or "F" in line
                 ):
                     complexities.append(line)
                     # F = too complex, D = high, C = moderate
@@ -230,9 +222,7 @@ class CodeQualityValidator:
                         avg_complexity += 3
 
             if complexities:
-                avg_complexity = (
-                    avg_complexity / len(complexities) if complexities else 5
-                )
+                avg_complexity = float(avg_complexity / len(complexities)) if complexities else 5.0
 
             if issues:
                 self.print_status(f"Found {len(issues)} complexity issues", "WARNING")
@@ -246,9 +236,7 @@ class CodeQualityValidator:
             return True, [], avg_complexity
 
         except FileNotFoundError:
-            self.print_status(
-                "radon not installed, skipping complexity check", "WARNING"
-            )
+            self.print_status("radon not installed, skipping complexity check", "WARNING")
             return True, [], 5
         except Exception as e:
             self.print_status(f"Complexity check error: {e}", "ERROR")
@@ -309,10 +297,7 @@ class CodeQualityValidator:
                 # Check for function docstrings
                 functions = re.findall(r"def \w+\(.*?\):", content)
                 for func in functions:
-                    if (
-                        f'{func}\n    """' not in content
-                        and f"{func}\n    '''" not in content
-                    ):
+                    if f'{func}\n    """' not in content and f"{func}\n    '''" not in content:
                         issues.append(f"{filepath}: Function missing docstring: {func}")
                         score -= 5
 
@@ -337,9 +322,7 @@ class CodeQualityValidator:
             return True, [], 100
 
         try:
-            result = subprocess.run(
-                ["pip-audit"], capture_output=True, text=True, timeout=30
-            )
+            result = subprocess.run(["pip-audit"], capture_output=True, text=True, timeout=30)
 
             if "found" in result.stdout.lower():
                 issues = result.stdout.split("\n")
@@ -479,9 +462,7 @@ class CodeQualityValidator:
             print(f"{Colors.GREEN}✓ ALL CHECKS PASSED - SAFE TO COMMIT{Colors.RESET}")
             return True
         else:
-            print(
-                f"{Colors.RED}✗ SOME CHECKS FAILED - FIX ISSUES BEFORE COMMIT{Colors.RESET}"
-            )
+            print(f"{Colors.RED}✗ SOME CHECKS FAILED - FIX ISSUES BEFORE COMMIT{Colors.RESET}")
             return False
 
     def save_quality_report(self, report: Dict):

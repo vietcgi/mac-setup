@@ -52,9 +52,7 @@ class TestAuditAction(unittest.TestCase):
         ]
 
         actual_actions = [
-            attr
-            for attr in dir(AuditAction)
-            if not attr.startswith("_") and attr.isupper()
+            attr for attr in dir(AuditAction) if not attr.startswith("_") and attr.isupper()
         ]
 
         self.assertEqual(len(actual_actions), len(expected_actions))
@@ -151,9 +149,7 @@ class TestAuditLogger(unittest.TestCase):
 
     def test_log_verification_failed(self):
         """Test logging failed verification."""
-        self.logger.log_verification(
-            passed=False, details={"missing": ["python", "git"]}
-        )
+        self.logger.log_verification(passed=False, details={"missing": ["python", "git"]})
 
         entries = self.logger.get_audit_logs()
         self.assertEqual(len(entries), 1)

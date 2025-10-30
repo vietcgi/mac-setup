@@ -100,21 +100,15 @@ class UltraTestSuite:
             config_file = Path(tmpdir) / "config.yaml"
 
             # Create corrupted YAML
-            config_file.write_text(
-                "global:\n  invalid: [unclosed list\n  another: value\n"
-            )
+            config_file.write_text("global:\n  invalid: [unclosed list\n  another: value\n")
 
             try:
                 with open(config_file) as f:
                     yaml.safe_load(f)
-                self.log_test(
-                    "Corrupted YAML detection", "FAIL", "Should have raised exception"
-                )
+                self.log_test("Corrupted YAML detection", "FAIL", "Should have raised exception")
                 self.add_result("Config System", "FAIL")
             except yaml.YAMLError:
-                self.log_test(
-                    "Corrupted YAML detection", "PASS", "Caught YAML error correctly"
-                )
+                self.log_test("Corrupted YAML detection", "PASS", "Caught YAML error correctly")
                 self.add_result("Config System", "PASS")
 
     def test_config_missing_file(self):
@@ -149,9 +143,7 @@ class UltraTestSuite:
                 # Try to read (should fail)
                 with open(config_file) as f:
                     f.read()
-                self.log_test(
-                    "Permission denied detection", "FAIL", "Should not be readable"
-                )
+                self.log_test("Permission denied detection", "FAIL", "Should not be readable")
                 self.add_result("Config System", "FAIL")
             except PermissionError:
                 self.log_test(
@@ -209,9 +201,7 @@ class UltraTestSuite:
             temp_file.rename(config_file)
 
             if config_file.exists():
-                self.log_test(
-                    "Safe write pattern", "PASS", "Atomic write via temp file"
-                )
+                self.log_test("Safe write pattern", "PASS", "Atomic write via temp file")
                 self.add_result("Config System", "PASS")
             else:
                 self.log_test("Safe write pattern", "FAIL", "Write failed")
@@ -243,22 +233,16 @@ class UltraTestSuite:
         """Test detection of old Ansible version."""
         self.log_category("Ansible Execution - Old Version")
 
-        result = subprocess.run(
-            ["ansible-playbook", "--version"], capture_output=True, text=True
-        )
+        result = subprocess.run(["ansible-playbook", "--version"], capture_output=True, text=True)
 
         if result.returncode == 0:
             output = result.stdout
             # Look for version string
             if "ansible" in output.lower():
-                self.log_test(
-                    "Ansible version detection", "PASS", f"Found: {output.split()[1]}"
-                )
+                self.log_test("Ansible version detection", "PASS", f"Found: {output.split()[1]}")
                 self.add_result("Ansible Execution", "PASS")
             else:
-                self.log_test(
-                    "Ansible version detection", "FAIL", "Cannot parse version"
-                )
+                self.log_test("Ansible version detection", "FAIL", "Cannot parse version")
                 self.add_result("Ansible Execution", "FAIL")
         else:
             self.log_test("Ansible version detection", "SKIP", "Ansible not available")
@@ -301,9 +285,7 @@ class UltraTestSuite:
                 )
                 self.add_result("Ansible Execution", "PASS")
             else:
-                self.log_test(
-                    "Missing inventory handling", "PASS", "Errors are handled"
-                )
+                self.log_test("Missing inventory handling", "PASS", "Errors are handled")
                 self.add_result("Ansible Execution", "PASS")
 
     def test_ansible_syntax_error(self):
@@ -314,9 +296,7 @@ class UltraTestSuite:
             playbook_path = Path(tmpdir) / "bad.yml"
 
             # Create playbook with syntax error
-            playbook_path.write_text(
-                "---\n- hosts: all\n  tasks:\n    invalid syntax here\n"
-            )
+            playbook_path.write_text("---\n- hosts: all\n  tasks:\n    invalid syntax here\n")
 
             result = subprocess.run(
                 ["ansible-playbook", "--syntax-check", str(playbook_path)],
@@ -324,9 +304,7 @@ class UltraTestSuite:
             )
 
             if result.returncode != 0:
-                self.log_test(
-                    "Playbook syntax validation", "PASS", "Caught syntax error"
-                )
+                self.log_test("Playbook syntax validation", "PASS", "Caught syntax error")
                 self.add_result("Ansible Execution", "PASS")
             else:
                 self.log_test(
@@ -348,9 +326,7 @@ class UltraTestSuite:
             plugin_file = Path(tmpdir) / "bad_plugin.py"
 
             # Create plugin with import error
-            plugin_file.write_text(
-                "import nonexistent_module\nclass TestPlugin: pass\n"
-            )
+            plugin_file.write_text("import nonexistent_module\nclass TestPlugin: pass\n")
 
             try:
                 spec = __import__("importlib.util").util.spec_from_file_location(
@@ -366,9 +342,7 @@ class UltraTestSuite:
                 )
                 self.add_result("Plugin System", "FAIL")
             except ModuleNotFoundError:
-                self.log_test(
-                    "Plugin import error detection", "PASS", "Caught import error"
-                )
+                self.log_test("Plugin import error detection", "PASS", "Caught import error")
                 self.add_result("Plugin System", "PASS")
 
     def test_plugin_missing_interface(self):
@@ -386,9 +360,7 @@ class UltraTestSuite:
                 content = f.read()
 
             if "def execute" not in content or "def get_hooks" not in content:
-                self.log_test(
-                    "Plugin interface validation", "PASS", "Detected missing methods"
-                )
+                self.log_test("Plugin interface validation", "PASS", "Detected missing methods")
                 self.add_result("Plugin System", "PASS")
             else:
                 self.log_test(
@@ -428,9 +400,7 @@ class UltraTestSuite:
                 self.log_test("Circular dependency detection", "PASS", "Detected cycle")
                 self.add_result("Plugin System", "PASS")
             else:
-                self.log_test(
-                    "Circular dependency detection", "PASS", "No circular dependencies"
-                )
+                self.log_test("Circular dependency detection", "PASS", "No circular dependencies")
                 self.add_result("Plugin System", "PASS")
 
     # =========================================================================
@@ -458,9 +428,7 @@ class UltraTestSuite:
                 )
                 self.add_result("Security", "PASS")
             else:
-                self.log_test(
-                    "Shell injection prevention", "FAIL", "Input was modified"
-                )
+                self.log_test("Shell injection prevention", "FAIL", "Input was modified")
                 self.add_result("Security", "FAIL")
         except Exception as e:
             self.log_test("Shell injection prevention", "FAIL", f"Error: {e}")
@@ -485,16 +453,12 @@ class UltraTestSuite:
             # 1. Keep paths within safe_dir, OR
             # 2. Reject attempts to escape
             if str(resolved).startswith(str(safe_dir_resolved)):
-                self.log_test(
-                    "Path traversal prevention", "PASS", "Path correctly contained"
-                )
+                self.log_test("Path traversal prevention", "PASS", "Path correctly contained")
                 self.add_result("Security", "PASS")
             else:
                 # Even if it resolves outside, it's OK if we have validation
                 # The important thing is we don't blindly execute paths from user input
-                self.log_test(
-                    "Path traversal prevention", "PASS", "Path handling validated"
-                )
+                self.log_test("Path traversal prevention", "PASS", "Path handling validated")
                 self.add_result("Security", "PASS")
 
     def test_file_permission_security(self):
@@ -544,14 +508,10 @@ class UltraTestSuite:
                     exposed = True
 
         if not exposed:
-            self.log_test(
-                "Credential exposure prevention", "PASS", "No credentials in logs"
-            )
+            self.log_test("Credential exposure prevention", "PASS", "No credentials in logs")
             self.add_result("Security", "PASS")
         else:
-            self.log_test(
-                "Credential exposure prevention", "FAIL", "Credentials found in logs"
-            )
+            self.log_test("Credential exposure prevention", "FAIL", "Credentials found in logs")
             self.add_result("Security", "FAIL")
 
     # =========================================================================
@@ -583,14 +543,10 @@ class UltraTestSuite:
                 test_file.write_text("test")
 
                 if test_file.exists():
-                    self.log_test(
-                        "Temp directory availability", "PASS", f"Temp dir at {tmpdir}"
-                    )
+                    self.log_test("Temp directory availability", "PASS", f"Temp dir at {tmpdir}")
                     self.add_result("System Environment", "PASS")
                 else:
-                    self.log_test(
-                        "Temp directory availability", "FAIL", "Cannot write to temp"
-                    )
+                    self.log_test("Temp directory availability", "FAIL", "Cannot write to temp")
                     self.add_result("System Environment", "FAIL")
         except Exception as e:
             self.log_test("Temp directory availability", "FAIL", str(e))
@@ -606,9 +562,7 @@ class UltraTestSuite:
             self.log_test("Home directory availability", "PASS", f"HOME={home}")
             self.add_result("System Environment", "PASS")
         else:
-            self.log_test(
-                "Home directory availability", "FAIL", "HOME directory not accessible"
-            )
+            self.log_test("Home directory availability", "FAIL", "HOME directory not accessible")
             self.add_result("System Environment", "FAIL")
 
     # =========================================================================
@@ -717,14 +671,10 @@ class UltraTestSuite:
 
             # Should load in < 100ms
             if elapsed < 0.1:
-                self.log_test(
-                    "Config load performance", "PASS", f"Loaded in {elapsed*1000:.2f}ms"
-                )
+                self.log_test("Config load performance", "PASS", f"Loaded in {elapsed*1000:.2f}ms")
                 self.add_result("Performance", "PASS")
             else:
-                self.log_test(
-                    "Config load performance", "FAIL", f"Too slow: {elapsed*1000:.2f}ms"
-                )
+                self.log_test("Config load performance", "FAIL", f"Too slow: {elapsed*1000:.2f}ms")
                 self.add_result("Performance", "FAIL")
 
     def test_memory_usage_reasonable(self):
@@ -734,9 +684,7 @@ class UltraTestSuite:
         import sys
 
         # Create large config in memory
-        large_config = {
-            "global": {"settings": {f"key_{i}": f"value_{i}" for i in range(1000)}}
-        }
+        large_config = {"global": {"settings": {f"key_{i}": f"value_{i}" for i in range(1000)}}}
 
         size = sys.getsizeof(json.dumps(large_config))
 
@@ -762,9 +710,7 @@ class UltraTestSuite:
             if "while true" in content:
                 # Should have break or exit
                 if "break" in content or "exit" in content:
-                    self.log_test(
-                        "Infinite loop prevention", "PASS", "Loops have exit conditions"
-                    )
+                    self.log_test("Infinite loop prevention", "PASS", "Loops have exit conditions")
                     self.add_result("Performance", "PASS")
                 else:
                     self.log_test(
@@ -774,9 +720,7 @@ class UltraTestSuite:
                     )
                     self.add_result("Performance", "FAIL")
             else:
-                self.log_test(
-                    "Infinite loop prevention", "PASS", "No infinite loops detected"
-                )
+                self.log_test("Infinite loop prevention", "PASS", "No infinite loops detected")
                 self.add_result("Performance", "PASS")
         else:
             self.log_test("Infinite loop prevention", "SKIP", "bootstrap.sh not found")
@@ -810,31 +754,21 @@ class UltraTestSuite:
         for category, results in self.test_results["categories"].items():
             cat_total = results["passed"] + results["failed"] + results["skipped"]
             cat_pass = (results["passed"] / cat_total * 100) if cat_total > 0 else 0
-            status_color = (
-                GREEN if cat_pass >= 90 else YELLOW if cat_pass >= 70 else RED
-            )
-            print(
-                f"  {category}: {status_color}{results['passed']}/{cat_total} passed{NC}"
-            )
+            status_color = GREEN if cat_pass >= 90 else YELLOW if cat_pass >= 70 else RED
+            print(f"  {category}: {status_color}{results['passed']}/{cat_total} passed{NC}")
 
         # Overall assessment
         print(f"\n{BOLD}Assessment:{NC}")
         if pass_rate >= 95:
-            print(
-                f"{GREEN}✓ ULTRA-READY: System passes 95%+ of tests. Production-ready.{NC}"
-            )
+            print(f"{GREEN}✓ ULTRA-READY: System passes 95%+ of tests. Production-ready.{NC}")
         elif pass_rate >= 85:
             print(
                 f"{YELLOW}⚠ READY WITH CAUTIONS: System passes 85%+ of tests. Review warnings.{NC}"
             )
         elif pass_rate >= 70:
-            print(
-                f"{RED}✗ NEEDS WORK: System passes <85% of tests. Address failures.{NC}"
-            )
+            print(f"{RED}✗ NEEDS WORK: System passes <85% of tests. Address failures.{NC}")
         else:
-            print(
-                f"{RED}✗ NOT READY: System fails critical tests. Requires major fixes.{NC}"
-            )
+            print(f"{RED}✗ NOT READY: System fails critical tests. Requires major fixes.{NC}")
 
         return self.test_results
 

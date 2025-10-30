@@ -15,12 +15,14 @@ This role ensures that all configuration files tracked in the `dotfiles/` direct
 ## Configuration Files Deployed
 
 ### Files (root directory)
+
 - `.tmux.conf` → tmux terminal multiplexer configuration
 - `.zshrc` → Zsh shell configuration
 - `.direnvrc` → direnv configuration
 - `.inputrc` → readline configuration
 
 ### Directories
+
 - `nvim/` → Neovim editor configuration
 - `ghostty/` → Ghostty terminal configuration
 
@@ -100,6 +102,7 @@ ansible-playbook setup.yml --tags dotfiles
 ## Idempotency
 
 This role is fully idempotent:
+
 - Files are only copied if they've changed
 - Directories are synced with preserved permissions
 - Running multiple times has no additional effect
@@ -108,6 +111,7 @@ This role is fully idempotent:
 ## Backups
 
 When `dotfiles_create_backups: true` (default):
+
 - Existing files are backed up before overwriting
 - Backup files have timestamp suffix: `.backup.TIMESTAMP`
 - Stored in the same directory as the original
@@ -115,12 +119,14 @@ When `dotfiles_create_backups: true` (default):
 ## Validation
 
 The role validates deployed configurations:
+
 - **`.zshrc`**: Checks zsh syntax with `zsh -n`
 - Reports warnings but doesn't fail if validation fails
 
 ## Handlers
 
 When dotfiles are changed, a handler is triggered:
+
 - Notifies user that shell configuration may need reloading
 
 ## Dependencies
@@ -131,19 +137,25 @@ When dotfiles are changed, a handler is triggered:
 ## Troubleshooting
 
 ### Files not syncing?
+
 Check that the `dotfiles/` directory exists in the playbook directory:
+
 ```bash
 ls -la /path/to/playbook/dotfiles/
 ```
 
 ### Validation failing?
+
 If `.zshrc` validation fails, check the syntax:
+
 ```bash
 zsh -n ~/.zshrc
 ```
 
 ### Backups being created repeatedly?
+
 If backups are being created on every run, the file permissions or content may have changed. Check with:
+
 ```bash
 diff /path/to/repo/dotfiles/.tmux.conf ~/.tmux.conf
 ```
@@ -159,21 +171,25 @@ diff /path/to/repo/dotfiles/.tmux.conf ~/.tmux.conf
 ## Examples
 
 ### Deploy dotfiles only
+
 ```bash
 ansible-playbook setup.yml --tags dotfiles
 ```
 
 ### Deploy with verbose output
+
 ```bash
 ansible-playbook setup.yml --tags dotfiles -v
 ```
 
 ### Deploy to specific host
+
 ```bash
 ansible-playbook setup.yml --tags dotfiles --limit production
 ```
 
 ### Dry-run without making changes
+
 ```bash
 ansible-playbook setup.yml --tags dotfiles --check
 ```

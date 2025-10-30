@@ -130,9 +130,7 @@ class ConfigurationEngine:
                 self.logger.info(f"✓ Fixed config permissions for {config_path}")
             except OSError as e:
                 self.logger.error(f"Cannot fix file permissions: {e}")
-                raise PermissionError(
-                    f"Unable to fix permissions on {config_path}: {e}"
-                )
+                raise PermissionError(f"Unable to fix permissions on {config_path}: {e}")
 
     def load_defaults(self) -> None:
         """Load default configuration from schema."""
@@ -202,9 +200,7 @@ class ConfigurationEngine:
             version="1.0",
         )
 
-    def load_file(
-        self, file_path: str, section: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def load_file(self, file_path: str | Path, section: Optional[str] = None) -> Dict[str, Any]:
         """
         Load configuration from YAML file.
 
@@ -245,7 +241,7 @@ class ConfigurationEngine:
         - MAC_SETUP_ENABLED_ROLES=core,shell,editors
         - MAC_SETUP_LOGGING_LEVEL=debug
         """
-        overrides = {}
+        overrides: dict[str, Any] = {}
         prefix = "MAC_SETUP_"
 
         for key, value in os.environ.items():
@@ -256,6 +252,7 @@ class ConfigurationEngine:
             config_key = key[len(prefix) :].lower()
 
             # Parse value (handle arrays and booleans)
+            parsed_value: str | bool | list[str]
             if value.lower() in ("true", "false"):
                 parsed_value = value.lower() == "true"
             elif "," in value:
@@ -266,7 +263,7 @@ class ConfigurationEngine:
             # Nested keys use double underscore: MAC_SETUP_LOGGING__LEVEL
             if "__" in config_key:
                 parts = config_key.split("__")
-                current = overrides
+                current: Any = overrides
                 for part in parts[:-1]:
                     if part not in current:
                         current[part] = {}
@@ -317,9 +314,7 @@ class ConfigurationEngine:
 
         # 3. Load group config
         if group:
-            group_config = self.load_file(
-                self.project_root / "config" / "groups" / f"{group}.yaml"
-            )
+            group_config = self.load_file(self.project_root / "config" / "groups" / f"{group}.yaml")
             self._deep_merge(self.config, group_config)
             self.logger.debug(f"Merged group config: {group}")
 
@@ -393,9 +388,7 @@ class ConfigurationEngine:
         # Validate global settings
         valid_environments = ["development", "staging", "production"]
         if self.get("global.setup_environment") not in valid_environments:
-            errors.append(
-                f"Invalid setup_environment: {self.get('global.setup_environment')}"
-            )
+            errors.append(f"Invalid setup_environment: {self.get('global.setup_environment')}")
 
         # Validate enabled/disabled roles don't overlap
         enabled = set(self.get("global.enabled_roles", []))
@@ -431,11 +424,12 @@ class ConfigurationEngine:
         if format_type == "json":
             return json.dumps(self.config, indent=2)
         elif format_type == "yaml":
-            return yaml.dump(self.config, default_flow_style=False)
+            yaml_str = yaml.dump(self.config, default_flow_style=False)
+            return yaml_str if yaml_str is not None else ""
         else:
             raise ValueError(f"Unsupported format: {format_type}")
 
-    def save(self, file_path: str) -> None:
+    def save(self, file_path: str | Path) -> None:
         """Save current configuration to file."""
         path = Path(file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -486,15 +480,9 @@ def main():
     parser.add_argument("--platform", default="macos", help="Platform (macos/linux)")
     parser.add_argument("--config", help="Custom config file path")
     parser.add_argument("--get", help="Get config value (dot notation)")
-    parser.add_argument(
-        "--set", nargs=2, metavar=("KEY", "VALUE"), help="Set config value"
-    )
-    parser.add_argument(
-        "--validate", action="store_true", help="Validate configuration"
-    )
-    parser.add_argument(
-        "--export", choices=["yaml", "json"], help="Export configuration"
-    )
+    parser.add_argument("--set", nargs=2, metavar=("KEY", "VALUE"), help="Set config value")
+    parser.add_argument("--validate", action="store_true", help="Validate configuration")
+    parser.add_argument("--export", choices=["yaml", "json"], help="Export configuration")
     parser.add_argument("--list-files", action="store_true", help="List loaded files")
     parser.add_argument("--list-roles", action="store_true", help="List enabled roles")
 

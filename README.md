@@ -13,6 +13,7 @@
 **Set up your entire development environment in ~10 minutes:**
 
 ### Option 1: Secure Installation (Recommended)
+
 Uses checksum verification for security:
 
 ```bash
@@ -20,6 +21,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/vietcgi/devkit/main/scripts/
 ```
 
 ### Option 2: Clone and Run
+
 If you prefer to review code first:
 
 ```bash
@@ -29,6 +31,7 @@ cd devkit
 ```
 
 ### Option 3: Local File
+
 If you have the script locally:
 
 ```bash

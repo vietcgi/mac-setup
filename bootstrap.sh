@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034,SC2120,SC2162  # Variables used externally, unused functions OK
 ################################################################################
 # Devkit Bootstrap Script (PRIMARY ENTRY POINT)
 #

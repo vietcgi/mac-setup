@@ -300,9 +300,7 @@ class DependencyError(DevkitException):
         )
 
     @staticmethod
-    def version_incompatible(
-        tool: str, required: str, current: str
-    ) -> "DependencyError":
+    def version_incompatible(tool: str, required: str, current: str) -> "DependencyError":
         """Create version incompatibility exception."""
         return DependencyError(
             message=f"Tool version incompatible: {tool}",
