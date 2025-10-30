@@ -23,24 +23,6 @@
 
   tasks:
     # =========================================================================
-    # Initialize User and Home Variables
-    # =========================================================================
-
-  - name: Debug available facts
-    ansible.builtin.debug:
-      msg: |
-        ansible_user_id: {{ ansible_user_id | default('UNDEFINED') }}
-        ansible_user_dir: {{ ansible_user_dir | default('UNDEFINED') }}
-        ansible_env.HOME: {{ ansible_env.HOME | default('UNDEFINED') }}
-    tags: [always]
-
-  - name: Set user and home facts
-    ansible.builtin.set_fact:
-      user: '{{ ansible_user_id }}'
-      home: '{{ ansible_user_dir }}'
-    tags: [always]
-
-    # =========================================================================
     # Homebrew Installation
     # =========================================================================
 

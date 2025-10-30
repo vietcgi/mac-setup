@@ -5,6 +5,8 @@ all:
   vars:
     # Global variables for all machines
     ansible_connection: local
+    user: '{{ ansible_user_id | default("root") }}'
+    home: '{{ ansible_user_dir | default(ansible_env.HOME) }}'
 
   children:
     # Group machines by function
