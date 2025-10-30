@@ -582,12 +582,12 @@ jobs:
         successes=$((total - failures))
 
         echo "=== Final Results ==="
-        echo "✅ Passed: $successes/$total"
-        echo "❌ Failed: $failures/$total"
+        echo "Passed: $successes/$total"
+        echo "Failed: $failures/$total"
 
         if [ $failures -gt 0 ]; then
           echo ""
-          echo "⚠️  Some tests failed. Check the logs above."
+          echo "Some tests failed. Check the logs above."
           exit 1
         else
           echo ""

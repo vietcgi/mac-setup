@@ -51,7 +51,7 @@ jobs:
     - name: Check Python dependencies
       run: |
         pip install -r requirements.txt || true
-        safety check || echo "⚠️  Note: vulnerability check completed"
+        safety check || echo "Note: vulnerability check completed"
 
   # Code scanning with CodeQL
   codeql:
@@ -108,7 +108,7 @@ jobs:
     steps:
     - name: Check security results
       run: |
-        echo "✅ Security scanning completed"
+        echo "Security scanning completed"
         echo "  • Secrets scanning: ${{ needs.secrets-scan.result }}"
         echo "  • Dependency check: ${{ needs.dependency-check.result }}"
         echo "  • CodeQL analysis: ${{ needs.codeql.result }}"

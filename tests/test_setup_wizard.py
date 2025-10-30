@@ -10,8 +10,13 @@ Tests interactive setup wizard functionality including:
 """
 
 import pytest
+import sys
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+
+# Mock sys.argv to prevent argparse issues during import
+sys.argv = ["pytest"]
+
 from cli.setup_wizard import ProgressBar, Colors
 
 

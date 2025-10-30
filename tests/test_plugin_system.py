@@ -10,9 +10,14 @@ Tests plugin loading and execution including:
 """
 
 import pytest
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from typing import Optional
+
+# Mock sys.argv to prevent argparse issues during import
+sys.argv = ["pytest"]
+
 from cli.plugin_system import HookContext, HookInterface, PluginInterface
 
 

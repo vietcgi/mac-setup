@@ -14,8 +14,13 @@ Tests code quality validation functionality including:
 import pytest
 import json
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
+
+# Mock sys.argv to prevent argparse issues during import
+sys.argv = ["pytest"]
+
 from cli.commit_validator import CodeQualityValidator, Colors
 
 

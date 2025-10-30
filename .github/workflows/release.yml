@@ -234,7 +234,7 @@ jobs:
     - name: Print release info
       run: |
         echo "════════════════════════════════════════════════════"
-        echo "✅ Release Created Successfully!"
+        echo "Release Created Successfully!"
         echo "════════════════════════════════════════════════════"
         echo "Version: ${{ needs.create-release.outputs.version }}"
         echo "GitHub Release: https://github.com/vietcgi/devkit/releases/tag/${{ needs.create-release.outputs.version }}"

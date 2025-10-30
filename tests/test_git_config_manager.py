@@ -12,8 +12,13 @@ Tests git configuration management functionality including:
 
 import pytest
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
+
+# Mock sys.argv to prevent argparse issues during import
+sys.argv = ["pytest"]
+
 from cli.git_config_manager import GitConfigManager, Colors
 
 

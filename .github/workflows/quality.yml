@@ -164,10 +164,57 @@ jobs:
       run: |
         pytest tests/ -v --benchmark-only || true
 
+  # Mutation Testing
+  mutation-testing:
+    name: Mutation Testing (Test Quality)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        pip install pytest pytest-cov
+
+    - name: Run mutation testing
+      run: |
+        python cli/mutation_test.py
+
+    - name: Check mutation score
+      run: |
+        python -c "
+        import json
+        with open('.mutation_test/report.json') as f:
+            report = json.load(f)
+        score = report['mutation_score']
+        print(f'Mutation Score: {score}%')
+        if score < 70:
+            print('Mutation score below 70% threshold')
+            exit(1)
+        elif score < 80:
+            print('Mutation score below 80% (target)')
+            exit(0)
+        else:
+            print('Mutation score meets target (80%+)')
+            exit(0)
+        "
+
+    - name: Upload mutation report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: mutation-test-report
+        path: .mutation_test/
+
   # Quality Summary
   quality-summary:
     name: Quality Summary
-    needs: [python-quality, bash-quality, yaml-quality, complexity, performance]
+    needs: [python-quality, bash-quality, yaml-quality, complexity, performance, mutation-testing]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -181,4 +228,5 @@ jobs:
         echo "YAML Quality:      ${{ needs.yaml-quality.result }}"
         echo "Complexity:        ${{ needs.complexity.result }}"
         echo "Performance:       ${{ needs.performance.result }}"
+        echo "Mutation Testing:  ${{ needs.mutation-testing.result }}"
         echo "════════════════════════════════════════════════════"
