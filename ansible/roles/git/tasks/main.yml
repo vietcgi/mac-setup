@@ -1,0 +1,302 @@
+# Git Configuration Role
+# Manages git configuration, hooks, templates, and reload mechanisms
+# Supports system-wide and user-specific configurations
+
+- name: Initialize git variables
+  ansible.builtin.set_fact:
+    git_config_home: "{{ home_dir }}/.config/git"
+    git_templates_dir: "{{ home_dir }}/.git-templates"
+    git_hooks_dir: "{{ home_dir }}/.git-templates/hooks"
+    git_global_config: "{{ home_dir }}/.gitconfig"
+    git_local_config: "{{ home_dir }}/.gitconfig.local"
+    git_attributes_file: "{{ home_dir }}/.gitattributes"
+  tags: [always, git]
+
+- name: Create git directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ current_user }}"
+    group: staff
+  loop:
+    - "{{ git_config_home }}"
+    - "{{ git_templates_dir }}"
+    - "{{ git_hooks_dir }}"
+    - "{{ home_dir }}/.devkit/git"
+  tags: [git, setup]
+
+- name: Deploy global gitconfig (user info, core settings)
+  ansible.builtin.template:
+    src: gitconfig.j2
+    dest: "{{ git_global_config }}"
+    mode: '0644'
+    owner: "{{ current_user }}"
+    group: staff
+  notify: reload git config
+  tags: [git, config]
+
+- name: Deploy gitconfig.local (local overrides, credentials)
+  ansible.builtin.template:
+    src: gitconfig.local.j2
+    dest: "{{ git_local_config }}"
+    mode: '0644'
+    owner: "{{ current_user }}"
+    group: staff
+  notify: reload git config
+  tags: [git, config]
+
+- name: Deploy global gitattributes
+  ansible.builtin.template:
+    src: gitattributes.j2
+    dest: "{{ git_attributes_file }}"
+    mode: '0644'
+    owner: "{{ current_user }}"
+    group: staff
+  tags: [git, config]
+
+- name: Deploy gitignore_global
+  ansible.builtin.copy:
+    src: gitignore_global
+    dest: "{{ git_config_home }}/ignore"
+    mode: '0644'
+    owner: "{{ current_user }}"
+    group: staff
+  tags: [git, config]
+
+# Git Hooks Setup
+- name: Create pre-commit hook
+  ansible.builtin.template:
+    src: hooks/pre-commit.sh.j2
+    dest: "{{ git_hooks_dir }}/pre-commit"
+    mode: '0755'
+    owner: "{{ current_user }}"
+    group: staff
+  notify: reload git hooks
+  tags: [git, hooks]
+
+- name: Create commit-msg hook
+  ansible.builtin.template:
+    src: hooks/commit-msg.sh.j2
+    dest: "{{ git_hooks_dir }}/commit-msg"
+    mode: '0755'
+    owner: "{{ current_user }}"
+    group: staff
+  notify: reload git hooks
+  tags: [git, hooks]
+
+- name: Create post-commit hook
+  ansible.builtin.template:
+    src: hooks/post-commit.sh.j2
+    dest: "{{ git_hooks_dir }}/post-commit"
+    mode: '0755'
+    owner: "{{ current_user }}"
+    group: staff
+  tags: [git, hooks]
+
+- name: Create prepare-commit-msg hook
+  ansible.builtin.template:
+    src: hooks/prepare-commit-msg.sh.j2
+    dest: "{{ git_hooks_dir }}/prepare-commit-msg"
+    mode: '0755'
+    owner: "{{ current_user }}"
+    group: staff
+  tags: [git, hooks]
+
+# Git Ignore Configuration
+- name: Configure global gitignore
+  community.general.git_config:
+    name: core.excludesFile
+    value: "{{ git_config_home }}/ignore"
+    scope: global
+  notify: reload git config
+  tags: [git, config]
+
+# Git Templates Configuration
+- name: Configure git to use templates directory
+  community.general.git_config:
+    name: init.templateDir
+    value: "{{ git_templates_dir }}"
+    scope: global
+  notify: reload git config
+  tags: [git, config]
+
+- name: Configure git to use hooks from templates
+  community.general.git_config:
+    name: core.hooksPath
+    value: "{{ git_hooks_dir }}"
+    scope: global
+  notify: reload git config
+  tags: [git, config]
+
+# User Configuration
+- name: Configure git user info from variables
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - name: user.name
+      value: "{{ git_user_name | default('') }}"
+    - name: user.email
+      value: "{{ git_user_email | default('') }}"
+  when: item.value
+  notify: reload git config
+  tags: [git, config, user]
+
+# Conditional GPG Configuration
+- name: Configure git GPG signing (optional)
+  block:
+    - name: Check GPG key availability
+      ansible.builtin.shell: |
+        gpg --list-secret-keys --with-colons | grep -q "{{ git_gpg_key_id }}"
+      register: gpg_key_check
+      changed_when: false
+      failed_when: false
+      when: git_enable_gpg_signing | default(false)
+      tags: [git, gpg]
+
+    - name: Configure git GPG signing
+      community.general.git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        scope: global
+      loop:
+        - name: user.signingKey
+          value: "{{ git_gpg_key_id }}"
+        - name: commit.gpgSign
+          value: "{{ git_auto_sign_commits | default('false') }}"
+      when: gpg_key_check.rc == 0 and git_enable_gpg_signing | default(false)
+      notify: reload git config
+      tags: [git, gpg]
+
+  tags: [git, gpg, optional]
+
+# SSH Key Configuration (optional)
+- name: Configure SSH signing (optional)
+  block:
+    - name: Check SSH key availability
+      ansible.builtin.stat:
+        path: "{{ git_ssh_signing_key }}"
+      register: ssh_key_check
+      when: git_enable_ssh_signing | default(false)
+      tags: [git, ssh]
+
+    - name: Configure git SSH signing
+      community.general.git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        scope: global
+      loop:
+        - name: gpg.format
+          value: "ssh"
+        - name: user.signingKey
+          value: "{{ git_ssh_signing_key }}"
+        - name: commit.gpgSign
+          value: "{{ git_auto_sign_commits | default('false') }}"
+      when: ssh_key_check.stat.exists and git_enable_ssh_signing | default(false)
+      notify: reload git config
+      tags: [git, ssh]
+
+  tags: [git, ssh, optional]
+
+# Git Aliases
+- name: Configure git aliases
+  community.general.git_config:
+    name: "alias.{{ item.key }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop: "{{ git_aliases | dict2items }}"
+  when: git_aliases is defined and git_aliases | length > 0
+  notify: reload git config
+  tags: [git, config, aliases]
+
+# Git Display/Formatting Configuration
+- name: Configure git display settings
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - name: color.ui
+      value: "true"
+    - name: log.date
+      value: "{{ git_log_date_format | default('iso') }}"
+    - name: log.showSignature
+      value: "{{ git_show_signature | default('false') }}"
+  tags: [git, config, display]
+
+# Merge/Rebase Configuration
+- name: Configure merge and rebase settings
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - name: pull.rebase
+      value: "{{ git_pull_rebase | default('true') }}"
+    - name: rebase.autoStash
+      value: "{{ git_rebase_auto_stash | default('true') }}"
+    - name: merge.conflictStyle
+      value: "{{ git_merge_conflict_style | default('diff3') }}"
+  tags: [git, config, merge]
+
+# Performance Configuration
+- name: Configure git performance settings
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - name: core.preloadindex
+      value: "true"
+    - name: core.fsmonitor
+      value: "{{ git_fsmonitor | default('true') }}"
+    - name: feature.worktreeConfig
+      value: "true"
+  tags: [git, config, performance]
+
+# Backup existing config
+- name: Create backup of git config
+  ansible.builtin.shell: |
+    if [ -f "{{ git_global_config }}" ]; then
+      cp "{{ git_global_config }}" "{{ home_dir }}/.devkit/git/gitconfig.backup.$(date +%s)"
+    fi
+  changed_when: false
+  tags: [git, backup]
+
+# Verification
+- name: Verify git is properly configured
+  block:
+    - name: Check git user configuration
+      ansible.builtin.shell: |
+        git config --get user.name && git config --get user.email
+      register: git_user_check
+      changed_when: false
+      tags: [git, verify]
+
+    - name: Check git hooks are accessible
+      ansible.builtin.stat:
+        path: "{{ git_hooks_dir }}/pre-commit"
+      register: git_hooks_check
+      tags: [git, verify]
+
+    - name: Display git configuration status
+      ansible.builtin.debug:
+        msg: |
+          Git Configuration Status:
+          ==========================
+          Config Directory: {{ git_config_home }}
+          Templates Dir: {{ git_templates_dir }}
+          Hooks Dir: {{ git_hooks_dir }}
+          User Name: {{ git_user_check.stdout_lines[0] | default('NOT SET') }}
+          User Email: {{ git_user_check.stdout_lines[1] | default('NOT SET') }}
+          Hooks Available: {{ git_hooks_check.stat.exists }}
+      tags: [git, verify]
+  tags: [git, verify]
+
+- name: Final git configuration verification
+  ansible.builtin.command: git config --list --show-origin
+  register: git_config_list
+  changed_when: false
+  tags: [git, verify]

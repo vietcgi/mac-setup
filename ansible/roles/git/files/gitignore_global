@@ -1,0 +1,55 @@
+# Global Git Ignore File
+# These patterns apply to all repositories
+
+# OS-specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vim/
+*.swp
+*.swo
+.netrwhist
+
+# Languages/Frameworks
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+node_modules/
+package-lock.json
+yarn.lock
+
+.bundle/
+vendor/
+
+# Development
+.env
+.env.local
+.env.*.local
+
+# Tools
+.direnv
+.envrc
+
+# Temporary Files
+*.tmp
+*.log
+*.pid
+.cache/
+
+# Git Hooks
+.git/hooks/
+
+# Development servers/processes
+.pids/

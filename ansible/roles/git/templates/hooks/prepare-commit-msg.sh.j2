@@ -1,0 +1,53 @@
+#!/bin/bash
+# Git Prepare-Commit-Message Hook
+# {{ ansible_managed }}
+# Prepares/modifies commit message before user edits it
+
+set -e
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=${2:-}
+COMMIT_SHA=${3:-}
+
+# Don't modify merge commits, rebase, squash, etc.
+# Only prepare for new commits and amendments
+if [ "$COMMIT_SOURCE" != "" ] && [ "$COMMIT_SOURCE" != "commit" ] && [ "$COMMIT_SOURCE" != "message" ]; then
+    exit 0
+fi
+
+# Color codes
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Get current branch name
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Skip if on main/master
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+    exit 0
+fi
+
+# Extract branch prefix (everything before first dash or slash)
+# e.g., "feature/auth-login" -> "feature"
+# e.g., "GH-123-fix-bug" -> "GH"
+BRANCH_PREFIX=$(echo "$BRANCH" | sed -E 's/[-\/].*//')
+BRANCH_TICKET=$(echo "$BRANCH" | sed -E 's/^([A-Z0-9]+-[0-9]+).*/\1/')
+
+# Get current message (first line)
+CURRENT_MSG=$(head -n 1 "$COMMIT_MSG_FILE")
+
+# Don't modify if already has prefix
+if echo "$CURRENT_MSG" | grep -qE "^($BRANCH_TICKET|$BRANCH_PREFIX):"; then
+    exit 0
+fi
+
+# Add branch ticket/prefix if available
+if [ -n "$BRANCH_TICKET" ] && [ "$BRANCH_TICKET" != "$BRANCH" ]; then
+    # Looks like a ticket identifier (e.g., GH-123)
+    if ! echo "$CURRENT_MSG" | grep -q "$BRANCH_TICKET"; then
+        sed -i.bak "1s/^/$BRANCH_TICKET: /" "$COMMIT_MSG_FILE"
+        rm -f "$COMMIT_MSG_FILE.bak"
+    fi
+fi
+
+exit 0

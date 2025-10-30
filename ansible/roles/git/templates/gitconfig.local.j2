@@ -1,0 +1,85 @@
+# Git Local Configuration
+# {{ ansible_managed }}
+# This file is included from ~/.gitconfig and can contain:
+# - Machine-specific settings
+# - Credentials/tokens
+# - Local overrides
+# - Sensitive information (keep out of version control)
+
+# Local user overrides (optional)
+{% if git_user_name_local is defined %}
+[user]
+    name = {{ git_user_name_local }}
+{% endif %}
+{% if git_user_email_local is defined %}
+[user]
+    email = {{ git_user_email_local }}
+{% endif %}
+
+# GPG Signing Configuration (if enabled)
+{% if git_enable_gpg_signing %}
+[user]
+    signingKey = {{ git_gpg_key_id }}
+
+[gpg]
+    program = gpg
+{% endif %}
+
+# SSH Signing Configuration (if enabled)
+{% if git_enable_ssh_signing %}
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    program = /usr/bin/ssh-keygen
+{% endif %}
+
+# Local Aliases
+{% if git_aliases_local is defined %}
+[alias]
+{% for name, command in git_aliases_local.items() %}
+    {{ name }} = {{ command }}
+{% endfor %}
+{% endif %}
+
+# HTTP/HTTPS Configuration
+[http]
+    # Disable SSL verification (use with caution!)
+    sslVerify = true
+
+# HTTPS/SSH Configuration
+{% if git_protocol | default('https') == 'ssh' %}
+[url "ssh://git@github.com/"]
+    insteadOf = https://github.com/
+
+[url "ssh://git@gitlab.com/"]
+    insteadOf = https://gitlab.com/
+
+[url "ssh://git@bitbucket.org/"]
+    insteadOf = https://bitbucket.org/
+{% endif %}
+
+# Credential Helper (platform-specific)
+{% if ansible_os_family == 'Darwin' %}
+[credential]
+    helper = osxkeychain
+{% elif ansible_os_family == 'Linux' %}
+[credential]
+    helper = cache --timeout=3600
+{% endif %}
+
+# Performance Settings (local overrides)
+{% if git_use_delta | default(false) %}
+[core]
+    pager = delta
+
+[delta]
+    line-numbers = true
+    side-by-side = false
+{% endif %}
+
+# Note: Add sensitive information like tokens/credentials here, not in version control!
+# Examples:
+# [gitHub]
+#     user = your-github-username
+#     token = your-personal-access-token

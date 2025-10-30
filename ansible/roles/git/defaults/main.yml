@@ -1,0 +1,158 @@
+# Git Role Default Variables
+# These can be overridden in group_vars, host_vars, or playbook
+
+# User Configuration
+git_user_name: "Kevin Vu"
+git_user_email: "vietcgi@gmail.com"
+
+# GPG Signing Configuration
+git_enable_gpg_signing: false
+git_gpg_key_id: ""
+git_auto_sign_commits: false
+git_show_signature: false
+
+# SSH Signing Configuration
+git_enable_ssh_signing: false
+git_ssh_signing_key: "{{ home_dir }}/.ssh/id_ed25519"
+
+# Pull & Rebase Configuration
+git_pull_rebase: true
+git_rebase_auto_stash: true
+git_merge_conflict_style: "diff3"
+
+# Display & Formatting
+git_log_date_format: "iso"
+
+# Performance Settings
+git_fsmonitor: true
+
+# Git Aliases
+# Override in group_vars or host_vars
+git_aliases:
+  s: "status"
+  st: "status"
+  d: "diff"
+  dc: "diff --cached"
+  a: "add"
+  co: "checkout"
+  br: "branch"
+  c: "commit"
+  ca: "commit --amend"
+  cm: "commit -m"
+  amend: "commit --amend --no-edit"
+  unstage: "reset HEAD --"
+  last: "log -1 HEAD"
+  logs: "log --oneline"
+  loga: "log --all --graph --oneline"
+  graph: "log --all --decorate --oneline --graph"
+  root: "rev-parse --show-toplevel"
+  cleanup: "branch -vv | grep 'gone' | awk '{print $1}' | xargs -r git branch -d"
+  sync: "fetch --all --prune"
+
+# Core Configuration
+git_enable_color: true
+git_core_pager: "less -F"
+git_editor: "{{ git_editor | default('nvim') }}"
+
+# Enable/Disable Features
+git_setup_hooks: true
+git_setup_templates: true
+git_setup_global_gitignore: true
+git_setup_attributes: true
+
+# Hook Configuration
+git_pre_commit_checks:
+  - trailing_whitespace: true
+  - large_files: true
+  - syntax_check: false
+
+git_commit_msg_maxline: 50
+git_commit_msg_check_scope: true
+git_commit_msg_check_type: true
+
+# Hooks Scripts
+git_pre_commit_script: |
+  #!/bin/bash
+  # Pre-commit hook - runs before commit
+  set -e
+
+  # Check for trailing whitespace
+  if git diff --cached --name-only | xargs grep -l '[[:space:]]$' 2>/dev/null; then
+    echo "❌ Error: Trailing whitespace found"
+    exit 1
+  fi
+
+  echo "✓ Pre-commit checks passed"
+
+git_commit_msg_script: |
+  #!/bin/bash
+  # Commit message hook - validates commit message format
+  set -e
+
+  COMMIT_MSG_FILE=$1
+
+  # Read the commit message (exclude comments)
+  COMMIT_MSG=$(grep -v '^#' "$COMMIT_MSG_FILE" | head -1)
+
+  # Check if message is empty
+  if [ -z "$COMMIT_MSG" ]; then
+    echo "❌ Error: Commit message cannot be empty"
+    exit 1
+  fi
+
+  # Check line length (max 50 chars for first line)
+  FIRST_LINE=$(echo "$COMMIT_MSG" | head -1)
+  if [ ${#FIRST_LINE} -gt 50 ]; then
+    echo "❌ Error: First line must be 50 characters or less"
+    echo "   Current length: ${#FIRST_LINE}"
+    exit 1
+  fi
+
+  # Check for conventional commit format (optional)
+  if ! echo "$COMMIT_MSG" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?:'; then
+    echo "⚠️  Warning: Commit message doesn't follow conventional commit format"
+    echo "   Expected format: <type>(<scope>): <subject>"
+    echo "   Example: feat(auth): add two-factor authentication"
+  fi
+
+  echo "✓ Commit message validation passed"
+
+git_post_commit_script: |
+  #!/bin/bash
+  # Post-commit hook - runs after successful commit
+  set -e
+
+  # Log commit for audit trail
+  COMMIT_HASH=$(git rev-parse --short HEAD)
+  COMMIT_MSG=$(git log -1 --pretty=%B)
+  TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
+
+  echo "[${TIMESTAMP}] Committed: ${COMMIT_HASH} - ${COMMIT_MSG}" >> .git/logs/commits.log 2>/dev/null || true
+
+git_prepare_commit_msg_script: |
+  #!/bin/bash
+  # Prepare commit message hook - prepares commit message before editing
+  set -e
+
+  COMMIT_MSG_FILE=$1
+  COMMIT_SOURCE=$2
+
+  # If it's a merge, rebase, etc., don't modify
+  if [ -n "$COMMIT_SOURCE" ]; then
+    exit 0
+  fi
+
+  # Optional: Add branch name to commit message
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+    BRANCH_PREFIX=$(echo "$BRANCH" | sed 's/-/: /g' | cut -d: -f1)
+    if ! grep -q "^$BRANCH_PREFIX" "$COMMIT_MSG_FILE"; then
+      sed -i.bak "1s/^/$BRANCH_PREFIX: /" "$COMMIT_MSG_FILE" || true
+      rm -f "$COMMIT_MSG_FILE.bak"
+    fi
+  fi
+
+# Feature Flags
+configure_git: true
+git_enable_lfs: false  # Git Large File Storage
+git_enable_worktrees: true

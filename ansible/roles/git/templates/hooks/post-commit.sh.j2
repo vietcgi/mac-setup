@@ -1,0 +1,57 @@
+#!/bin/bash
+# Git Post-Commit Hook
+# {{ ansible_managed }}
+# Runs after successful commit
+
+set -e
+
+COMMIT_HASH=$(git rev-parse --short HEAD)
+COMMIT_MSG=$(git log -1 --pretty=%B)
+AUTHOR=$(git log -1 --pretty=%an)
+TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
+
+# Color codes
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Get hooks directory for logging
+HOOKS_DIR=$(git config core.hooksPath)
+LOGS_DIR="${HOOKS_DIR%/hooks}/logs"
+
+# Create logs directory if it doesn't exist
+if [ ! -d "$LOGS_DIR" ]; then
+    mkdir -p "$LOGS_DIR"
+fi
+
+# Log commit information
+if [ -w "$LOGS_DIR" ]; then
+    {
+        echo "[$TIMESTAMP] Commit: $COMMIT_HASH"
+        echo "  Author: $AUTHOR"
+        echo "  Message: $(echo "$COMMIT_MSG" | head -1)"
+    } >> "$LOGS_DIR/commits.log" 2>/dev/null || true
+fi
+
+# Show commit summary
+echo -e "${GREEN}✓ Commit successful${NC}"
+echo -e "${BLUE}  Hash: $COMMIT_HASH${NC}"
+echo -e "${BLUE}  Message: $(echo "$COMMIT_MSG" | head -1)${NC}"
+
+# Optional: Run additional post-commit scripts
+SCRIPTS_DIR="${HOOKS_DIR%/hooks}/scripts"
+if [ -d "$SCRIPTS_DIR" ]; then
+    for script in "$SCRIPTS_DIR"/post-commit-*.sh; do
+        if [ -x "$script" ]; then
+            echo "  Running: $(basename $script)"
+            if "$script"; then
+                echo -e "    ${GREEN}✓${NC}"
+            else
+                # Don't fail on post-commit errors
+                echo "    ⚠️  Script failed (non-blocking)"
+            fi
+        fi
+    done
+fi
+
+exit 0

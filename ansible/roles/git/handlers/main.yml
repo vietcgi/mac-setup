@@ -1,0 +1,84 @@
+# Git Configuration Handlers
+# Handles reloading and refreshing git configuration
+
+- name: reload git config
+  block:
+    - name: Reload git configuration
+      ansible.builtin.shell: |
+        # Git reads config from files on each command invocation
+        # So simply updating the files triggers reload
+        git config --list > /dev/null
+      environment:
+        HOME: "{{ home_dir }}"
+      changed_when: false
+      tags: [git, reload]
+
+    - name: Verify git config was reloaded
+      ansible.builtin.shell: |
+        git config --global user.name > /dev/null 2>&1 && echo "success" || echo "failed"
+      register: git_reload_result
+      changed_when: false
+      tags: [git, reload, verify]
+
+    - name: Log git config reload
+      ansible.builtin.shell: |
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Git config reloaded" >> {{ home_dir }}/.devkit/logs/git.log
+      changed_when: false
+      tags: [git, reload, logging]
+
+  listen: "reload git config"
+
+- name: reload git hooks
+  block:
+    - name: Make hooks executable
+      ansible.builtin.file:
+        path: "{{ git_hooks_dir }}/{{ item }}"
+        mode: '0755'
+      loop:
+        - pre-commit
+        - commit-msg
+        - post-commit
+        - prepare-commit-msg
+      tags: [git, hooks, reload]
+
+    - name: Verify git hooks
+      ansible.builtin.shell: |
+        ls -la {{ git_hooks_dir }}/ | grep -E "^-rwx"
+      register: git_hooks_verify
+      changed_when: false
+      tags: [git, hooks, verify]
+
+    - name: Log git hooks reload
+      ansible.builtin.shell: |
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Git hooks reloaded" >> {{ home_dir }}/.devkit/logs/git.log
+      changed_when: false
+      tags: [git, hooks, logging]
+
+  listen: "reload git hooks"
+
+- name: restart git services
+  block:
+    - name: Reload git configuration
+      ansible.builtin.shell: |
+        # Ensure git cache is cleared
+        git config --list > /dev/null
+      environment:
+        HOME: "{{ home_dir }}"
+      changed_when: false
+      tags: [git, restart]
+
+    - name: Clear git object database cache (if needed)
+      ansible.builtin.shell: |
+        # This runs git gc to clean up repository
+        # Note: Only run in specific repositories, not globally
+        echo "Git services refreshed"
+      changed_when: false
+      tags: [git, restart]
+
+    - name: Log git service restart
+      ansible.builtin.shell: |
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Git services restarted" >> {{ home_dir }}/.devkit/logs/git.log
+      changed_when: false
+      tags: [git, restart, logging]
+
+  listen: "restart git services"

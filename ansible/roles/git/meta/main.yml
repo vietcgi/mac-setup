@@ -1,0 +1,34 @@
+---
+galaxy_info:
+  author: "Kevin Vu"
+  description: "Manage git configuration, templates, hooks, and aliases"
+  company: "DevKit"
+  license: "MIT"
+  min_ansible_version: "2.9"
+
+  platforms:
+    - name: macOS
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - "20.04"
+        - "22.04"
+        - "24.04"
+    - name: Debian
+      versions:
+        - "11"
+        - "12"
+
+  galaxy_tags:
+    - git
+    - vcs
+    - configuration
+    - hooks
+    - development
+
+dependencies:
+  - role: core
+    tags: [always]
+
+documentation_url: "https://docs.example.com/roles/git"

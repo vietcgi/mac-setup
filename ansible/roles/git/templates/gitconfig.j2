@@ -1,0 +1,89 @@
+# Git Global Configuration
+# {{ ansible_managed }}
+# User: {{ git_user_name }}
+# Email: {{ git_user_email }}
+
+[user]
+    name = {{ git_user_name }}
+    email = {{ git_user_email }}
+
+[core]
+    # Use global gitignore
+    excludesFile = {{ git_config_home }}/ignore
+    # Use custom hooks directory
+    hooksPath = {{ git_hooks_dir }}
+    # Pager for less output
+    pager = {{ git_core_pager }}
+    # File mode sensitivity
+    fileMode = true
+    # Preload index for better performance
+    preloadindex = true
+    # Use filesystem monitor
+    fsmonitor = {{ git_fsmonitor | lower }}
+
+[init]
+    # Use templates directory for new repos
+    templateDir = {{ git_templates_dir }}
+    defaultBranch = main
+
+[color]
+    ui = {{ git_enable_color | lower }}
+    status = auto
+    branch = auto
+    diff = auto
+    interactive = auto
+    grep = auto
+    pager = true
+
+[log]
+    date = {{ git_log_date_format }}
+    showSignature = {{ git_show_signature | lower }}
+
+[commit]
+    gpgSign = {{ git_auto_sign_commits | lower }}
+
+[pull]
+    rebase = {{ git_pull_rebase | lower }}
+
+[rebase]
+    autoStash = {{ git_rebase_auto_stash | lower }}
+    stat = true
+
+[merge]
+    conflictStyle = {{ git_merge_conflict_style }}
+    verbosity = 1
+
+[fetch]
+    prune = true
+
+[push]
+    default = simple
+    followTags = true
+
+[status]
+    relativePaths = true
+    showStashed = true
+
+[diff]
+    algorithm = histogram
+    compactionHeuristic = true
+    wsErrorHighlight = all
+    colorMoved = dimmed_zebra
+
+[format]
+    pretty = format:%h %d %s (%cr) <%an>
+
+[branch]
+    autosetuprebase = always
+
+[feature]
+    worktreeConfig = true
+
+[aliases]
+{% for name, command in git_aliases.items() %}
+    {{ name }} = {{ command }}
+{% endfor %}
+
+# Include local configuration (credentials, machine-specific settings)
+[include]
+    path = ~/.gitconfig.local
