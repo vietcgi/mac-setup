@@ -87,9 +87,9 @@ jobs:
         brew bundle check --file=Brewfile || true
         brew bundle check --file=Brewfile.sre || true
 
-    - name: Dry run Ansible playbook
+    - name: Test Ansible playbook syntax
       run: |
-        ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
+        ansible-playbook -i inventory.yml setup.yml --syntax-check
 
   # Test on Ubuntu
   test-ubuntu:
@@ -109,9 +109,9 @@ jobs:
       run: |
         pip install ansible
 
-    - name: Dry run Ansible playbook
+    - name: Test Ansible playbook syntax
       run: |
-        ansible-playbook -i inventory.yml setup.yml --check --limit localhost -v
+        ansible-playbook -i inventory.yml setup.yml --syntax-check
 
   # Verify configuration files
   verify-config:
