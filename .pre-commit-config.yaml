@@ -67,6 +67,7 @@ repos:
         args:
           - --config-file=mypy.ini
           - --warn-unused-ignores
+        files: ^cli/
 
   # =========================================================================
   # Python - Security (Bandit for Python vulnerability detection)

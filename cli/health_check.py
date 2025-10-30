@@ -13,7 +13,7 @@ import subprocess
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 import json
 
 
@@ -438,18 +438,20 @@ class HealthMonitor:
 
     def get_json_report(self) -> str:
         """Get health check report as JSON."""
-        report = {
-            "timestamp": datetime.now().isoformat(),
-            "overall_status": self.get_overall_status(),
-            "checks": {},
-        }
+        checks_dict: Dict[str, Dict[str, Any]] = {}
 
         for check_name, (status, message, details) in self.results.items():
-            report["checks"][check_name] = {
+            checks_dict[check_name] = {
                 "status": status,
                 "message": message,
                 "details": details,
             }
+
+        report: Dict[str, Any] = {
+            "timestamp": datetime.now().isoformat(),
+            "overall_status": self.get_overall_status(),
+            "checks": checks_dict,
+        }
 
         return json.dumps(report, indent=2)
 

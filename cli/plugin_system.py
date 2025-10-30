@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 # Security: Import validator
-from plugin_validator import PluginValidator
+from .plugin_validator import PluginValidator
 
 
 @dataclass
@@ -30,7 +30,7 @@ class HookContext:
     task: Optional[str] = None
     status: str = "running"  # "running", "success", "failed"
     error: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class HookInterface(ABC):
@@ -134,14 +134,14 @@ class PluginLoader:
         else:
             self.logger.warning(f"Plugin path not found: {path}")
 
-    def discover_plugins(self) -> List[str]:
+    def discover_plugins(self) -> List[tuple[str, str]]:
         """
         Auto-discover plugins in configured paths.
 
         Returns:
-            List of discovered plugin module names
+            List of discovered plugin (path, module_name) tuples
         """
-        discovered = []
+        discovered: list[tuple[str, str]] = []
 
         for plugin_dir in self.plugin_paths:
             if not plugin_dir.exists():
@@ -259,8 +259,8 @@ class PluginLoader:
 
         # Load each plugin
         loaded = 0
-        for plugin_path, module_name in discovered:
-            plugin = self.load_plugin(plugin_path, module_name)
+        for plugin_path_str, module_name_str in discovered:
+            plugin = self.load_plugin(plugin_path_str, module_name_str)
             if plugin:
                 self.plugins[plugin.name] = plugin
                 loaded += 1

@@ -15,7 +15,7 @@ All plugins must have a manifest.json file and implement the PluginInterface.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Type, Any
 import re
 
 
@@ -23,7 +23,7 @@ class PluginManifest:
     """Validates plugin manifest files."""
 
     # Required fields that every plugin must have
-    REQUIRED_FIELDS = {
+    REQUIRED_FIELDS: Dict[str, Type[Any]] = {
         "name": str,
         "version": str,
         "author": str,
@@ -31,7 +31,7 @@ class PluginManifest:
     }
 
     # Optional fields with type checking
-    OPTIONAL_FIELDS = {
+    OPTIONAL_FIELDS: Dict[str, Type[Any]] = {
         "homepage": str,
         "repository": str,
         "license": str,
@@ -290,7 +290,7 @@ class PluginValidator:
 
         return results
 
-    def get_plugin_info(self, plugin_name: str) -> Optional[Dict]:
+    def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
         """
         Get plugin information from manifest.
 
@@ -307,7 +307,9 @@ class PluginValidator:
             manifest = PluginManifest(manifest_path)
             is_valid, _ = manifest.validate()
             if is_valid:
-                return manifest.data
+                data: Any = manifest.data
+                if isinstance(data, dict):
+                    return data
         except (FileNotFoundError, ValueError):
             pass
 
