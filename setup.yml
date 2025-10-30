@@ -26,11 +26,10 @@
     # Initialize variables (must be first task)
     # =========================================================================
 
-  - name: Set user and home variables from facts
+  - name: Set user and home variables from environment
     ansible.builtin.set_fact:
-      user: "{{ ansible_user_id }}"
-      home: "{{ ansible_user_dir }}"
-      cacheable: yes
+      user: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root' }}"
+      home: "{{ lookup('env', 'HOME') or '/root' }}"
     tags: [always]
 
     # =========================================================================
