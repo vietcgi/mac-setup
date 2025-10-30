@@ -37,6 +37,10 @@ VERIFY_ONLY=false
 ENVIRONMENT="development"
 SELECTED_ROLES="core,shell,editors,languages,development"
 
+# SECURITY: Bootstrap integrity verification
+# This checksum is automatically updated on each release by CI/CD
+BOOTSTRAP_CHECKSUM="${DEVKIT_BOOTSTRAP_CHECKSUM:-}"  # Can be overridden by environment
+
 ################################################################################
 # Utility Functions
 ################################################################################
@@ -68,6 +72,45 @@ print_header() {
 print_section() {
     echo ""
     echo -e "${BOLD}${BLUE}» $1${NC}"
+}
+
+################################################################################
+# Security: Bootstrap Script Integrity Verification
+################################################################################
+
+verify_bootstrap_integrity() {
+    # Only verify if checksum is set (not in development mode)
+    if [ -z "$BOOTSTRAP_CHECKSUM" ]; then
+        log_info "Bootstrap integrity check skipped (development mode)"
+        return 0
+    fi
+
+    # Can only verify if running from a file (not piped from curl)
+    if [ ! -f "$0" ]; then
+        log_warning "Bootstrap integrity check skipped (piped execution)"
+        return 0
+    fi
+
+    local actual_checksum
+    actual_checksum=$(sha256sum "$0" | awk '{print $1}')
+
+    if [ "$actual_checksum" != "$BOOTSTRAP_CHECKSUM" ]; then
+        log_error "Bootstrap script integrity check FAILED!"
+        log_error "Expected checksum: $BOOTSTRAP_CHECKSUM"
+        log_error "Actual checksum:   $actual_checksum"
+        log_error ""
+        log_error "SECURITY WARNING: Script may have been tampered with or corrupted."
+        log_error "This could indicate:"
+        log_error "  • A network man-in-the-middle attack (MITM)"
+        log_error "  • Script corruption during download"
+        log_error "  • Running a modified/outdated version"
+        log_error ""
+        log_error "DO NOT PROCEED. Aborting setup."
+        return 1
+    fi
+
+    log_success "Bootstrap script integrity verified"
+    return 0
 }
 
 ################################################################################
@@ -501,6 +544,11 @@ EOF
 ################################################################################
 
 main() {
+    # SECURITY: Verify bootstrap script integrity first
+    if ! verify_bootstrap_integrity; then
+        exit 1
+    fi
+
     print_header "Devkit Bootstrap - Development Environment Setup"
 
     # Parse arguments

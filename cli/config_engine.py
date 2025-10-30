@@ -15,6 +15,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 import sys
+import stat
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -73,6 +74,60 @@ class ConfigurationEngine:
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
+
+    def validate_and_secure_config_file(self, config_path: Path) -> None:
+        """
+        Validate and secure configuration file permissions.
+
+        Config files may contain sensitive data (API keys, tokens, etc.)
+        and must have restrictive permissions (0600 - user read/write only).
+
+        Args:
+            config_path: Path to configuration file
+
+        Raises:
+            PermissionError: If file is owned by different user
+            OSError: If unable to fix permissions
+        """
+        if not config_path.exists():
+            # Create with secure permissions (0600)
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.touch(mode=0o600)
+            self.logger.debug(f"Created {config_path} with secure permissions (0600)")
+            return
+
+        # Get file stats
+        try:
+            stat_info = config_path.stat()
+        except OSError as e:
+            self.logger.error(f"Cannot access config file: {e}")
+            raise
+
+        # Verify ownership - file must be owned by current user
+        current_uid = os.getuid()
+        if stat_info.st_uid != current_uid:
+            raise PermissionError(
+                f"Config file {config_path} is owned by different user "
+                f"(uid: {stat_info.st_uid}, current: {current_uid}). "
+                f"This could be a security risk."
+            )
+
+        # Check file permissions
+        file_mode = stat_info.st_mode & 0o777
+        if file_mode != 0o600:
+            self.logger.warning(
+                f"Config file {config_path} has insecure permissions: {oct(file_mode)}"
+            )
+            self.logger.info("Fixing permissions to 0600 (user read/write only)...")
+
+            try:
+                config_path.chmod(0o600)
+                self.logger.info(f"✓ Fixed config permissions for {config_path}")
+            except OSError as e:
+                self.logger.error(f"Cannot fix file permissions: {e}")
+                raise PermissionError(
+                    f"Unable to fix permissions on {config_path}: {e}"
+                )
 
     def load_defaults(self) -> None:
         """Load default configuration from schema."""

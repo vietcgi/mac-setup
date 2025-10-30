@@ -4,6 +4,9 @@ Mac-Setup Plugin System
 
 Allows users to extend mac-setup with custom roles, hooks, and tasks.
 Plugins can be defined in ~/.mac-setup/plugins/ and are auto-discovered.
+
+SECURITY: All plugins are validated before loading using PluginValidator.
+Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
 import os
@@ -14,6 +17,9 @@ from pathlib import Path
 from typing import Dict, List, Callable, Any, Optional
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+
+# Security: Import validator
+from plugin_validator import PluginValidator
 
 
 @dataclass
@@ -161,7 +167,12 @@ class PluginLoader:
 
     def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:
         """
-        Load a single plugin module.
+        Load a single plugin module with security validation.
+
+        SECURITY: Before loading, validates:
+        1. Plugin manifest exists and is valid
+        2. Plugin implements PluginInterface
+        3. Plugin integrity is verified
 
         Args:
             plugin_path: Path to plugin file or directory
@@ -171,6 +182,17 @@ class PluginLoader:
             Loaded plugin instance or None
         """
         try:
+            # SECURITY: Validate plugin before loading
+            plugin_dir = Path(plugin_path)
+            validator = PluginValidator(plugin_dir.parent)
+            is_valid, message = validator.validate_plugin(module_name)
+
+            if not is_valid:
+                self.logger.error(f"Plugin validation failed for {module_name}: {message}")
+                return None
+
+            self.logger.debug(f"Plugin validation passed for {module_name}")
+
             # Create a proper module name with namespace
             full_module_name = f"mac_setup_plugins.{module_name}"
 

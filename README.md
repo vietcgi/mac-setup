@@ -12,6 +12,25 @@
 
 **Set up your entire development environment in ~10 minutes:**
 
+### Option 1: Secure Installation (Recommended)
+Uses checksum verification for security:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/vietcgi/devkit/main/scripts/install.sh)
+```
+
+### Option 2: Clone and Run
+If you prefer to review code first:
+
+```bash
+git clone https://github.com/vietcgi/devkit.git
+cd devkit
+./bootstrap.sh
+```
+
+### Option 3: Local File
+If you have the script locally:
+
 ```bash
 ./bootstrap.sh
 ```
@@ -25,14 +44,6 @@
 - Dotfiles (managed with chezmoi)
 - macOS configuration (Dock, defaults)
 
-**Clone and run:**
-
-```bash
-git clone https://github.com/vietcgi/devkit.git
-cd devkit
-./bootstrap.sh
-```
-
 **Verify your setup:**
 
 ```bash
@@ -40,6 +51,20 @@ cd devkit
 ```
 
 **For detailed guide:** See [QUICKSTART.md](QUICKSTART.md)
+
+---
+
+### Security
+
+Devkit uses HTTPS and checksum verification to ensure downloaded scripts are authentic:
+
+- ✅ All downloads over HTTPS
+- ✅ Checksums verified automatically
+- ✅ Script integrity checked before execution
+- ✅ No hardcoded passwords or credentials
+- ✅ Regular security scanning in CI/CD
+
+See [SECURITY.md](SECURITY.md) for more details.
 
 ---
 
