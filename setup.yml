@@ -15,23 +15,17 @@
     is_macos: "{{ ansible_os_family == 'Darwin' }}"
     is_linux: "{{ ansible_os_family != 'Darwin' }}"
 
+    # User and home directory (use facts that are guaranteed to exist after gather_facts)
+    user: '{{ ansible_user_id }}'
+    home: '{{ ansible_user_dir }}'
+
     # Homebrew paths (can be overridden in group_vars)
-    homebrew_prefix: "{{ '/opt/homebrew' if ansible_os_family == 'Darwin' else '/home/linuxbrew/.linuxbrew' }}"
+    homebrew_prefix: "{{ '/opt/homebrew' if is_macos else '/home/linuxbrew/.linuxbrew' }}"
 
     # Brewfile selection (defaults to Brewfile, can override per group/host)
     brewfile_path: "{{ playbook_dir }}/{{ brewfile_name | default('Brewfile') }}"
 
   tasks:
-    # =========================================================================
-    # Initialize Variables
-    # =========================================================================
-
-  - name: Set user and home variables
-    ansible.builtin.set_fact:
-      user: "{{ ansible_user_id }}"
-      home: "{{ ansible_user_dir }}"
-    tags: [always]
-
     # =========================================================================
     # Homebrew Installation
     # =========================================================================
