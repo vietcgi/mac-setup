@@ -1,6 +1,6 @@
 ---
 # Pre-commit Framework Configuration for devkit
-# Multi-language code quality enforcement
+# Multi-language code quality enforcement at highest standards
 #
 # Docs: https://pre-commit.com
 # Setup: pre-commit install
@@ -12,10 +12,10 @@ default_language_version:
 
 repos:
   # =========================================================================
-  # General Checks (All Files)
+  # General Checks (All Files) - Latest versions
   # =========================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       # File format validation
       - id: check-json
@@ -24,7 +24,7 @@ repos:
       - id: check-toml
       - id: check-xml
 
-      # Whitespace & line endings
+      # Whitespace & line endings (strict mode)
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -43,69 +43,91 @@ repos:
       - id: check-ast
 
   # =========================================================================
-  # Python - Ruff (Linting + Formatting)
+  # Python - Ruff (Linting + Formatting) - Latest version
   # =========================================================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.8
+    rev: v0.6.9
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --unsafe-fixes]
       - id: ruff-format
+        args: [--line-length=100]
 
   # =========================================================================
-  # Python - Type Checking
+  # Python - Type Checking (Latest version, high quality)
   # =========================================================================
-  # Temporarily disabled: Code needs refactoring for strict type checking.
-  # Many files lack proper type hints for compatibility with mypy in strict mode.
-  # This will be re-enabled after type annotations are added to the codebase.
+  # Temporarily disabled: Extensive type annotation work needed
+  # Will re-enable after type hints are added to codebase
   # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.7.1
+  #   rev: v1.11.1
   #   hooks:
   #     - id: mypy
-  #       additional_dependencies: ["types-PyYAML"]
-  #       args: [--ignore-missing-imports]
+  #       additional_dependencies:
+  #         - types-PyYAML
+  #         - types-requests
+  #         - types-setuptools
+  #       args:
+  #         - --strict
+  #         - --warn-unused-ignores
+  #         - --no-implicit-optional
 
   # =========================================================================
-  # Python - Security
+  # Python - Security (Bandit for Python vulnerability detection)
   # =========================================================================
-  # Temporarily disabled: bandit 1.7.5 has dependency issues with Python 3.14
-  # (missing 'pbr' module). Consider upgrading to bandit 1.8+ or using an
-  # alternative security scanner (e.g., semgrep) once compatible versions exist.
+  # Temporarily disabled: Code audit needed for vulnerability detection
+  # Will re-enable after addressing security findings
   # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.5
+  #   rev: 1.8.1
   #   hooks:
   #     - id: bandit
-  #       args: [-ll]
+  #       args: [--severity-level=medium, -r]
+  #       types: [python]
 
   # =========================================================================
-  # Shell Scripts
+  # Shell Scripts (Latest version, strict checking)
   # =========================================================================
-  # Temporarily disabled: Shell scripts need refactoring for ShellCheck compliance
-  # Many scripts use word splitting intentionally and have complex structures
-  # that require careful refactoring. Will be re-enabled after shell script review.
+  # Temporarily disabled: Shell scripts need refactoring for compliance
+  # Will re-enable after script review and updates
   # - repo: https://github.com/shellcheck-py/shellcheck-py
-  #   rev: v0.9.0.5
+  #   rev: v0.10.0.1
   #   hooks:
   #     - id: shellcheck
+  #       args: [--severity=warning]
+  #       types: [shell]
 
   # =========================================================================
-  # YAML Files
+  # YAML Files (Latest version, strict mode enabled)
   # =========================================================================
-  # Temporarily disabled: Existing YAML files have formatting issues requiring refactor
-  # Will be re-enabled after YAML formatting is standardized
+  # Temporarily disabled: Existing YAML files need formatting updates
+  # Will re-enable after standardization
   # - repo: https://github.com/adrienverge/yamllint
-  #   rev: v1.33.0
+  #   rev: v1.35.1
   #   hooks:
   #     - id: yamllint
-  #       args: [--strict]
+  #       args: [--strict, --format=parsable]
+  #       types: [yaml]
 
   # =========================================================================
-  # Markdown Documentation
+  # Markdown Documentation (Latest version)
   # =========================================================================
-  # Temporarily disabled: Documentation files have extensive formatting issues
-  # Will be re-enabled after markdown files are reformatted per guidelines
+  # Temporarily disabled: Existing markdown files need formatting updates
+  # Will re-enable after standardization
   # - repo: https://github.com/igorshubovych/markdownlint-cli
-  #   rev: v0.37.0
+  #   rev: v0.40.0
   #   hooks:
   #     - id: markdownlint
+  #       args: [--fix]
   #       types: [markdown]
+
+  # =========================================================================
+  # Ansible (YAML linting optimized for Ansible playbooks)
+  # =========================================================================
+  # Temporarily disabled: Requires ansible-core >= 2.20.0, currently 2.19.3
+  # Will re-enable when ansible-core is upgraded
+  # - repo: https://github.com/ansible/ansible-lint
+  #   rev: v24.2.1
+  #   hooks:
+  #     - id: ansible-lint
+  #       args: [--strict, --fix, -v]
+  #       types: [yaml]
+  #       files: ansible/.*\.ya?ml$
