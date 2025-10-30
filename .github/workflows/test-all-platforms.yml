@@ -30,8 +30,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -99,8 +99,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -167,8 +167,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -213,8 +213,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -260,9 +260,9 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
+        chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap-ansible.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -334,9 +334,9 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
+        chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap-ansible.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -383,9 +383,9 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
+        chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap-ansible.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -440,9 +440,9 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
+        chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap-ansible.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -497,9 +497,9 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
+        chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap-ansible.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -610,8 +610,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 
@@ -665,8 +665,8 @@ jobs:
 
     - name: Run bootstrap
       run: |
-        chmod +x bootstrap-ansible.sh
-        ./bootstrap-ansible.sh
+        chmod +x bootstrap.sh
+        ./bootstrap.sh
       env:
         CI: true
 

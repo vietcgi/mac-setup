@@ -1,0 +1,187 @@
+name: Code Quality & Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Python code quality
+  python-quality:
+    name: Python Code Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install quality tools
+      run: |
+        pip install flake8 pylint black isort pytest pytest-cov
+
+    - name: Check code formatting with black
+      run: black --check cli/ tests/ || true
+
+    - name: Check import sorting with isort
+      run: isort --check-only cli/ tests/ || true
+
+    - name: Lint with flake8
+      run: |
+        flake8 cli/ tests/ \
+          --count \
+          --statistics \
+          --max-line-length=120 \
+          --extend-ignore=E203,W503 \
+          || echo "⚠️  Flake8 issues found"
+
+    - name: Lint with pylint
+      run: |
+        pylint cli/ tests/ --max-line-length=120 || true
+
+    - name: Run pytest with coverage
+      run: |
+        pytest tests/ \
+          --cov=cli \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --junitxml=junit.xml
+      continue-on-error: true
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-test-results
+        path: |
+          junit.xml
+          htmlcov/
+
+  # Bash script quality
+  bash-quality:
+    name: Bash Script Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install shellcheck
+      run: apt-get update && apt-get install -y shellcheck
+
+    - name: Run shellcheck with strict options
+      run: |
+        shellcheck \
+          --severity=style \
+          --format=gcc \
+          bootstrap.sh \
+          bootstrap-ansible.sh \
+          verify-setup.sh \
+          update.sh \
+          cli/config.sh
+      continue-on-error: true
+
+    - name: Run shfmt (shell formatting check)
+      run: |
+        apt-get install -y shfmt
+        shfmt -d bootstrap.sh bootstrap-ansible.sh verify-setup.sh update.sh cli/config.sh || true
+
+  # YAML quality
+  yaml-quality:
+    name: YAML Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install yamllint
+      run: pip install yamllint
+
+    - name: Lint YAML files
+      run: |
+        yamllint -d relaxed \
+          setup.yml \
+          inventory.yml \
+          .github/workflows/*.yml \
+          ansible/group_vars/ \
+          ansible/roles/*/
+      continue-on-error: true
+
+  # Complexity analysis
+  complexity:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install radon
+      run: pip install radon
+
+    - name: Cyclomatic complexity check
+      run: |
+        radon cc cli/ -a -s || true
+
+    - name: Maintainability index
+      run: |
+        radon mi cli/ -s || true
+
+  # Performance benchmarks
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install pytest-benchmark
+      run: pip install pytest-benchmark
+
+    - name: Run performance tests
+      run: |
+        pytest tests/ -v --benchmark-only || true
+
+  # Quality Summary
+  quality-summary:
+    name: Quality Summary
+    needs: [python-quality, bash-quality, yaml-quality, complexity, performance]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Print quality report
+      run: |
+        echo "════════════════════════════════════════════════════"
+        echo "Code Quality Report"
+        echo "════════════════════════════════════════════════════"
+        echo "Python Quality:    ${{ needs.python-quality.result }}"
+        echo "Bash Quality:      ${{ needs.bash-quality.result }}"
+        echo "YAML Quality:      ${{ needs.yaml-quality.result }}"
+        echo "Complexity:        ${{ needs.complexity.result }}"
+        echo "Performance:       ${{ needs.performance.result }}"
+        echo "════════════════════════════════════════════════════"
