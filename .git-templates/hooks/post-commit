@@ -1,0 +1,82 @@
+#!/bin/bash
+# Git Post-Commit Hook - Audit Trail Logging
+# Records all commits to ~/.devkit/git/commits.log in JSONL format
+
+set -e
+
+COMMIT_HASH=$(git rev-parse --short HEAD)
+COMMIT_HASH_FULL=$(git rev-parse HEAD)
+COMMIT_MSG=$(git log -1 --pretty=%B)
+AUTHOR=$(git log -1 --pretty=%an)
+AUTHOR_EMAIL=$(git log -1 --pretty=%ae)
+TIMESTAMP=$(git log -1 --pretty=%aI)
+FILES_CHANGED=$(git diff-tree --no-commit-id --name-only -r HEAD | wc -l | tr -d ' ')
+INSERTIONS=$(git diff-tree --numstat HEAD^ HEAD 2>/dev/null | awk '{sum+=$1} END {print sum}' || echo "0")
+DELETIONS=$(git diff-tree --numstat HEAD^ HEAD 2>/dev/null | awk '{sum+=$2} END {print sum}' || echo "0")
+
+# Create audit directory
+AUDIT_DIR="$HOME/.devkit/git"
+mkdir -p "$AUDIT_DIR"
+AUDIT_LOG="$AUDIT_DIR/commits.log"
+
+# Get GPG signature status
+GPG_SIGNATURE=$(git log -1 --format=%G? || echo "N")
+case "$GPG_SIGNATURE" in
+    G) SIGNATURE_STATUS="good" ;;
+    B) SIGNATURE_STATUS="bad" ;;
+    U) SIGNATURE_STATUS="untrusted" ;;
+    X) SIGNATURE_STATUS="expired" ;;
+    Y) SIGNATURE_STATUS="expired_key" ;;
+    R) SIGNATURE_STATUS="revoked" ;;
+    E) SIGNATURE_STATUS="missing" ;;
+    N) SIGNATURE_STATUS="not_signed" ;;
+    *) SIGNATURE_STATUS="unknown" ;;
+esac
+
+# Extract test stats from commit message (if available)
+TESTS_PASSED=""
+TESTS_TOTAL=""
+COVERAGE=""
+if [[ "$COMMIT_MSG" =~ ([0-9]+)/([0-9]+)\ tests ]] || [[ "$COMMIT_MSG" =~ tests:.*\(([0-9]+)/([0-9]+)\) ]]; then
+    TESTS_PASSED="${BASH_REMATCH[1]}"
+    TESTS_TOTAL="${BASH_REMATCH[2]}"
+fi
+
+if [[ "$COMMIT_MSG" =~ Coverage:\ ([0-9]+)% ]] || [[ "$COMMIT_MSG" =~ coverage:\ ([0-9]+)% ]]; then
+    COVERAGE="${BASH_REMATCH[1]}"
+fi
+
+# Create audit log entry in JSONL format
+AUDIT_ENTRY=$(cat <<EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "commit_hash": "$COMMIT_HASH",
+  "commit_hash_full": "$COMMIT_HASH_FULL",
+  "author": "$AUTHOR",
+  "author_email": "$AUTHOR_EMAIL",
+  "subject": "$(echo "$COMMIT_MSG" | head -n1 | sed 's/"/\\"/g')",
+  "files_changed": $FILES_CHANGED,
+  "lines_added": $INSERTIONS,
+  "lines_removed": $DELETIONS,
+  "signature_status": "$SIGNATURE_STATUS",
+  "tests_passed": $([[ -z "$TESTS_PASSED" ]] && echo "null" || echo "$TESTS_PASSED"),
+  "tests_total": $([[ -z "$TESTS_TOTAL" ]] && echo "null" || echo "$TESTS_TOTAL"),
+  "coverage": $([[ -z "$COVERAGE" ]] && echo "null" || echo "$COVERAGE"),
+  "review_status": "pending",
+  "tags": ["commit"]
+}
+EOF
+)
+
+# Log to audit trail
+echo "$AUDIT_ENTRY" >> "$AUDIT_LOG"
+
+# Display commit info
+echo ""
+echo "✓ Commit logged to audit trail"
+echo "  Hash: $COMMIT_HASH"
+echo "  Files: $FILES_CHANGED changed, +$INSERTIONS -$DELETIONS"
+echo "  Author: $AUTHOR"
+echo "  Time: $(date '+%Y-%m-%d %H:%M:%S')"
+
+exit 0
