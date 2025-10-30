@@ -134,6 +134,7 @@
     name: core.hooksPath
     value: "{{ git_hooks_dir }}"
     scope: global
+  when: not git_enable_precommit | default(true)
   notify: reload git config
   tags: [git, config]
 
@@ -223,15 +224,23 @@
 # Pre-Commit Framework Setup (Multi-language quality enforcement)
 - name: Install pre-commit framework
   block:
-    - name: Install pre-commit via pip
-      ansible.builtin.pip:
-        name: "pre-commit=={{ git_precommit_version }}"
-        state: present
-        extra_args: "--upgrade"
+    - name: Check if pre-commit is already installed
+      ansible.builtin.command: which pre-commit
+      register: precommit_check
+      failed_when: false
+      changed_when: false
+      when: git_enable_precommit | default(true)
+      tags: [git, precommit, install, verify]
+
+    - name: Install pre-commit via pipx (if not already installed)
+      ansible.builtin.command: pipx install pre-commit
       environment:
         HOME: "{{ home_dir }}"
       register: precommit_install
-      when: git_enable_precommit | default(true)
+      when:
+        - git_enable_precommit | default(true)
+        - precommit_check.rc != 0
+      changed_when: "'installed' in precommit_install.stdout or 'Installed' in precommit_install.stdout"
       tags: [git, precommit, install]
 
     - name: Verify pre-commit installation
