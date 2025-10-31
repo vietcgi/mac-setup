@@ -84,7 +84,7 @@ class DependencyCheck(HealthCheck):
                     installed.append(tool)
                 else:
                     missing.append(tool)
-            except (OSError, subprocess.TimeoutExpired) as e:
+            except Exception as e:
                 self.logger.debug(f"Failed to check {tool}: {e}")
                 missing.append(tool)
 
@@ -149,7 +149,7 @@ class DiskSpaceCheck(HealthCheck):
                 f"Only {available_gb}GB free (need {self.min_gb}GB)",
                 {"available_gb": available_gb, "minimum_gb": self.min_gb},
             )
-        except (OSError, subprocess.TimeoutExpired, ValueError) as e:
+        except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check disk space: {e}",
@@ -210,7 +210,7 @@ class ConfigurationCheck(HealthCheck):
                 },
             )
 
-        except (OSError, ValueError) as e:
+        except Exception as e:
             return (
                 HealthStatus.WARNING,
                 f"Failed to check configuration: {e}",
@@ -284,7 +284,7 @@ class LogCheck(HealthCheck):
                 },
             )
 
-        except (OSError, UnicodeDecodeError) as e:
+        except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check logs: {e}",
@@ -339,7 +339,7 @@ class SystemCheck(HealthCheck):
                 },
             )
 
-        except (OSError, subprocess.TimeoutExpired) as e:
+        except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check system: {e}",
@@ -373,7 +373,7 @@ class HealthMonitor:
                 status, message, details = check.run()
                 self.results[check.name] = (status, message, details)
                 self.logger.debug(f"{check.name}: {status} - {message}")
-            except (OSError, subprocess.TimeoutExpired, ValueError) as e:
+            except Exception as e:
                 self.logger.exception(f"Health check {check.name} failed: {e}")
                 self.results[check.name] = (
                     HealthStatus.UNKNOWN,
@@ -415,11 +415,11 @@ class HealthMonitor:
         }
 
         print("\n" + "=" * 60)
-        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, "?")} {overall.upper()}")
+        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
         print("=" * 60 + "\n")
 
         for check_name, (status, message, details) in self.results.items():
-            print(f"{emoji.get(status, "?")} {check_name}: {status.upper()}")
+            print(f"{emoji.get(status, '?')} {check_name}: {status.upper()}")
             print(f"   {message}")
 
             if details:

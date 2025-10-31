@@ -10,9 +10,9 @@ SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
-import sys
-import logging
 import importlib.util
+import logging
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -193,7 +193,7 @@ class PluginLoader:
                         )
                         return None
                     self.logger.debug(f"Plugin integrity verified for {module_name}")
-                except (ValueError, OSError) as e:
+                except Exception as e:
                     self.logger.exception(
                         f"Failed to verify plugin integrity for {module_name}: {e}",
                     )
@@ -238,7 +238,7 @@ class PluginLoader:
             self.logger.warning(f"No PluginInterface found in {module_name}")
             return None
 
-        except (ImportError, OSError, AttributeError) as e:
+        except Exception as e:
             self.logger.exception(f"Error loading plugin {module_name}: {e}")
             return None
 
@@ -321,7 +321,7 @@ class PluginLoader:
                     self.logger.warning(f"Hook failed for stage {stage}")
                     context.status = "failed"
                     return False
-            except (RuntimeError, ValueError) as e:
+            except Exception as e:
                 self.logger.exception(f"Hook execution error: {e}")
                 context.error = str(e)
                 context.status = "failed"
@@ -347,7 +347,6 @@ class BuiltinHook(HookInterface):
     """Base class for builtin hooks."""
 
     def __init__(self, name: str) -> None:
-        """Initialize builtin hook with name."""
         self.name = name
 
     def execute(self, context: HookContext) -> bool:
@@ -433,10 +432,10 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
-    "BuiltinHook",
     "HookContext",
     "HookInterface",
     "PluginInterface",
     "PluginLoader",
+    "BuiltinHook",
     "SimplePlugin",
 ]

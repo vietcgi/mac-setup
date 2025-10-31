@@ -22,11 +22,11 @@ This implementation:
 """
 
 import ast
-import sys
 import json
 import logging
-import tempfile
 import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -299,7 +299,7 @@ class MutationTester:
                 detector = MutationDetector(source, py_file)
                 file_mutations = detector.detect()
                 mutations.extend(file_mutations)
-            except (OSError, SyntaxError) as e:
+            except Exception as e:
                 self.logger.warning(f"Error detecting mutations in {py_file}: {e}")
 
         return mutations
@@ -365,7 +365,7 @@ class MutationTester:
                 test_result="survived",
                 details="Test timeout (mutation not caught)",
             )
-        except (OSError, subprocess.SubprocessError) as e:
+        except Exception as e:
             mutation.file_path.write_text(original_code)
             return MutationResult(
                 mutation=mutation,

@@ -13,10 +13,10 @@ Provides comprehensive validation for Devkit plugins:
 All plugins must have a manifest.json file and implement the PluginInterface.
 """
 
-import re
-import json
 import hashlib
+import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Optional
 
@@ -67,7 +67,7 @@ class PluginManifest:
             with open(manifest_path, encoding="utf-8") as f:
                 self.data = json.load(f)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid manifest JSON in {manifest_path}: {e}") from e
+            raise ValueError(f"Invalid manifest JSON in {manifest_path}: {e}")
 
     def validate(self) -> tuple[bool, list[str]]:
         """Validate manifest against schema.
@@ -247,7 +247,7 @@ class PluginValidator:
         try:
             if not self._verify_plugin_class(plugin_dir):
                 return False, "Plugin class not properly defined in __init__.py"
-        except (ImportError, AttributeError) as e:
+        except Exception as e:
             return False, f"Cannot load plugin class: {e}"
 
         # Log successful validation

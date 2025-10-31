@@ -17,13 +17,13 @@ Architecture (Refactored - Phase 2):
 - AuditReporter: Generates reports and summaries
 """
 
-import os
+import hashlib
 import hmac
 import json
-import shutil
-import hashlib
 import logging
 import operator
+import os
+import shutil
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -85,7 +85,7 @@ class AuditSigningService:
                     key = f.read()
                     if len(key) == 32:  # Validate key length
                         return key
-            except OSError as e:
+            except Exception as e:
                 self.logger.warning(f"Failed to load HMAC key, generating new one: {e}")
 
         # Generate new HMAC key (256 bits = 32 bytes)
@@ -98,7 +98,7 @@ class AuditSigningService:
                 f.write(key)
             key_file.chmod(0o600)  # Owner read/write only
             self.logger.info("Generated new HMAC key for audit log signing")
-        except OSError as e:
+        except Exception as e:
             self.logger.exception(f"Failed to store HMAC key: {e}")
 
         return key
@@ -150,7 +150,7 @@ class AuditSigningService:
         try:
             computed_signature = self.sign_entry(entry_copy)
             return hmac.compare_digest(computed_signature, stored_signature)
-        except (TypeError, ValueError) as e:
+        except Exception as e:
             self.logger.exception(f"Error verifying signature: {e}")
             return False
 
@@ -176,7 +176,7 @@ class AuditLogStorage:
             self.log_dir.chmod(0o700)
             if self.log_file.exists():
                 self.log_file.chmod(0o600)
-        except OSError as e:
+        except Exception as e:
             self.logger.warning(f"Could not set audit log permissions: {e}")
 
     def write_entry(self, entry: dict[str, Any]) -> None:
@@ -204,6 +204,8 @@ class AuditLogStorage:
             self.logger.exception(
                 f"Failed to write audit log: {e}. Check disk space and permissions.",
             )
+        except Exception as e:
+            self.logger.exception(f"Unexpected error writing audit log: {e}")
 
     def read_entries(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Read audit log entries from file.
@@ -232,8 +234,10 @@ class AuditLogStorage:
                                 f"Entry may be corrupt.",
                             )
                             continue
-        except (OSError, UnicodeDecodeError) as e:
+        except OSError as e:
             self.logger.warning(f"Failed to read audit logs: {e}")
+        except Exception as e:
+            self.logger.exception(f"Unexpected error reading audit logs: {e}")
 
         if limit:
             entries = entries[-limit:]
@@ -261,7 +265,7 @@ class AuditLogStorage:
                     archive_path = archive_dir / log_file.name
                     shutil.move(str(log_file), str(archive_path))
                     self.logger.info(f"Archived log file: {log_file.name}")
-        except OSError as e:
+        except Exception as e:
             self.logger.exception(f"Failed to rotate logs: {e}")
 
 
@@ -561,7 +565,7 @@ class AuditLogger:
 
                 users = summary["users"]
                 users.add(user)
-            except (KeyError, TypeError) as e:
+            except Exception as e:
                 self.logger.debug(f"Error parsing audit entry: {e}")
 
         users_set = summary["users"]
@@ -613,7 +617,7 @@ class AuditReporter:
 
                 action_counts[action] = action_counts.get(action, 0) + 1
                 user_counts[user] = user_counts.get(user, 0) + 1
-            except (KeyError, TypeError) as e:
+            except Exception as e:
                 self.logger.debug(f"Error parsing entry: {e}")
 
         report_lines.append("Actions by Type:")

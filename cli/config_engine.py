@@ -7,13 +7,13 @@ Handles loading, validating, merging, and managing configuration from multiple s
 Supports YAML configuration files, environment variables, and runtime overrides.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 from collections import deque
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
@@ -240,7 +240,7 @@ class ConfigurationEngine:
                 self.logger.info(f"✓ Fixed config permissions for {config_path}")
             except OSError as e:
                 self.logger.exception(f"Cannot fix file permissions: {e}")
-                raise PermissionError(f"Unable to fix permissions on {config_path}: {e}") from e
+                raise PermissionError(f"Unable to fix permissions on {config_path}: {e}")
 
     def load_defaults(self) -> None:
         """Load default configuration from schema."""
@@ -338,7 +338,7 @@ class ConfigurationEngine:
         except yaml.YAMLError as e:
             self.logger.exception(f"Invalid YAML in {path}: {e}")
             return {}
-        except (OSError, KeyError, TypeError) as e:
+        except Exception as e:
             self.logger.exception(f"Error loading {path}: {e}")
             return {}
 
@@ -610,7 +610,9 @@ class ConfigurationEngine:
     @staticmethod
     def _get_timestamp() -> str:
         """Get current timestamp in ISO format."""
-        return datetime.now(tz=UTC).isoformat()
+        from datetime import datetime
+
+        return datetime.now().isoformat()
 
     def list_loaded_files(self) -> list[str]:
         """Get list of loaded configuration files."""

@@ -9,10 +9,10 @@ Provides:
 - Intelligent cache invalidation
 """
 
-import json
-import time
 import hashlib
+import json
 import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -59,7 +59,7 @@ class CacheManager:
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f)
             self.logger.debug(f"Cached {key} for {ttl_hours} hours")
-        except (OSError, json.JSONDecodeError) as e:
+        except Exception as e:
             self.logger.warning(f"Failed to cache {key}: {e}")
 
     def get(self, key: str) -> Optional[Any]:
@@ -89,7 +89,7 @@ class CacheManager:
             self.logger.debug(f"Cache hit for {key}")
             value: Any = cache_data["value"]
             return value
-        except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
+        except Exception as e:
             self.logger.warning(f"Failed to read cache for {key}: {e}")
             return None
 
@@ -100,7 +100,7 @@ class CacheManager:
             try:
                 cache_file.unlink()
                 self.logger.debug(f"Invalidated cache for {key}")
-            except OSError as e:
+            except Exception as e:
                 self.logger.warning(f"Failed to invalidate cache for {key}: {e}")
 
     def clear(self) -> None:
@@ -109,7 +109,7 @@ class CacheManager:
             for cache_file in self.cache_dir.glob("*.cache"):
                 cache_file.unlink()
             self.logger.info("Cleared all cache entries")
-        except OSError as e:
+        except Exception as e:
             self.logger.warning(f"Failed to clear cache: {e}")
 
     def get_cache_stats(self) -> dict:
