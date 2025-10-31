@@ -7,17 +7,25 @@ Provides:
 - Change auditing
 - Compliance reporting
 - Secure log storage
+
+Architecture (Refactored - Phase 2):
+- AuditAction: Enum for audit event types
+- AuditSigningService: Cryptographic signing and verification
+- AuditLogStorage: File I/O and permission management
+- AuditLogger: Orchestrates logging with specific action types
+- AuditReporter: Generates reports and summaries
 """
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import hashlib
 import hmac
 import os
+import shutil
 
 
 class AuditAction(Enum):
@@ -40,32 +48,23 @@ class AuditAction(Enum):
     WARNING_DETECTED = "warning_detected"
 
 
-class AuditLogger:
-    """Enterprise audit logging system."""
+class AuditSigningService:
+    """Handles cryptographic signing and verification of audit entries."""
 
-    def __init__(self, log_dir: Optional[Path] = None, enable_signing: bool = False, hmac_key: Optional[bytes] = None):
+    def __init__(self, log_dir: Path, hmac_key: Optional[bytes] = None):
         """
-        Initialize audit logger.
+        Initialize signing service.
 
         Args:
-            log_dir: Directory for audit logs (default ~/.devkit/audit)
-            enable_signing: Enable cryptographic signing of logs using HMAC
-            hmac_key: HMAC secret key (auto-generated if enable_signing=True and not provided)
+            log_dir: Directory for audit logs
+            hmac_key: HMAC secret key (auto-generated if not provided)
         """
-        self.log_dir = log_dir or Path.home() / ".devkit" / "audit"
-        self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.enable_signing = enable_signing
+        self.log_dir = log_dir
+        self.hmac_key = hmac_key
         self.logger = logging.getLogger(__name__)
 
-        # Initialize HMAC key for signing
-        self.hmac_key = hmac_key
-        if enable_signing and not hmac_key:
+        if not hmac_key:
             self.hmac_key = self._load_or_create_hmac_key()
-
-        # Set up file logging
-        log_file = self.log_dir / f"audit-{datetime.now().strftime('%Y%m%d')}.jsonl"
-        self.log_file = log_file
-        self._ensure_secure_permissions()
 
     def _load_or_create_hmac_key(self) -> bytes:
         """
@@ -104,16 +103,7 @@ class AuditLogger:
 
         return key
 
-    def _ensure_secure_permissions(self) -> None:
-        """Ensure audit log directory has secure permissions (700)."""
-        try:
-            self.log_dir.chmod(0o700)
-            if self.log_file.exists():
-                self.log_file.chmod(0o600)
-        except Exception as e:
-            self.logger.warning(f"Could not set audit log permissions: {e}")
-
-    def _sign_entry(self, entry: Dict[str, Any]) -> str:
+    def sign_entry(self, entry: Dict[str, Any]) -> str:
         """
         Create HMAC-SHA256 cryptographic signature for audit entry.
 
@@ -161,11 +151,133 @@ class AuditLogger:
         entry_copy = {k: v for k, v in entry.items() if k != "signature"}
 
         try:
-            computed_signature = self._sign_entry(entry_copy)
+            computed_signature = self.sign_entry(entry_copy)
             return hmac.compare_digest(computed_signature, stored_signature)
         except Exception as e:
             self.logger.error(f"Error verifying signature: {e}")
             return False
+
+
+class AuditLogStorage:
+    """Handles file I/O, permissions, and rotation of audit logs."""
+
+    def __init__(self, log_dir: Path):
+        """
+        Initialize log storage.
+
+        Args:
+            log_dir: Directory for audit logs
+        """
+        self.log_dir = log_dir
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.log_file = log_dir / f"audit-{datetime.now().strftime('%Y%m%d')}.jsonl"
+        self.logger = logging.getLogger(__name__)
+        self._ensure_secure_permissions()
+
+    def _ensure_secure_permissions(self) -> None:
+        """Ensure audit log directory has secure permissions (700)."""
+        try:
+            self.log_dir.chmod(0o700)
+            if self.log_file.exists():
+                self.log_file.chmod(0o600)
+        except Exception as e:
+            self.logger.warning(f"Could not set audit log permissions: {e}")
+
+    def write_entry(self, entry: Dict[str, Any]) -> None:
+        """
+        Write audit entry to log file.
+
+        Args:
+            entry: Audit entry dictionary
+        """
+        try:
+            with open(self.log_file, "a") as f:
+                f.write(json.dumps(entry) + "\n")
+            self._ensure_secure_permissions()
+        except Exception as e:
+            self.logger.error(f"Failed to write audit log: {e}")
+
+    def read_entries(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Read audit log entries from file.
+
+        Args:
+            limit: Maximum number of entries (default all)
+
+        Returns:
+            List of audit log entries
+        """
+        entries = []
+
+        try:
+            if not self.log_file.exists():
+                return entries
+
+            with open(self.log_file, "r") as f:
+                for line in f:
+                    if line.strip():
+                        entry = json.loads(line)
+                        entries.append(entry)
+        except Exception as e:
+            self.logger.warning(f"Failed to read audit logs: {e}")
+
+        if limit:
+            entries = entries[-limit:]
+
+        return entries
+
+    def get_log_file_path(self) -> Path:
+        """Get current audit log file path."""
+        return self.log_file
+
+    def rotate_logs(self, days: int = 90) -> None:
+        """
+        Rotate audit logs by archiving old ones.
+
+        Args:
+            days: Archive logs older than this many days (default 90)
+        """
+        try:
+            cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
+            archive_dir = self.log_dir / "archive"
+            archive_dir.mkdir(exist_ok=True)
+
+            for log_file in self.log_dir.glob("audit-*.jsonl"):
+                file_date = log_file.stem.replace("audit-", "")
+                if file_date < cutoff_date:
+                    archive_path = archive_dir / log_file.name
+                    shutil.move(str(log_file), str(archive_path))
+                    self.logger.info(f"Archived log file: {log_file.name}")
+        except Exception as e:
+            self.logger.error(f"Failed to rotate logs: {e}")
+
+
+class AuditLogger:
+    """Enterprise audit logging system with cryptographic security."""
+
+    def __init__(
+        self,
+        log_dir: Optional[Path] = None,
+        enable_signing: bool = False,
+        hmac_key: Optional[bytes] = None,
+    ):
+        """
+        Initialize audit logger.
+
+        Args:
+            log_dir: Directory for audit logs (default ~/.devkit/audit)
+            enable_signing: Enable cryptographic signing of logs using HMAC
+            hmac_key: HMAC secret key (auto-generated if enable_signing=True and not provided)
+        """
+        self.log_dir = log_dir or Path.home() / ".devkit" / "audit"
+        self.enable_signing = enable_signing
+        self.logger = logging.getLogger(__name__)
+
+        # Initialize storage and signing services
+        self.storage = AuditLogStorage(self.log_dir)
+        self.signing_service: Optional[AuditSigningService] = None
+        if enable_signing:
+            self.signing_service = AuditSigningService(self.log_dir, hmac_key)
 
     def log_action(
         self,
@@ -196,21 +308,17 @@ class AuditLogger:
         }
 
         # Add signature if enabled
-        if self.enable_signing:
-            entry["signature"] = self._sign_entry(entry)
+        if self.enable_signing and self.signing_service:
+            entry["signature"] = self.signing_service.sign_entry(entry)
 
         # Write to log file
-        try:
-            with open(self.log_file, "a") as f:
-                f.write(json.dumps(entry) + "\n")
-            self._ensure_secure_permissions()
-        except Exception as e:
-            self.logger.error(f"Failed to write audit log: {e}")
-
+        self.storage.write_entry(entry)
         return entry
 
     def log_install_started(
-        self, roles: Optional[List[str]] = None, details: Optional[Dict] = None
+        self,
+        roles: Optional[List[str]] = None,
+        details: Optional[Dict] = None,
     ) -> Dict:
         """Log installation start."""
         return self.log_action(
@@ -219,7 +327,9 @@ class AuditLogger:
         )
 
     def log_install_completed(
-        self, duration_seconds: float, details: Optional[Dict] = None
+        self,
+        duration_seconds: float,
+        details: Optional[Dict] = None,
     ) -> Dict:
         """Log successful installation."""
         return self.log_action(
@@ -235,7 +345,12 @@ class AuditLogger:
             status="failure",
         )
 
-    def log_config_changed(self, key: str, old_value: Any, new_value: Any) -> Dict:
+    def log_config_changed(
+        self,
+        key: str,
+        old_value: Any,
+        new_value: Any,
+    ) -> Dict:
         """Log configuration change."""
         return self.log_action(
             AuditAction.CONFIG_CHANGED,
@@ -255,10 +370,16 @@ class AuditLogger:
 
     def log_plugin_removed(self, plugin_name: str) -> Dict:
         """Log plugin removal."""
-        return self.log_action(AuditAction.PLUGIN_REMOVED, details={"plugin": plugin_name})
+        return self.log_action(
+            AuditAction.PLUGIN_REMOVED,
+            details={"plugin": plugin_name},
+        )
 
     def log_security_check(
-        self, check_name: str, status: str, findings: Optional[List[str]] = None
+        self,
+        check_name: str,
+        status: str,
+        findings: Optional[List[str]] = None,
     ) -> Dict:
         """Log security check."""
         return self.log_action(
@@ -267,7 +388,12 @@ class AuditLogger:
             status=status,
         )
 
-    def log_permission_changed(self, path: str, old_perms: str, new_perms: str) -> Dict[str, Any]:
+    def log_permission_changed(
+        self,
+        path: str,
+        old_perms: str,
+        new_perms: str,
+    ) -> Dict[str, Any]:
         """Log permission change."""
         return self.log_action(
             AuditAction.PERMISSION_CHANGED,
@@ -278,20 +404,44 @@ class AuditLogger:
             },
         )
 
-    def log_verification(self, passed: bool, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def log_verification(
+        self,
+        passed: bool,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Log setup verification."""
-        action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
-        return self.log_action(action, details=details, status="success" if passed else "failure")
+        action = (
+            AuditAction.VERIFICATION_PASSED
+            if passed
+            else AuditAction.VERIFICATION_FAILED
+        )
+        return self.log_action(
+            action,
+            details=details,
+            status="success" if passed else "failure",
+        )
 
-    def log_health_check(self, status: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def log_health_check(
+        self,
+        status: str,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Log health check result."""
-        return self.log_action(AuditAction.HEALTH_CHECK, details=details, status=status)
+        return self.log_action(
+            AuditAction.HEALTH_CHECK,
+            details=details,
+            status=status,
+        )
 
     def get_log_file_path(self) -> Path:
         """Get current audit log file path."""
-        return self.log_file
+        return self.storage.get_log_file_path()
 
-    def get_audit_logs(self, limit: Optional[int] = None, verify_signatures: bool = False) -> List[Dict[str, Any]]:
+    def get_audit_logs(
+        self,
+        limit: Optional[int] = None,
+        verify_signatures: bool = False,
+    ) -> List[Dict[str, Any]]:
         """
         Get audit log entries.
 
@@ -302,26 +452,20 @@ class AuditLogger:
         Returns:
             List of audit log entries
         """
-        entries = []
+        entries = self.storage.read_entries(limit)
 
-        try:
-            with open(self.log_file, "r") as f:
-                for line in f:
-                    if line.strip():
-                        entry = json.loads(line)
-
-                        # Skip if signature verification requested and entry has invalid signature
-                        if verify_signatures and entry.get("signature"):
-                            if not self.verify_signature(entry):
-                                self.logger.warning(f"Audit entry has invalid signature: {entry.get('timestamp')}")
-                                continue
-
-                        entries.append(entry)
-        except Exception as e:
-            self.logger.warning(f"Failed to read audit logs: {e}")
-
-        if limit:
-            entries = entries[-limit:]
+        # Filter by signature validity if requested
+        if verify_signatures and self.signing_service:
+            filtered_entries = []
+            for entry in entries:
+                if entry.get("signature"):
+                    if self.signing_service.verify_signature(entry):
+                        filtered_entries.append(entry)
+                    else:
+                        self.logger.warning(
+                            f"Audit entry has invalid signature: {entry.get('timestamp')}"
+                        )
+            return filtered_entries
 
         return entries
 
@@ -343,23 +487,7 @@ class AuditLogger:
                 "invalid_entry_timestamps": List[str]
             }
         """
-        entries = []
-        try:
-            with open(self.log_file, "r") as f:
-                for line in f:
-                    if line.strip():
-                        entries.append(json.loads(line))
-        except Exception as e:
-            self.logger.error(f"Failed to read audit logs for validation: {e}")
-            return {
-                "total_entries": 0,
-                "valid_entries": 0,
-                "invalid_entries": 0,
-                "unsigned_entries": 0,
-                "tampering_detected": False,
-                "invalid_entry_timestamps": [],
-                "error": str(e)
-            }
+        entries = self.storage.read_entries()
 
         valid_count = 0
         invalid_count = 0
@@ -369,7 +497,7 @@ class AuditLogger:
         for entry in entries:
             if "signature" not in entry:
                 unsigned_count += 1
-            elif self.verify_signature(entry):
+            elif self.signing_service and self.signing_service.verify_signature(entry):
                 valid_count += 1
             else:
                 invalid_count += 1
@@ -382,8 +510,12 @@ class AuditLogger:
             "invalid_entries": invalid_count,
             "unsigned_entries": unsigned_count,
             "tampering_detected": invalid_count > 0,
-            "invalid_entry_timestamps": invalid_timestamps
+            "invalid_entry_timestamps": invalid_timestamps,
         }
+
+    def rotate_logs(self) -> None:
+        """Rotate audit logs by archiving old ones."""
+        self.storage.rotate_logs()
 
     def get_audit_summary(self, hours: int = 24) -> Dict[str, Any]:
         """
@@ -395,12 +527,10 @@ class AuditLogger:
         Returns:
             Summary statistics
         """
-        from datetime import timedelta
-
         cutoff = datetime.now() - timedelta(hours=hours)
-        entries = self.get_audit_logs()
+        entries = self.storage.read_entries()
 
-        summary: dict[str, int | dict[str, int] | set[str] | list[str]] = {
+        summary: Dict[str, Any] = {
             "total_actions": 0,
             "actions_by_type": {},
             "actions_by_status": {},
@@ -414,126 +544,111 @@ class AuditLogger:
                 if entry_time < cutoff:
                     continue
 
-                total_actions = summary["total_actions"]
-                if isinstance(total_actions, int):
-                    summary["total_actions"] = total_actions + 1
+                summary["total_actions"] = int(summary["total_actions"]) + 1
                 action = entry.get("action", "unknown")
                 status = entry.get("status", "unknown")
                 user = entry.get("user", "unknown")
 
                 actions_by_type = summary["actions_by_type"]
-                if isinstance(actions_by_type, dict):
-                    actions_by_type[action] = actions_by_type.get(action, 0) + 1
+                actions_by_type[action] = actions_by_type.get(action, 0) + 1
 
                 actions_by_status = summary["actions_by_status"]
-                if isinstance(actions_by_status, dict):
-                    actions_by_status[status] = actions_by_status.get(status, 0) + 1
+                actions_by_status[status] = actions_by_status.get(status, 0) + 1
 
                 users = summary["users"]
-                if isinstance(users, set):
-                    users.add(user)
+                users.add(user)
             except Exception as e:
                 self.logger.debug(f"Error parsing audit entry: {e}")
 
         users_set = summary["users"]
-        if isinstance(users_set, set):
-            summary["users"] = list(users_set)
+        summary["users"] = list(users_set)
         return summary
 
-    def rotate_logs(self) -> None:
-        """Rotate audit logs by archiving old ones."""
-        try:
-            import shutil
-            from datetime import datetime, timedelta
 
-            cutoff_date = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
-            archive_dir = self.log_dir / "archive"
-            archive_dir.mkdir(exist_ok=True)
-
-            for log_file in self.log_dir.glob("audit-*.jsonl"):
-                # Extract date from filename
-                date_str = log_file.name.replace("audit-", "").replace(".jsonl", "")
-                if date_str < cutoff_date:
-                    archive_path = archive_dir / log_file.name
-                    shutil.move(str(log_file), str(archive_path))
-                    self.logger.info(f"Archived audit log: {log_file.name}")
-        except Exception as e:
-            self.logger.warning(f"Failed to rotate audit logs: {e}")
-
-
-class ComplianceReport:
-    """Generate compliance reports from audit logs."""
+class AuditReporter:
+    """Generates reports from audit logs."""
 
     def __init__(self, audit_logger: AuditLogger):
         """
-        Initialize compliance report generator.
+        Initialize report generator.
 
         Args:
             audit_logger: AuditLogger instance
         """
         self.audit_logger = audit_logger
+        self.logger = logging.getLogger(__name__)
 
     def generate_activity_report(self, days: int = 30) -> str:
         """
-        Generate user activity report.
+        Generate activity report for given time period.
 
         Args:
-            days: Report period in days
+            days: Number of days to report on
 
         Returns:
-            Formatted report string
+            Formatted activity report
         """
-        summary = self.audit_logger.get_audit_summary(hours=days * 24)
-
-        report = f"""
-ACTIVITY REPORT - Last {days} Days
-{'=' * 60}
-
-Total Actions: {summary['total_actions']}
-Active Users: {len(summary['users'])} ({', '.join(summary['users'])})
-
-Actions by Type:
-"""
-        for action, count in sorted(
-            summary["actions_by_type"].items(), key=lambda x: x[1], reverse=True
-        ):
-            report += f"  {action}: {count}\n"
-
-        report += "\nActions by Status:\n"
-        for status, count in sorted(
-            summary["actions_by_status"].items(), key=lambda x: x[1], reverse=True
-        ):
-            report += f"  {status}: {count}\n"
-
-        return report
-
-    def generate_security_report(self) -> str:
-        """Generate security events report."""
+        cutoff = datetime.now() - timedelta(days=days)
         entries = self.audit_logger.get_audit_logs()
 
-        security_events = [
-            e
-            for e in entries
-            if e.get("action")
-            in [
-                AuditAction.SECURITY_CHECK.value,
-                AuditAction.PERMISSION_CHANGED.value,
-                AuditAction.VERIFICATION_FAILED.value,
-            ]
+        report_lines = [
+            f"Activity Report - Last {days} Days",
+            "=" * 50,
+            "",
         ]
 
-        report = f"""
-SECURITY REPORT
-{'=' * 60}
+        action_counts: Dict[str, int] = {}
+        user_counts: Dict[str, int] = {}
 
-Security Events: {len(security_events)}
+        for entry in entries:
+            try:
+                entry_time = datetime.fromisoformat(entry.get("timestamp", ""))
+                if entry_time < cutoff:
+                    continue
 
-Recent Events:
-"""
-        for event in security_events[-10:]:
-            timestamp = event.get("timestamp", "unknown")
-            action = event.get("action", "unknown")
-            status = event.get("status", "unknown")
-            report += f"  {timestamp} | {action} | {status}\n"
+                action = entry.get("action", "unknown")
+                user = entry.get("user", "unknown")
 
-        return report
+                action_counts[action] = action_counts.get(action, 0) + 1
+                user_counts[user] = user_counts.get(user, 0) + 1
+            except Exception as e:
+                self.logger.debug(f"Error parsing entry: {e}")
+
+        report_lines.append("Actions by Type:")
+        for action, count in sorted(action_counts.items(), key=lambda x: x[1], reverse=True):
+            report_lines.append(f"  {action}: {count}")
+
+        report_lines.append("")
+        report_lines.append("Activity by User:")
+        for user, count in sorted(user_counts.items(), key=lambda x: x[1], reverse=True):
+            report_lines.append(f"  {user}: {count}")
+
+        return "\n".join(report_lines)
+
+    def generate_security_report(self) -> str:
+        """
+        Generate security and integrity report.
+
+        Returns:
+            Formatted security report
+        """
+        integrity = self.audit_logger.validate_log_integrity()
+
+        report_lines = [
+            "Security & Integrity Report",
+            "=" * 50,
+            "",
+            f"Total Entries: {integrity['total_entries']}",
+            f"Valid Entries: {integrity['valid_entries']}",
+            f"Invalid Entries: {integrity['invalid_entries']}",
+            f"Unsigned Entries: {integrity['unsigned_entries']}",
+            f"Tampering Detected: {integrity['tampering_detected']}",
+            "",
+        ]
+
+        if integrity["invalid_entry_timestamps"]:
+            report_lines.append("⚠️ Invalid Entries at:")
+            for timestamp in integrity["invalid_entry_timestamps"]:
+                report_lines.append(f"  - {timestamp}")
+
+        return "\n".join(report_lines)
