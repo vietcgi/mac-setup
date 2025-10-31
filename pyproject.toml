@@ -134,7 +134,6 @@ skip_gitignore = true
 known_first_party = ["cli", "config"]
 known_third_party = ["yaml", "requests"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
-multi_line_mode = 3
 include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true

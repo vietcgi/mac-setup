@@ -113,6 +113,7 @@ repos:
         args: [--severity-level=medium, -r, cli/]
         types: [python]
         files: ^cli/
+        additional_dependencies: ["pbr"]
 
   # =========================================================================
   # TIER 6: COMPREHENSIVE LINTING (pylint) - STRICT
