@@ -513,6 +513,366 @@ Errors are logged and reported clearly to the user.
 
 ---
 
+---
+
+## Structured Logging API
+
+### Overview
+
+The `cli.log` module provides production-ready structured logging with support for JSON output, colored terminal formatting, and automatic log rotation.
+
+### Modules
+
+#### setup_logging()
+
+Configure and initialize a logger for your application.
+
+```python
+from cli.log import setup_logging
+import logging
+
+# Basic setup with colored console output
+logger = setup_logging(__name__)
+
+# Advanced setup with JSON output and file logging
+logger = setup_logging(
+    __name__,
+    level=logging.DEBUG,
+    log_dir=Path.home() / ".devkit" / "logs",
+    json_output=True,
+    file_output=True,
+)
+
+logger.info("Application started")
+logger.debug("Debug information")
+logger.warning("Warning message")
+logger.error("Error occurred")
+```
+
+**Parameters:**
+
+- `name` (str): Logger name (typically `__name__`)
+- `level` (int, optional): Logging level (default: `logging.INFO`)
+- `log_dir` (Path, optional): Directory for log files (default: `~/.devkit/logs`)
+- `json_output` (bool, optional): Enable JSON output for structured logging (default: `False`)
+- `file_output` (bool, optional): Enable file output in addition to console (default: `True`)
+
+**Returns:** Configured `logging.Logger` instance
+
+**Example - Production Setup:**
+
+```python
+from cli.log import setup_logging
+import logging
+
+# Console: colored output | File: JSON format with rotation
+logger = setup_logging(
+    "myapp",
+    level=logging.INFO,
+    json_output=False,  # Console shows colors
+    file_output=True,   # File gets JSON
+)
+
+# Logs appear in: ~/.devkit/logs/myapp.log
+```
+
+#### get_logger()
+
+Get an existing logger instance by name.
+
+```python
+from cli.log import get_logger
+
+logger = get_logger("myapp")
+logger.info("Message from existing logger")
+```
+
+**Parameters:**
+
+- `name` (str): Logger name
+
+**Returns:** `logging.Logger` instance
+
+**Note:** Returns the same logger instance for the same name (singleton pattern).
+
+#### log_context()
+
+Log a message with additional context data (structured logging).
+
+```python
+from cli.log import setup_logging, log_context
+
+logger = setup_logging(__name__, json_output=True)
+
+# Log with context (appears in JSON output)
+log_context(logger, {
+    "user_id": 12345,
+    "action": "deploy",
+    "environment": "production",
+    "timestamp": "2025-10-31T10:30:00Z"
+})
+```
+
+**Parameters:**
+
+- `logger` (logging.Logger): Logger instance
+- `data` (dict): Context dictionary to include in log
+
+**Output (JSON format):**
+
+```json
+{
+  "timestamp": "2025-10-31T10:30:00Z",
+  "level": "INFO",
+  "module": "myapp",
+  "message": "Context",
+  "line": 42,
+  "extra": {
+    "user_id": 12345,
+    "action": "deploy",
+    "environment": "production"
+  }
+}
+```
+
+### Formatters
+
+#### JSONFormatter
+
+Formats log records as JSON for machine parsing and structured logging.
+
+```python
+from cli.log import JSONFormatter
+import logging
+
+formatter = JSONFormatter()
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+```
+
+**Output Format:**
+
+```json
+{
+  "timestamp": "2025-10-31T10:30:45.123456Z",
+  "level": "INFO",
+  "module": "cli.main",
+  "message": "Application started",
+  "line": 42
+}
+```
+
+**Features:**
+
+- ISO 8601 timestamps with UTC timezone
+- Structured JSON output for log aggregation
+- Exception traceback in `exception` field
+- Extra context data in `extra` field
+
+#### ColoredFormatter
+
+Formats log records with ANSI color codes for terminal output.
+
+```python
+from cli.log import ColoredFormatter
+import logging
+
+formatter = ColoredFormatter()
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+```
+
+**Color Scheme:**
+
+- `DEBUG`: Cyan (`\033[36m`)
+- `INFO`: Green (`\033[32m`)
+- `WARNING`: Yellow (`\033[33m`)
+- `ERROR`: Red (`\033[31m`)
+- `CRITICAL`: Magenta (`\033[35m`)
+
+**Output Example:**
+
+```
+[10:30:45] [INFO] cli.main: Application started
+[10:30:46] [DEBUG] cli.config: Loading configuration from /etc/devkit/config.yaml
+[10:30:47] [ERROR] cli.plugin: Plugin 'example' failed to load
+```
+
+### Common Patterns
+
+#### Pattern 1: Development Logging
+
+```python
+from cli.log import setup_logging
+import logging
+
+# Colored console, no files
+logger = setup_logging(
+    __name__,
+    level=logging.DEBUG,
+    file_output=False,
+)
+
+logger.debug("Detailed debugging info")
+logger.info("Informational message")
+```
+
+#### Pattern 2: Production Logging
+
+```python
+from cli.log import setup_logging
+from pathlib import Path
+import logging
+
+# JSON file logging, colored console
+logger = setup_logging(
+    "myapp",
+    level=logging.INFO,
+    log_dir=Path("/var/log/myapp"),
+    json_output=False,
+    file_output=True,
+)
+
+logger.info("Application running")
+
+# File output: /var/log/myapp/myapp.log (JSON format)
+# Console output: Colored (human-readable)
+```
+
+#### Pattern 3: Structured Context Logging
+
+```python
+from cli.log import setup_logging, log_context
+
+logger = setup_logging("api", json_output=True)
+
+# Log request with full context
+log_context(logger, {
+    "request_id": "req-12345",
+    "method": "POST",
+    "path": "/api/users",
+    "status": 201,
+    "duration_ms": 45,
+})
+```
+
+#### Pattern 4: Exception Logging
+
+```python
+from cli.log import setup_logging
+
+logger = setup_logging(__name__)
+
+try:
+    result = risky_operation()
+except Exception as e:
+    # Exception details automatically included in log
+    logger.exception("Operation failed")
+```
+
+**Output includes full traceback.**
+
+### File Rotation
+
+The logging module automatically rotates log files when they exceed 10MB.
+
+**Configuration:**
+
+- Maximum file size: 10 MB
+- Backup count: 5 (keeps up to 5 rotated log files)
+- Default location: `~/.devkit/logs/<logger_name>.log`
+
+**Example with 5 rotations:**
+
+```
+~/.devkit/logs/myapp.log         (current, ≤ 10 MB)
+~/.devkit/logs/myapp.log.1       (10 MB)
+~/.devkit/logs/myapp.log.2       (10 MB)
+~/.devkit/logs/myapp.log.3       (10 MB)
+~/.devkit/logs/myapp.log.4       (10 MB)
+~/.devkit/logs/myapp.log.5       (oldest, 10 MB)
+```
+
+When log file exceeds 10 MB, it's renamed to `.1`, `.1` becomes `.2`, etc., and `.5` is deleted.
+
+### Best Practices
+
+1. **Use module name as logger name:**
+
+   ```python
+   logger = setup_logging(__name__)  # ✓ Good
+   logger = setup_logging("myapp")   # ✓ OK for single module
+   ```
+
+2. **Configure once, reuse:**
+
+   ```python
+   # In main module
+   logger = setup_logging(__name__)
+
+   # In other modules
+   from cli.log import get_logger
+   logger = get_logger("myapp")  # Reuse existing logger
+   ```
+
+3. **Use appropriate log levels:**
+
+   ```python
+   logger.debug("Variable: x = 42")           # Details
+   logger.info("User logged in")              # Normal flow
+   logger.warning("Cache is 95% full")        # Unusual situation
+   logger.error("Failed to connect to DB")    # Error occurred
+   logger.critical("System shutting down")    # Critical issue
+   ```
+
+4. **Structure context data:**
+
+   ```python
+   # Good - structured
+   log_context(logger, {"user_id": 123, "action": "login"})
+
+   # Avoid - unstructured
+   logger.info(f"User 123 logged in")
+   ```
+
+5. **Don't log sensitive data:**
+
+   ```python
+   # Bad - exposes password
+   logger.info(f"Connecting to {username}:{password}@{host}")
+
+   # Good - sanitize
+   logger.info(f"Connecting to {username}@{host}")
+   ```
+
+### Testing
+
+See `tests/test_log.py` for comprehensive test examples:
+
+```python
+from cli.log import setup_logging
+import tempfile
+from pathlib import Path
+
+def test_logging():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        logger = setup_logging(
+            "test",
+            log_dir=Path(tmpdir),
+            json_output=True,
+        )
+        logger.info("Test message")
+        # Verify log file created and contains message
+```
+
+---
+
 ## See Also
 
 - [MODULAR_ARCHITECTURE.md](MODULAR_ARCHITECTURE.md) - System design
