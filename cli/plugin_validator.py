@@ -383,7 +383,7 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
+    "PluginManifest",
     "PluginValidator",
-    "validate_all_plugins",
     "validate_plugin_manifest",
 ]

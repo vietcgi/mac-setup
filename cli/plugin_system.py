@@ -432,7 +432,10 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
+    "HookContext",
+    "HookInterface",
     "PluginInterface",
-    "PluginManager",
-    "PluginSystem",
+    "PluginLoader",
+    "BuiltinHook",
+    "SimplePlugin",
 ]
