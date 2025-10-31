@@ -686,43 +686,36 @@ def main() -> None:
 
     # Handle various commands
     if args.validate:
-        is_valid, errors = engine.validate()
-        if is_valid:
-            sys.exit(0)
-
-        for _error in errors:
-            pass
-        sys.exit(1)
+        is_valid, _ = engine.validate()
+        sys.exit(0 if is_valid else 1)
 
     if args.get:
         engine.get(args.get)
         return
 
     if args.set:
-        success, _message = engine.set(args.set[0], args.set[1])
-        if success:
-            engine.save(Path.home() / ".mac-setup" / "config.yaml")
-        else:
+        success, _ = engine.set(args.set[0], args.set[1])
+        if not success:
             sys.exit(1)
+        engine.save(Path.home() / ".mac-setup" / "config.yaml")
         return
 
     if args.list_files:
-        for _f in engine.list_loaded_files():
-            pass
+        engine.list_loaded_files()
         return
 
     if args.list_roles:
-        for _role in engine.get_enabled_roles():
-            pass
+        engine.get_enabled_roles()
         return
 
     if args.export:
+        # Export functionality to be implemented
         return
 
-    # Default: show summary
-    is_valid, errors = engine.validate()
-    if errors:
-        pass
+    # Default: validate configuration
+    is_valid, _ = engine.validate()
+    if not is_valid:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -169,10 +169,10 @@ class GitConfigManager(ValidatorBase):
 
         if changed:
             self.print_status(f"Found {len(changed)} configuration changes", "WARNING")
-            for _key, _value in list(changed.items())[:5]:
-                pass
+            for key, value in list(changed.items())[:5]:
+                self.logger.info("Changed: %s = %s", key, value)
             if len(changed) > 5:
-                pass
+                self.logger.info("... and %d more changes", len(changed) - 5)
         else:
             self.print_status("No configuration changes detected", "SUCCESS")
 
