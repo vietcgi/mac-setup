@@ -379,44 +379,9 @@
     until: dircolors_result is succeeded
     tags:
     - shell
-  - name: Check if .inputrc exists in dotfiles
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/.inputrc'
-    register: inputrc_check
-    tags:
-    - always
-    - shell
-  - name: Copy .inputrc configuration
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/.inputrc'
-      dest: '{{ home }}/.inputrc'
-      mode: '0644'
-      backup: true
-    when:
-    - install_shell_tools | default(true)
-    - inputrc_check.stat.exists
-    tags:
-    - shell
-  - name: Check if .direnvrc exists in dotfiles
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/.direnvrc'
-    register: direnvrc_check
-    tags:
-    - always
-    - shell
-    - direnv
-  - name: Copy .direnvrc configuration
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/.direnvrc'
-      dest: '{{ home }}/.direnvrc'
-      mode: '0644'
-      backup: true
-    when:
-    - install_dev_tools | default(true)
-    - direnvrc_check.stat.exists
-    tags:
-    - shell
-    - direnv
+  # NOTE: .inputrc and .direnvrc are now deployed by the dotfiles role
+  # These duplicate tasks have been removed to avoid overwriting correct permissions
+
   - name: Enable direnv in zsh
     ansible.builtin.lineinfile:
       path: '{{ home }}/.zshrc'
@@ -468,25 +433,8 @@
     until: tpm_result is succeeded
     tags:
     - tmux
-  - name: Check if .tmux.conf exists in dotfiles
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/.tmux.conf'
-    register: tmux_conf_check
-    when: install_shell_tools | default(true)
-    tags:
-    - always
-    - tmux
-  - name: Copy tmux configuration
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/.tmux.conf'
-      dest: '{{ home }}/.tmux.conf'
-      mode: '0644'
-      backup: true
-    when:
-    - install_shell_tools | default(true)
-    - tmux_conf_check.stat.exists
-    tags:
-    - tmux
+  # NOTE: .tmux.conf is now deployed by the dotfiles role
+
   - name: Display tmux plugin installation instructions
     ansible.builtin.debug:
       msg:
@@ -498,34 +446,8 @@
     - not tpm_check.stat.exists
     tags:
     - tmux
-  - name: Check if neovim config exists
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/nvim'
-    register: nvim_config_check
-    tags:
-    - always
-    - neovim
-  - name: Create neovim config directory
-    ansible.builtin.file:
-      path: '{{ home }}/.config/nvim'
-      state: directory
-      mode: '0755'
-    when:
-    - install_neovim | default(true)
-    - nvim_config_check.stat.exists
-    tags:
-    - neovim
-  - name: Copy neovim configuration
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/nvim/'
-      dest: '{{ home }}/.config/nvim/'
-      mode: '0644'
-      directory_mode: '0755'
-    when:
-    - install_neovim | default(true)
-    - nvim_config_check.stat.exists
-    tags:
-    - neovim
+  # NOTE: neovim config is now deployed by the dotfiles role
+
   - name: Create vim symlinks to neovim (override system vim)
     ansible.builtin.file:
       src: '{{ ''/usr/bin/nvim'' if ansible_os_family == ''Debian'' else homebrew_prefix
@@ -634,34 +556,8 @@
     when: install_shell_tools | default(true)
     tags:
     - ghostty
-  - name: Check if ghostty config exists in dotfiles
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/ghostty/config'
-    register: ghostty_config_check
-    tags:
-    - always
-    - ghostty
-  - name: Deploy Ghostty configuration
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/ghostty/config'
-      dest: '{{ home }}/.config/ghostty/config'
-      mode: '0644'
-      backup: true
-    register: ghostty_config_deployed
-    when:
-    - install_shell_tools | default(true)
-    - ghostty_config_check.stat.exists
-    tags:
-    - ghostty
-  - name: Notify user about Ghostty config
-    ansible.builtin.debug:
-      msg: Ghostty configuration deployed to ~/.config/ghostty/config - Restart Ghostty
-        to apply changes
-    when:
-    - ghostty_config_deployed is defined
-    - ghostty_config_deployed is changed
-    tags:
-    - ghostty
+  # NOTE: ghostty config is now deployed by the dotfiles role
+
   - name: Check if chezmoi binary exists
     ansible.builtin.stat:
       path: '{{ homebrew_prefix }}/bin/chezmoi'
@@ -690,42 +586,8 @@
     changed_when: chezmoi_init.rc == 0
     tags:
     - dotfiles
-  - name: Check if dotfiles/.zshrc exists
-    ansible.builtin.stat:
-      path: '{{ playbook_dir }}/dotfiles/.zshrc'
-    register: dotfiles_zshrc_check
-    when: configure_dotfiles | default(true)
-    tags:
-    - dotfiles
-  - name: Copy initial zshrc dotfile
-    ansible.builtin.copy:
-      src: '{{ playbook_dir }}/dotfiles/.zshrc'
-      dest: '{{ home }}/.zshrc'
-      mode: '0644'
-      backup: true
-    register: zshrc_copy
-    when:
-    - configure_dotfiles | default(true)
-    - chezmoi_binary_check.stat.exists | default(false)
-    - chezmoi_check is defined
-    - not chezmoi_check.stat.exists
-    - dotfiles_zshrc_check.stat.exists
-    tags:
-    - dotfiles
-  - name: Add zshrc to chezmoi
-    ansible.builtin.command: '{{ homebrew_prefix }}/bin/chezmoi add {{ home }}/.zshrc'
-    register: chezmoi_add
-    when:
-    - configure_dotfiles | default(true)
-    - chezmoi_binary_check.stat.exists | default(false)
-    - chezmoi_check is defined
-    - not chezmoi_check.stat.exists
-    - zshrc_copy is defined
-    - zshrc_copy is changed
-    changed_when: chezmoi_add.rc == 0
-    failed_when: false
-    tags:
-    - dotfiles
+  # NOTE: .zshrc is now deployed by the dotfiles role
+  # Chezmoi-specific tasks removed as they conflict with dotfiles role deployment
   - name: macOS-specific tasks
     when: is_macos
     tags:

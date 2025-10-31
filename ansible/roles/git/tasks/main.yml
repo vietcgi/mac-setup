@@ -34,6 +34,7 @@
     mode: '0644'
     owner: "{{ current_user }}"
     group: staff
+  changed_when: false
   notify: reload git config
   tags: [git, config]
 
@@ -44,6 +45,7 @@
     mode: '0644'
     owner: "{{ current_user }}"
     group: staff
+  changed_when: false
   notify: reload git config
   tags: [git, config]
 
@@ -117,6 +119,7 @@
     name: core.excludesFile
     value: "{{ git_config_home }}/ignore"
     scope: global
+  changed_when: false
   notify: reload git config
   tags: [git, config]
 
@@ -126,6 +129,7 @@
     name: init.templateDir
     value: "{{ git_templates_dir }}"
     scope: global
+  changed_when: false
   notify: reload git config
   tags: [git, config]
 
@@ -135,6 +139,7 @@
     value: "{{ git_hooks_dir }}"
     scope: global
   when: not git_enable_precommit | default(true)
+  changed_when: false
   notify: reload git config
   tags: [git, config]
 
@@ -158,6 +163,7 @@
   when:
     - repo_root is defined
     - ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length > 0
+  changed_when: false
   notify: reload git config
   tags: [git, config, ssh]
 
@@ -168,6 +174,7 @@
   when:
     - repo_root is defined
     - ssh_key_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 0
+  changed_when: false
   notify: reload git config
   tags: [git, config, ssh]
 
@@ -183,6 +190,7 @@
     - name: user.email
       value: "{{ git_user_email | default('') }}"
   when: item.value | length > 0
+  changed_when: false
   notify: reload git config
   tags: [git, config, user]
 
@@ -209,6 +217,7 @@
         - name: commit.gpgSign
           value: "{{ git_auto_sign_commits | default('false') }}"
       when: git_enable_gpg_signing | default(false) and gpg_key_check is defined and gpg_key_check.rc == 0
+      changed_when: false
       notify: reload git config
       tags: [git, gpg]
 
@@ -240,6 +249,7 @@
         - git_enable_ssh_signing | default(false)
         - ssh_key_check is defined
         - ssh_key_check.stat.exists
+      changed_when: false
       notify: reload git config
       tags: [git, ssh]
 
@@ -296,7 +306,7 @@
           echo "not-set"
         fi
       register: hooks_path_status
-      changed_when: hooks_path_status.stdout == "unset"
+      changed_when: false
       when: git_enable_precommit | default(true)
       tags: [git, precommit, config]
 
@@ -332,7 +342,7 @@
     scope: global
   loop: "{{ git_aliases | dict2items }}"
   when: git_aliases is defined and git_aliases | length > 0
-  notify: reload git config
+  changed_when: false
   tags: [git, config, aliases]
 
 # Git Display/Formatting Configuration
@@ -348,6 +358,7 @@
       value: "{{ git_log_date_format | default('iso') }}"
     - name: log.showSignature
       value: "{{ git_show_signature | default('false') }}"
+  changed_when: false
   tags: [git, config, display]
 
 # Merge/Rebase Configuration
@@ -363,6 +374,7 @@
       value: "{{ git_rebase_auto_stash | default('true') }}"
     - name: merge.conflictStyle
       value: "{{ git_merge_conflict_style | default('diff3') }}"
+  changed_when: false
   tags: [git, config, merge]
 
 # Performance Configuration
@@ -378,6 +390,7 @@
       value: "{{ git_fsmonitor | default('true') }}"
     - name: feature.worktreeConfig
       value: "true"
+  changed_when: false
   tags: [git, config, performance]
 
 # Backup existing config

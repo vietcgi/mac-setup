@@ -87,6 +87,7 @@
 
     dest: "{{ home_dir }}/.devkit/logs/setup.log"
     mode: '0644'
+  changed_when: false
   tags: [setup, logging]
 
 - name: Verify core tools are available
