@@ -189,13 +189,24 @@ class AuditLogStorage:
 
         Args:
             entry: Audit entry dictionary
+
+        Raises:
+            OSError: If unable to write to log file
         """
         try:
+            # Ensure log directory exists and is secure
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write entry with atomic append
             with open(self.log_file, "a") as f:
                 f.write(json.dumps(entry) + "\n")
             self._ensure_secure_permissions()
+        except json.JSONEncodeError as e:
+            self.logger.error(f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data.")
+        except (IOError, OSError) as e:
+            self.logger.error(f"Failed to write audit log: {e}. Check disk space and permissions.")
         except Exception as e:
-            self.logger.error(f"Failed to write audit log: {e}")
+            self.logger.error(f"Unexpected error writing audit log: {e}")
 
     def read_entries(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """
@@ -214,12 +225,21 @@ class AuditLogStorage:
                 return entries
 
             with open(self.log_file, "r") as f:
-                for line in f:
+                for line_num, line in enumerate(f, 1):
                     if line.strip():
-                        entry = json.loads(line)
-                        entries.append(entry)
-        except Exception as e:
+                        try:
+                            entry = json.loads(line)
+                            entries.append(entry)
+                        except json.JSONDecodeError as e:
+                            self.logger.warning(
+                                f"Skipping invalid JSON on line {line_num}: {e}. "
+                                f"Entry may be corrupt."
+                            )
+                            continue
+        except (IOError, OSError) as e:
             self.logger.warning(f"Failed to read audit logs: {e}")
+        except Exception as e:
+            self.logger.error(f"Unexpected error reading audit logs: {e}")
 
         if limit:
             entries = entries[-limit:]
