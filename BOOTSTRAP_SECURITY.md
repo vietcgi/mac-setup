@@ -11,12 +11,14 @@ SHA256: dbc6106138b9c9c1b349d8e047465e33e4ec0bd175363131ed97423458a0ec1c
 ```
 
 This checksum is automatically verified when:
+
 - Running the bootstrap script with `DEVKIT_BOOTSTRAP_CHECKSUM` environment variable set
 - Publishing a new release (CI/CD updates this automatically)
 
 ### How It Works
 
 1. **For Users (Safe Usage)**
+
    ```bash
    # Download and run with checksum verification
    export DEVKIT_BOOTSTRAP_CHECKSUM="dbc6106138b9c9c1b349d8e047465e33e4ec0bd175363131ed97423458a0ec1c"
@@ -24,6 +26,7 @@ This checksum is automatically verified when:
    ```
 
 2. **For Local Development (No Verification)**
+
    ```bash
    # Run locally without checksum (development mode)
    ./bootstrap.sh
@@ -37,6 +40,7 @@ This checksum is automatically verified when:
 ### Verification in bootstrap.sh
 
 The script:
+
 1. Checks if `DEVKIT_BOOTSTRAP_CHECKSUM` environment variable is set
 2. If set, computes SHA256 of the actual script
 3. Compares with expected value
@@ -46,16 +50,19 @@ The script:
 ### Security Guarantees
 
 ✅ **Supply Chain Attack Prevention**
+
 - Detects man-in-the-middle attacks on GitHub
 - Detects script tampering during download
 - Detects corrupted downloads
 
 ✅ **Fail Secure**
+
 - Always aborts if checksum fails
 - Never silently proceeds with mismatched checksums
 - Clear error messages for troubleshooting
 
 ⚠️ **Current Limitations**
+
 - Only works when checksum is set (opt-in for users)
 - Doesn't prevent compromised GitHub account attacks
 - Requires users to verify checksum before running
@@ -65,6 +72,7 @@ The script:
 **For Release Process:**
 
 1. When creating a new release, run:
+
    ```bash
    sha256sum bootstrap.sh
    ```
@@ -72,6 +80,7 @@ The script:
 2. Update release notes with the new checksum
 
 3. Add to release body:
+
    ```
    **Security: Verify Bootstrap Script Integrity**
 
@@ -128,8 +137,9 @@ unset DEVKIT_BOOTSTRAP_CHECKSUM
 ### Security Contact
 
 If you discover a security issue in Devkit:
+
 - **DO NOT** create a public GitHub issue
-- Email: security@devkit.example.com
+- Email: <security@devkit.example.com>
 - See SECURITY.md for vulnerability reporting process
 
 ---

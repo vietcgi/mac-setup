@@ -26,6 +26,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: 10 Specific Issues to Close
 
 **Issue 1: God Class Anti-Pattern - ConfigurationEngine**
+
 - **Current State:** 545 lines, 15+ public methods in single class
 - **Perfect State:** Split into 3 focused classes
   - `ConfigLoader` (load YAML/TOML files, environment resolution)
@@ -35,6 +36,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Lines of Code Affected:** All 545 lines need refactoring
 
 **Issue 2: Complex Method in PluginValidator.validate()**
+
 - **Current State:** ~14 cyclomatic complexity (>8 threshold)
 - **Perfect State:** Break into 4 focused methods:
   - `_validate_manifest()` - Check plugin.yaml structure
@@ -44,6 +46,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Lines Affected:** ~100 lines in plugin_validator.py:validate()
 
 **Issue 3: Complex Method in ConfigurationEngine.main()**
+
 - **Current State:** ~11 cyclomatic complexity
 - **Perfect State:** Extract into:
   - `_initialize_environment()` - Setup config paths and caching
@@ -52,36 +55,43 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Lines Affected:** ~120 lines in config_engine.py:main()
 
 **Issue 4: Service Locator Anti-Pattern**
+
 - **Location:** `cli/performance.py:68` - ParallelInstaller creates own dependencies
 - **Current State:**
+
   ```python
   class ParallelInstaller:
       def __init__(self):
           self.logger = get_logger()  # Service locator
           self.config = load_config()
   ```
+
 - **Perfect State:**
+
   ```python
   class ParallelInstaller:
       def __init__(self, logger: Logger, config: Config):
           self.logger = logger
           self.config = config
   ```
+
 - **Impact:** 3-4 classes need dependency injection refactoring
 
 **Issue 5: Silent Failures in Error Handling**
+
 - **Location 1:** `config_engine.py:229-234` - Returns empty dict {} instead of raising exception
 - **Location 2:** `plugin_validator.py:306-314` - Silent failure on validation
 - **Location 3:** `setup_wizard.py:99-105` - Returns None without indication of failure
 - **Current State:** Callers can't distinguish success from failure
 - **Perfect State:** All failures raise specific exceptions with context
 - **Example of Perfect:**
+
   ```python
   # Current (imperfect)
   try:
       result = validate_plugin(plugin)
       return result or {}  # Silent failure!
-  
+
   # Perfect
   try:
       result = validate_plugin(plugin)
@@ -91,6 +101,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **Issue 6: Type Annotation Inconsistency**
+
 - **Issue 1:** Mixed use of `dict[str, Any]` vs `Dict[str, Any]`
   - Locations: config_engine.py:203, setup_wizard.py:99, performance.py:83+
   - Count: ~18 instances across codebase
@@ -100,10 +111,11 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Location: audit.py:264-287
   - Current: `summary["total_actions"]` treated as `int | dict | set | list`
   - Perfect State: Strong typing with TypeGuard functions
+
   ```python
   def is_int_action(val: Any) -> TypeGuard[int]:
       return isinstance(val, int)
-  
+
   def is_dict_action(val: Any) -> TypeGuard[dict]:
       return isinstance(val, dict)
   ```
@@ -114,15 +126,19 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Perfect State: 100% of public methods have complete type hints
 
 **Issue 7: No Type Checking in CI/CD Pipeline**
+
 - **Current State:** mypy.ini exists locally but NOT run in GitHub Actions
 - **Perfect State:** Add to ci.yml:
+
   ```yaml
   - name: Type checking (strict)
     run: mypy --strict cli/ plugins/ --ignore-missing-imports
   ```
+
 - **Expected Result:** 0 type violations
 
 **Issue 8: Inconsistent Error Recovery**
+
 - **Location:** audit.py, health_check.py
 - **Current State:** Some methods retry on failure, others fail immediately
 - **Perfect State:** Consistent error recovery strategy:
@@ -131,23 +147,25 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Unknown errors: Log full stack trace and fail with context
 
 **Issue 9: Missing Docstring Standards**
+
 - **Current State:** ~70% of methods have docstrings, but format inconsistent
 - **Perfect State:**
   - 100% docstring coverage on all public methods
   - Consistent format: Google-style docstrings with Args, Returns, Raises sections
   - All complex algorithms documented with examples
 - **Example of Perfect:**
+
   ```python
   def validate_config(config: dict[str, Any], schema: dict[str, Any]) -> ValidationResult:
       """Validate configuration against JSON schema.
-      
+
       Args:
           config: Configuration dictionary to validate
           schema: JSON schema defining constraints
-      
+
       Returns:
           ValidationResult with errors list if invalid, empty if valid
-      
+
       Raises:
           SchemaError: If schema itself is invalid
           ConfigValidationError: If validation process fails (not config)
@@ -155,6 +173,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **Issue 10: Insufficient Logging Context**
+
 - **Current State:** Logger calls lack context (function name, trace IDs, operation state)
 - **Perfect State:** All logs include:
   - Function name (automatic via %func)
@@ -162,10 +181,11 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Request/operation ID (traced through call stack)
   - Elapsed time for operations
 - **Example:**
+
   ```python
   # Current
   logger.info("Plugin loaded")
-  
+
   # Perfect
   logger.info(f"Plugin {plugin_id} loaded", extra={
       "operation_id": operation_id,
@@ -182,23 +202,27 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Feasibility:** YES - 95% confident
 **Reasons:**
+
 - Code is well-structured with clear method boundaries
 - Tests exist for current behavior (100 tests pass)
 - No external dependencies on internal structure
 - Low risk of breaking changes
 
 **Approach:**
+
 1. Create new classes alongside existing (2 hours)
 2. Migrate tests to use new classes (1 hour)
 3. Update integration points incrementally (2 hours)
 4. Delete old class when 100% migration complete (1 hour)
 
 **Risks:**
+
 - Circular dependencies when splitting (LOW - code is acyclic)
 - Missing edge cases during refactoring (MEDIUM - mitigate with tests)
 - Performance regression (LOW - no computation changes)
 
 **Mitigation:**
+
 - Keep all tests passing at each step
 - Run full test suite after each migration
 - Property-based testing for edge cases
@@ -211,11 +235,13 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Feasibility:** YES - 98% confident
 **Reasons:**
+
 - Cyclomatic complexity metrics clearly identify boundaries
 - AST analysis shows natural break points
 - Tests provide safety net for refactoring
 
 **Implementation:**
+
 1. Extract validation logic to separate methods (30 min per method × 3 = 90 min)
 2. Create helper classes for validation contexts (45 min)
 3. Update call sites (30 min)
@@ -228,11 +254,13 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Feasibility:** YES - 100% confident
 **Reasons:**
+
 - mypy.ini already configured
 - No major type violations detected in recent scans
 - Single GitHub Actions addition needed
 
 **Implementation:**
+
 1. Add mypy job to ci.yml (15 min)
 2. Run against codebase and fix any issues (30 min estimated, likely 0 issues)
 3. Configure mypy to fail build if violated (5 min)
@@ -244,11 +272,13 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Feasibility:** YES - 100% confident (mechanical task)
 **Reasons:**
+
 - No code changes needed
 - LLM can generate high-quality docstrings
 - Review is straightforward
 
 **Implementation:**
+
 1. Generate docstrings for missing methods (3 hours)
 2. Manual review and refinement (2 hours)
 3. Add docstring checker to pre-commit (30 min)
@@ -264,6 +294,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Timeline:** 4-6 weeks part-time, 1-2 weeks full-time
 
 **Success Metrics:**
+
 - All methods have cyclomatic complexity < 6
 - 100% docstring coverage (Google-style)
 - 0 mypy violations in strict mode
@@ -279,9 +310,11 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: 7 Security Issues (3 Critical + 4 High)
 
 **CRITICAL ISSUE #1: Bootstrap Checksum Verification Missing**
+
 - **Current Risk:** 8.1/10 severity
 - **Threat Model:** Supply chain attack via GitHub repository compromise
 - **Attack Path:**
+
   ```
   1. Attacker compromises GitHub account or CI/CD
   2. Modifies bootstrap.sh maliciously
@@ -289,12 +322,16 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   4. Malicious code executes with user privileges
   5. Attacker gains shell access, installs backdoors, steals SSH keys
   ```
+
 - **Current State:**
+
   ```bash
   curl -sSL https://raw.githubusercontent.com/kevin/devkit/main/bootstrap.sh | bash
   # NO CHECKSUM VALIDATION! Anyone can MITM or modify in-transit
   ```
+
 - **Perfect State:**
+
   ```bash
   # Users download with checksum verification
   EXPECTED_SHA256="abc123def456..."
@@ -306,6 +343,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   fi
   bash /tmp/bootstrap.sh
   ```
+
 - **Implementation:**
   1. Generate SHA256 of bootstrap.sh (always before release)
   2. Store in README.md and SECURITY.md
@@ -314,6 +352,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   5. Document verification in QUICKSTART.md
 
 **CRITICAL ISSUE #2: Config File Permissions Not Enforced**
+
 - **Current Risk:** 6.5/10 severity
 - **Threat Model:** Information disclosure of sensitive credentials
 - **Affected Files:** Git config backups with API keys, SSH keys
@@ -322,16 +361,17 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Other files may be created world-readable (0644 by default)
   - Backup directory permissions not validated
 - **Perfect State:**
+
   ```python
   import os
-  
+
   def create_backup(config_data: dict, backup_path: Path) -> None:
       # Create with secure permissions from start
       with open(backup_path, 'w') as f:
           json.dump(config_data, f)
       # Enforce 0600 (rw-------)
       os.chmod(backup_path, 0o600)
-      
+
       # Validate permissions
       stat_info = os.stat(backup_path)
       mode = stat_info.st_mode & 0o777
@@ -341,15 +381,18 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
               f"sensitive data may be exposed"
           )
   ```
+
 - **Files Needing Fix:**
   - cli/git_config_manager.py (backup creation)
   - cli/config_engine.py (config persistence)
   - All dotfile symlinking operations
 
 **CRITICAL ISSUE #3: Plugin System Has No Integrity Validation**
+
 - **Current Risk:** 7.2/10 severity
 - **Threat Model:** Malicious plugin injection
 - **Attack Path:**
+
   ```
   1. Attacker creates malicious plugin masquerading as legitimate
   2. User downloads from third-party source (not official repo)
@@ -357,6 +400,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   4. Malicious code executes with application privileges
   5. Attacker exfiltrates sensitive data or modifies system
   ```
+
 - **Current State:**
   - Plugin loaded from filesystem path
   - No manifest validation
@@ -364,6 +408,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - No permission validation on plugin files
   - No sandboxing
 - **Perfect State:**
+
   ```python
   @dataclass
   class PluginManifest:
@@ -372,12 +417,12 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
       sha256_hash: str
       signing_key_id: str  # GPG key ID
       required_apis: list[str]
-  
+
   class PluginValidator:
       def validate_integrity(self, plugin_path: Path) -> bool:
           """Validate plugin hasn't been modified."""
           manifest = load_manifest(plugin_path / 'manifest.yaml')
-          
+
           # Check hash
           plugin_hash = compute_directory_hash(plugin_path)
           if plugin_hash != manifest.sha256_hash:
@@ -385,18 +430,19 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
                   f"Plugin {plugin_path} hash mismatch! "
                   f"Expected {manifest.sha256_hash}, got {plugin_hash}"
               )
-          
+
           # Check GPG signature
           if not verify_gpg_signature(plugin_path, manifest.signing_key_id):
               raise PluginSignatureInvalid(
                   f"Plugin {plugin_path} has invalid signature"
               )
-          
+
           # Check permissions (no execute bits except for scripts)
           check_plugin_permissions(plugin_path)
-          
+
           return True
   ```
+
 - **Implementation Steps:**
   1. Add manifest.yaml schema to each plugin
   2. Implement SHA256 hashing of plugins
@@ -405,6 +451,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   5. Create plugin signing infrastructure (GPG keys, release process)
 
 **HIGH ISSUE #4: Audit Logging Uses Non-Cryptographic "Signing"**
+
 - **Current Risk:** 5.2/10 severity
 - **Threat Model:** Audit logs can be tampered with by attacker
 - **Current State:**
@@ -412,18 +459,19 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Hash can be recalculated if log content modified
   - No cryptographic key material
 - **Perfect State:**
+
   ```python
   import hmac
   from cryptography.hazmat.primitives import hashes
   from cryptography.hazmat.primitives.asymmetric import rsa, padding
-  
+
   class CryptographicAuditLog:
       def __init__(self, private_key_path: Path):
           with open(private_key_path, 'rb') as f:
               self.private_key = serialization.load_pem_private_key(
                   f.read(), password=None
               )
-      
+
       def log_and_sign(self, event: AuditEvent) -> str:
           """Log event with cryptographic signature."""
           log_entry = json.dumps({
@@ -432,7 +480,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
               'user': event.user,
               'details': event.details
           })
-          
+
           # Sign with RSA private key
           signature = self.private_key.sign(
               log_entry.encode(),
@@ -442,7 +490,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
               ),
               hashes.SHA256()
           )
-          
+
           return json.dumps({
               'log': log_entry,
               'signature': signature.hex()
@@ -450,22 +498,24 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **HIGH ISSUE #5: No Rate Limiting on Config Reloads**
+
 - **Current Risk:** 4.1/10 severity
 - **Threat Model:** DoS via excessive config file reloading
 - **Current State:** No limits on how often config can be reloaded from disk
 - **Perfect State:**
+
   ```python
   from datetime import datetime, timedelta
-  
+
   class ConfigurationEngine:
       def __init__(self):
           self.last_reload_time = None
           self.reload_cooldown = timedelta(seconds=5)
-      
+
       def reload_config(self, force: bool = False) -> bool:
           """Reload config with rate limiting."""
           now = datetime.now()
-          
+
           if not force and self.last_reload_time:
               time_since_reload = now - self.last_reload_time
               if time_since_reload < self.reload_cooldown:
@@ -475,71 +525,75 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
                       f"{self.reload_cooldown.total_seconds():.1f}s"
                   )
                   return False
-          
+
           # Perform reload...
           self.last_reload_time = now
           return True
   ```
 
 **HIGH ISSUE #6: Environment Variable Injection Not Sanitized**
+
 - **Current Risk:** 4.8/10 severity
 - **Threat Model:** Code injection via malicious environment variables
 - **Current State:** config_engine.py uses environment variables without validation
 - **Perfect State:**
+
   ```python
   import re
-  
+
   class ConfigurationEngine:
       ENV_ALLOWED_KEYS = {
           'DEVKIT_HOME': r'^[a-zA-Z0-9/_.\-]+$',  # Path chars only
           'DEVKIT_DEBUG': r'^(true|false)$',  # Boolean only
           'DEVKIT_LOG_LEVEL': r'^(DEBUG|INFO|WARNING|ERROR)$',  # Enum
       }
-      
+
       def _sanitize_env_var(self, key: str, value: str) -> str:
           """Validate environment variable format."""
           if key not in self.ENV_ALLOWED_KEYS:
               raise ConfigSecurityError(
                   f"Unknown environment variable: {key}"
               )
-          
+
           pattern = self.ENV_ALLOWED_KEYS[key]
           if not re.match(pattern, value):
               raise ConfigSecurityError(
                   f"Invalid value for {key}: {value!r} "
                   f"doesn't match pattern {pattern}"
               )
-          
+
           return value
   ```
 
 **HIGH ISSUE #7: No Protection Against TOCTOU in File Operations**
+
 - **Current Risk:** 3.5/10 severity
 - **Threat Model:** Time-of-check-time-of-use vulnerability
 - **Current State:** File permissions checked, then file used (race condition window)
 - **Perfect State:**
+
   ```python
   import os
   from pathlib import Path
-  
+
   def secure_file_read(filepath: Path) -> str:
       """Read file with TOCTOU protection."""
       # Check permissions before opening
       stat_info = filepath.stat()
-      
+
       # Verify ownership
       if stat_info.st_uid != os.getuid():
           raise FileSecurityError(
               f"{filepath} not owned by current user"
           )
-      
+
       # Verify no group/other readable
       mode = stat_info.st_mode & 0o777
       if mode & 0o077:  # Check if group or other bits set
           raise FileSecurityError(
               f"{filepath} readable by group/other (mode {oct(mode)})"
           )
-      
+
       # Open with O_NOFOLLOW to prevent symlink attacks
       fd = os.open(filepath, os.O_RDONLY | os.O_NOFOLLOW)
       try:
@@ -559,6 +613,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Straightforward cryptographic hash verification
 
 **Implementation Plan:**
+
 1. Generate SHA256 of bootstrap.sh (5 min)
 2. Store in SECURITY.md (5 min)
 3. Update README.md installation section (10 min)
@@ -575,6 +630,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Simple chmod calls, well-understood file permissions
 
 **Implementation Plan:**
+
 1. Add os.chmod(0o600) calls (30 min)
 2. Add permission validation functions (30 min)
 3. Add tests for permission enforcement (1 hour)
@@ -590,6 +646,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Well-defined problem, standard solution (GPG signatures)
 
 **Implementation Plan:**
+
 1. Define plugin manifest schema (30 min)
 2. Create plugin_manifest.py module (1 hour)
 3. Add hash computation for directories (1 hour)
@@ -600,6 +657,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Time:** 7 hours
 **Risk:** MEDIUM
+
 - Risk: GPG signature verification complexity (MITIGATE: use standard library)
 - Risk: Backwards compatibility with unsigned plugins (MITIGATE: migration period)
 - Risk: Key management process (MITIGATE: document key rotation)
@@ -611,6 +669,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Standard cryptographic operations using proven libraries
 
 **Implementation:**
+
 1. Add cryptography library to dependencies (immediate)
 2. Create CryptographicAuditLog class (1.5 hours)
 3. Generate RSA keypair for signing (30 min)
@@ -621,6 +680,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Time:** 6-7 hours
 **Risk:** MEDIUM
+
 - Risk: Key compromise (MITIGATE: rotate keys quarterly)
 - Risk: Performance impact (MITIGATE: batch signing)
 **Confidence:** 95%
@@ -631,6 +691,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Simple logic with minimal dependencies
 
 **Implementation:**
+
 1. Add rate limiting to ConfigurationEngine (1 hour)
 2. Create sanitization functions for env vars (1 hour)
 3. Add TOCTOU protection to file operations (1.5 hours)
@@ -638,6 +699,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 
 **Time:** 5.5 hours
 **Risk:** LOW
+
 - Risk: Breaking existing code relying on rapid reloads (MITIGATE: make configurable)
 **Confidence:** 98%
 
@@ -649,6 +711,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Post-Implementation Score:** 9.8/10
 
 **Success Metrics:**
+
 - 0 critical security issues
 - 0 high-risk vulnerabilities
 - All files have 0600 or 0755 permissions (appropriate)
@@ -665,6 +728,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: Testing Improvements Needed
 
 **Current State:**
+
 - 260 tests passing, 100% pass rate
 - 94.7% mutation score (EXCELLENT)
 - 56.4% line coverage
@@ -676,17 +740,19 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Perfect State Requirements:**
 
 **1. Eliminate All 15 Surviving Mutations**
+
 - **Current Survivors:** (from mutation_test.py report)
   - commit_validator.py: 15 surviving mutations (82.8% score)
   - Others: 0 surviving (100% score)
 - **Root Cause:** commit_validator has complex validation logic with edge cases
 - **Perfect Solution:**
+
   ```python
   # Example of gap in tests:
   # Current code has: if commit_type in ['feat', 'fix', 'refactor']
   # Mutation: if commit_type in ['feat', 'fix']  (removes 'refactor')
   # Test missed this because no test validates 'refactor' specifically
-  
+
   # Add parametrized tests:
   @pytest.mark.parametrize('commit_type,is_valid', [
       ('feat', True),
@@ -701,6 +767,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **2. Increase Coverage from 56.4% to 65%+**
+
 - **Current Gaps:**
   - performance.py: ~40% coverage (parallelization logic not tested)
   - plugin_system.py: ~70% coverage (error paths untested)
@@ -708,12 +775,14 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Missing ~500 lines of testable code**
 
 **3. Add Property-Based Testing (25-30 tests)**
+
 - **What:** Use Hypothesis library to generate random inputs and verify properties
 - **Example:**
+
   ```python
   from hypothesis import given
   from hypothesis import strategies as st
-  
+
   @given(st.dictionaries(st.text(), st.text()))
   def test_config_roundtrip(config_dict: dict):
       # Property: Can serialize and deserialize without loss
@@ -723,28 +792,31 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **4. Add Integration Tests for Ansible Playbooks**
+
 - **Current:** No tests of ansible playbooks
 - **Perfect:** Test 5+ playbook scenarios
+
   ```python
   def test_core_role_idempotency():
       """Running core role twice produces same result."""
       result1 = run_ansible_playbook('setup.yml', target='localhost')
       result2 = run_ansible_playbook('setup.yml', target='localhost')
-      
+
       # Second run should have 0 changed tasks
       assert result2['changed'] == 0
       assert result2['failed'] == 0
-  
+
   def test_dotfiles_symlinks_created():
       """Dotfiles role creates correct symlinks."""
       result = run_ansible_playbook('setup.yml', target='localhost')
-      
+
       # Check symlinks exist
       assert Path.home() / '.tmux.conf' is_symlink
       assert Path.home() / '.zshrc' is_symlink
   ```
 
 **5. Add Chaos Testing (3-5 tests)**
+
 - **What:** Deliberately break things and verify graceful handling
 - **Examples:**
   - Remove config file mid-operation → verify error handling
@@ -752,6 +824,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - Corrupt YAML syntax → verify validation catches it
 
 **6. Add Load Testing (2-3 tests)**
+
 - **What:** Stress test with many operations
 - **Examples:**
   - Load 1000 plugins → verify performance acceptable
@@ -768,6 +841,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** 15 mutations is small number, patterns are clear
 
 **Implementation:**
+
 1. Run mutation testing with verbose output (15 min)
 2. Analyze each surviving mutation (1 hour)
 3. Write targeted tests for each (2-3 hours)
@@ -781,6 +855,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Feasibility:** YES - 95% confident
 
 **Implementation:**
+
 1. Identify coverage gaps with coverage.py report (30 min)
 2. Write tests for uncovered lines (5-6 hours)
 3. Verify coverage targets met (1 hour)
@@ -794,6 +869,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Hypothesis is mature library, but requires learning curve
 
 **Implementation:**
+
 1. Add hypothesis to dev dependencies (5 min)
 2. Learn Hypothesis patterns (1 hour)
 3. Write 25-30 property-based tests (4-5 hours)
@@ -808,6 +884,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Running playbooks in tests is complex, but doable with ansible-runner
 
 **Implementation:**
+
 1. Setup test environment (ansible-runner, Docker containers) (2 hours)
 2. Create fixture for running playbooks (1 hour)
 3. Write 5 integration tests (3 hours)
@@ -822,6 +899,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Why:** Requires careful setup to avoid damaging dev environment
 
 **Implementation:**
+
 1. Create isolated test environment (1 hour)
 2. Write chaos test cases (2 hours)
 3. Write load tests with threading (2 hours)
@@ -837,6 +915,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Confidence Level:** 91%
 
 **Success Metrics:**
+
 - 100% mutation score (all 285 mutations killed)
 - 65%+ line coverage
 - 25-30 property-based tests passing
@@ -853,27 +932,31 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### The Final 0.5% - 5 Improvements Needed
 
 **Gap #1: Non-Blocking Quality Checks Block Merge**
+
 - **Current State:** Some quality checks don't prevent merge if they fail
 - **Location:** ci.yml - "continue-on-error: true" on some jobs
 - **Problem:** Quality gate is "nice to have" not "must pass"
 - **Perfect State:**
+
   ```yaml
   # Current (imperfect)
   - name: Run quality checks
     run: ruff check cli/
     continue-on-error: true  # Allows merge even if fails!
-  
+
   # Perfect
   - name: Run quality checks
     run: ruff check cli/
     # No continue-on-error - will fail the workflow
   ```
+
 - **Action Items:**
   - Remove "continue-on-error: true" from: quality.yml (2 places)
   - Move checks to "required" in GitHub branch protection
   - Document that all quality checks are mandatory
 
 **Gap #2: Deprecated GitHub Actions**
+
 - **Current State:** release.yml uses old actions (actions/checkout@v2)
 - **Perfect State:** All actions use v4 (latest stable)
 - **Locations:** release.yml (3 places), test workflows (5 places)
@@ -883,8 +966,10 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - actions/upload-artifact@v2 → actions/upload-artifact@v4
 
 **Gap #3: Missing Pip Caching**
+
 - **Current State:** CI/CD installs dependencies fresh every run (~30-45 seconds)
 - **Perfect State:** Cache pip packages between runs
+
   ```yaml
   - name: Cache pip dependencies
     uses: actions/setup-python@v5
@@ -892,11 +977,14 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
       python-version: '3.13'
       cache: 'pip'  # Automatically cache pip packages
   ```
+
 - **Impact:** Reduce CI time by 20-25%
 
 **Gap #4: No Coverage Report Artifacts**
+
 - **Current State:** Coverage reports computed but not saved
 - **Perfect State:** Save HTML report as artifact, upload to CodeCov
+
   ```yaml
   - name: Upload coverage to CodeCov
     uses: codecov/codecov-action@v3
@@ -906,15 +994,17 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **Gap #5: No Performance Benchmarking in CI**
+
 - **Current State:** Performance improvements can be accidental regressions
 - **Perfect State:** Track performance metrics over time
+
   ```yaml
   - name: Run performance benchmarks
     run: |
       python -m pytest tests/test_performance.py \
         --benchmark-only \
         --benchmark-json=benchmark.json
-  
+
   - name: Store benchmark
     uses: benchmark-action/github-action-benchmark@v1
     with:
@@ -931,26 +1021,31 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Overall Feasibility:** YES - 100% confident
 
 ### Removing "continue-on-error"
+
 - **Time:** 15 minutes
 - **Confidence:** 100%
 - **Risk:** None (only strengthens gates)
 
 ### Updating Deprecated Actions
+
 - **Time:** 30 minutes
 - **Confidence:** 100%
 - **Risk:** LOW (tested versions before release)
 
 ### Adding Pip Caching
+
 - **Time:** 10 minutes
 - **Confidence:** 100%
 - **Risk:** NONE (caching is transparent)
 
 ### Coverage Report Artifacts
+
 - **Time:** 20 minutes
 - **Confidence:** 100%
 - **Risk:** LOW (CodeCov integration proven)
 
 ### Performance Benchmarking
+
 - **Time:** 45 minutes
 - **Confidence:** 95%
 - **Risk:** LOW (GitHub Benchmark Action is stable)
@@ -972,16 +1067,18 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: 5 Ansible Improvements
 
 **Gap #1: Incomplete `changed_when` Coverage**
+
 - **Current State:** 46 `changed_when` directives across 12 files
 - **Problem:** Some tasks don't have `changed_when`, causing false "changed" reports
 - **Perfect State:** 100% of relevant tasks have `changed_when`
+
   ```yaml
   # Current (imperfect) - marks changed even when idempotent
   - name: Update config
     template:
       src: config.j2
       dest: /etc/app/config
-  
+
   # Perfect - only marks changed if file actually modified
   - name: Update config
     template:
@@ -990,10 +1087,12 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
     register: config_result
     changed_when: config_result.changed  # Or custom logic
   ```
+
 - **Tasks Needing Updates:** ~8 tasks identified in recent audit
 - **Files:** core/tasks/main.yml, git/tasks/main.yml, dotfiles/tasks/main.yml
 
 **Gap #2: Variable Naming Inconsistency**
+
 - **Current State:** Mix of naming conventions
   - Some vars: `app_version`, `app_home` (snake_case prefix)
   - Others: `user_config`, `system_packages` (inconsistent)
@@ -1003,8 +1102,10 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Scope:** Update 15+ role variable files
 
 **Gap #3: No Error Recovery Paths**
+
 - **Current State:** Tasks fail hard if any step fails
 - **Perfect State:** Graceful error handling with fallback paths
+
   ```yaml
   # Perfect pattern
   - name: Try to install via homebrew
@@ -1012,7 +1113,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
       name: package_name
     register: brew_install
     failed_when: false  # Don't fail workflow
-  
+
   - name: Fall back to manual installation
     command: ./install_manually.sh
     when: brew_install is failed
@@ -1020,28 +1121,33 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   ```
 
 **Gap #4: No Validation of Role Dependencies**
+
 - **Current State:** Roles have undeclared dependencies
 - **Perfect State:** All dependencies declared in meta/main.yml
+
   ```yaml
   # meta/main.yml example
   dependencies:
     - role: core  # git role depends on core
     - role: security
   ```
+
 - **Missing declarations:** ~5 roles need dependency updates
 
 **Gap #5: No Idempotency Test Coverage in CI**
+
 - **Current State:** Playbooks run in ci.yml but idempotency not tested
 - **Perfect State:** Run playbook twice, verify second run is 0 changed
+
   ```yaml
   # In ci.yml
   - name: Run setup playbook (first pass)
     ansible-playbook setup.yml
-  
+
   - name: Run setup playbook (idempotency check)
     ansible-playbook setup.yml
     register: result
-  
+
   - name: Verify no changes on second pass
     assert:
       that:
@@ -1054,12 +1160,14 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ## 5.2 IS IT ACHIEVABLE? (Ansible Feasibility)
 
 ### Adding `changed_when` Directives
+
 - **Feasibility:** YES - 100% confident
 - **Time:** 1-2 hours
 - **Confidence:** 100%
 - **Risk:** None (improves clarity only)
 
 ### Variable Naming Consistency
+
 - **Feasibility:** YES - 90% confident
 - **Time:** 2-3 hours
 - **Confidence:** 90%
@@ -1067,18 +1175,21 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - **Mitigation:** Use grep/sed to find and update systematically
 
 ### Error Recovery Paths
+
 - **Feasibility:** YES - 85% confident
 - **Time:** 2-3 hours
 - **Confidence:** 85%
 - **Risk:** MEDIUM (must test error scenarios)
 
 ### Dependency Declarations
+
 - **Feasibility:** YES - 95% confident
 - **Time:** 30-45 minutes
 - **Confidence:** 95%
 - **Risk:** LOW (straightforward YAML updates)
 
 ### Idempotency Test Coverage
+
 - **Feasibility:** YES - 90% confident
 - **Time:** 1-2 hours
 - **Confidence:** 90%
@@ -1091,6 +1202,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Confidence Level:** 90%
 
 **Success Metrics:**
+
 - 100% of modifying tasks have `changed_when`
 - All variables follow naming convention
 - All roles have declared dependencies
@@ -1106,6 +1218,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: 8 Documentation Gaps
 
 **Gap #1: 5 Missing Critical Documents**
+
 1. **QUICKSTART.md** (Referenced in README, doesn't exist)
    - Should contain: 5-minute setup guide with minimal customization
    - Length: 300-400 lines
@@ -1132,24 +1245,28 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
    - Audience: Users on old setup
 
 **Gap #2: Broken Internal References**
+
 - README.md links to files that don't exist
 - FAQ.md references section numbers that changed
 - ARCHITECTURE.md references files in /docs that were moved
 - Count: ~12 broken references identified
 
 **Gap #3: Outdated Examples**
+
 - Example scripts reference old bootstrap.sh paths
 - Version numbers in examples are stale (v3.0 examples, current is v3.1)
 - Homebrew package names have changed
 - Count: ~8 examples need updates
 
 **Gap #4: Missing API Documentation**
+
 - Python modules lack comprehensive documentation
 - No API reference generated from docstrings
 - No example code for extending devkit
 - Need: Auto-generated API docs (sphinx or pdoc)
 
 **Gap #5: No Architecture Decision Records (ADRs)**
+
 - Why certain design choices were made
 - Why alternatives were rejected
 - What trade-offs were accepted
@@ -1159,18 +1276,21 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
   - ADR-003: Why Ansible vs other IaC tools
 
 **Gap #6: Version Consistency Issues**
+
 - README says v3.1, CHANGELOG says v3.1.1
 - API version examples show different numbers
 - Installation docs reference wrong version numbers
 - Count: ~5 version number inconsistencies
 
 **Gap #7: Missing Troubleshooting for Common Errors**
+
 - No guide for "bash: permission denied" on bootstrap
 - No guide for "ansible-playbook: command not found"
 - No guide for "Homebrew installation fails on ARM64"
 - Need: Add ~10 common error guides
 
 **Gap #8: No Video/Visual Documentation**
+
 - Only text documentation exists
 - No videos for visual learners
 - No interactive examples
@@ -1183,46 +1303,54 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Creating Missing Documents
 
 **QUICKSTART.md**
+
 - Feasibility: YES - 100% confident
 - Time: 2-3 hours
 - Confidence: 100%
 - Can use existing README as template
 
 **QUICKSTART-ANSIBLE.md**
+
 - Feasibility: YES - 100% confident
 - Time: 1.5-2 hours
 - Confidence: 100%
 
 **KNOWN-ISSUES.md**
+
 - Feasibility: YES - 95% confident
 - Time: 2-3 hours
 - Confidence: 95%
 - Research needed for real user issues
 
 **DEPLOYMENT-GUIDE.md**
+
 - Feasibility: YES - 90% confident
 - Time: 3-4 hours
 - Confidence: 90%
 - Requires some enterprise deployment experience
 
 **ANSIBLE-MIGRATION.md**
+
 - Feasibility: YES - 85% confident
 - Time: 2-3 hours
 - Confidence: 85%
 
 ### Fixing Broken References
+
 - Feasibility: YES - 100% confident
 - Time: 1-2 hours
 - Confidence: 100%
 - Can script with grep/sed
 
 ### Creating Architecture Decision Records
+
 - Feasibility: YES - 95% confident
 - Time: 2-3 hours
 - Confidence: 95%
 - Good for future maintainers
 
 ### Auto-Generating API Docs
+
 - Feasibility: YES - 90% confident
 - Time: 1-2 hours
 - Confidence: 90%
@@ -1235,6 +1363,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Confidence Level:** 93%
 
 **Success Metrics:**
+
 - All referenced files exist and linkable
 - 0 broken internal references
 - All examples use current versions
@@ -1252,23 +1381,27 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Gap Analysis: 4 Dependency Issues
 
 **Issue #1: Outdated setuptools (68.0 → 75.0+)**
+
 - **Current:** setuptools>=68.0 (from 11 months ago)
 - **Latest:** 75.0 (released 1 month ago)
 - **Security:** 75.0 has 3 vulnerability fixes
 - **Perfect State:** setuptools>=75.0
 
 **Issue #2: Outdated types-setuptools**
+
 - **Current:** types-setuptools>=68.0.0
 - **Latest:** types-setuptools>=75.0.0
 - **Perfect State:** Match setuptools version exactly
 
 **Issue #3: Python Version Requirement Too Strict**
+
 - **Current:** Requires Python 3.14 (not released!)
 - **Impact:** 99% of users can't install
 - **Perfect State:** Requires Python >=3.12
 - **Rationale:** 3.12 released Oct 2023, widely available
 
 **Issue #4: No Dependency Security Scanning**
+
 - **Current:** Dependencies updated manually
 - **Perfect State:** Automated scanning with Dependabot
   - Schedule: Weekly checks for updates
@@ -1284,18 +1417,21 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ## 7.2 IS IT ACHIEVABLE? (Dependencies Feasibility)
 
 ### Updating setuptools and types-setuptools
+
 - **Feasibility:** YES - 100% confident
 - **Time:** 15 minutes
 - **Confidence:** 100%
 - **Risk:** None (well-tested releases)
 
 ### Updating Python Requirement
+
 - **Feasibility:** YES - 100% confident
 - **Time:** 20 minutes
 - **Confidence:** 100%
 - **Risk:** None (only relaxes requirement)
 
 ### Setting Up Dependabot
+
 - **Feasibility:** YES - 100% confident
 - **Time:** 30 minutes
 - **Confidence:** 100%
@@ -1308,6 +1444,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Confidence Level:** 100%
 
 **Success Metrics:**
+
 - setuptools >= 75.0
 - Python >= 3.12 requirement
 - Dependabot configured and active
@@ -1321,6 +1458,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ## Phase-by-Phase Roadmap
 
 ### PHASE 1: CRITICAL SECURITY (Week 1 - 8-10 hours)
+
 **Status:** BLOCKING → MUST COMPLETE FIRST
 
 1. Bootstrap checksum verification (2 hrs)
@@ -1334,6 +1472,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ---
 
 ### PHASE 2: HIGH-PRIORITY ROBUSTNESS (Weeks 2-3 - 6-8 hours)
+
 **Status:** IMPORTANT → ENABLES WIDER DEPLOYMENT
 
 1. Fix CI/CD non-blocking checks (1 hr)
@@ -1349,30 +1488,36 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ---
 
 ### PHASE 3: EXCELLENCE ENHANCEMENTS (Weeks 4-7 - 15-20 hours)
+
 **Status:** IMPORTANT BUT NOT BLOCKING
 
 **Code Quality (6-7 hrs):**
+
 - Refactor ConfigurationEngine (6-7 hrs)
 - Fix complex methods (3-4 hrs)
 - Add docstrings (5-6 hrs)
 
 **Testing (10-12 hrs):**
+
 - Increase coverage to 65% (6-7 hrs)
 - Property-based testing (6-8 hrs)
 - Integration tests (7-8 hrs)
 
 **Documentation (18-25 hrs):**
+
 - Create 5 missing documents (12-15 hrs)
 - Fix broken references (1-2 hrs)
 - ADRs and API docs (2-3 hrs)
 
 **Ansible (7-11 hrs):**
+
 - Complete changed_when (1-2 hrs)
 - Variable consistency (2-3 hrs)
 - Error recovery (2-3 hrs)
 - Idempotency testing (1-2 hrs)
 
 **Security (5-10 hrs):**
+
 - Audit log signing (6-7 hrs)
 - Rate limiting (1 hr)
 - TOCTOU protection (1.5 hrs)
@@ -1401,24 +1546,28 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ### Why We're 100% Confident
 
 **1. Technical Feasibility: 96% Average**
+
 - All improvements are proven solutions (not experimental)
 - No new technologies required
 - Standard libraries and tools used
 - Clear implementation paths identified
 
 **2. Timeline Achievability: 95% Confident**
+
 - 111 hours = 4-6 weeks full-time or 8-12 weeks part-time
 - Estimates based on similar refactoring projects
 - Includes 20% buffer for unknowns
 - No hard dependencies between items (can parallelize)
 
 **3. Risk Mitigation: 97% Effective**
+
 - Strong test suite (260 tests, 94.7% mutation score)
 - All changes are backwards-compatible
 - Can be done incrementally (commit by commit)
 - Easy to rollback any changes
 
 **4. Resource Requirements: Realistic**
+
 - 1-2 developers needed (can do in parallel)
 - Standard tools (no specialized knowledge required)
 - No new infrastructure (existing CI/CD can handle)
@@ -1441,6 +1590,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 ## SUCCESS CRITERIA BY DIMENSION
 
 ### Code Quality (10/10 ✅)
+
 - [ ] Cyclomatic complexity <6 for all methods
 - [ ] 100% docstring coverage (Google-style)
 - [ ] 0 code smells (pylint 10.0/10)
@@ -1448,6 +1598,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] Clean architecture with <3 responsibilities per class
 
 ### Security (10/10 ✅)
+
 - [ ] 0 critical vulnerabilities
 - [ ] 0 high-risk security issues
 - [ ] Bootstrap checksum verification working
@@ -1456,6 +1607,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] Audit logs cryptographically signed
 
 ### Testing (10/10 ✅)
+
 - [ ] 100% mutation score (all 285 mutations killed)
 - [ ] 65%+ line coverage
 - [ ] 260+ tests passing, 0 flaky
@@ -1464,6 +1616,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] <5 second test runtime
 
 ### CI/CD (10/10 ✅)
+
 - [ ] All workflows passing
 - [ ] No deprecated Actions
 - [ ] Pip caching enabled
@@ -1472,6 +1625,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] Branch protection rules enforced
 
 ### Ansible (10/10 ✅)
+
 - [ ] 100% of modifying tasks have changed_when
 - [ ] All variables follow naming convention
 - [ ] All roles have declared dependencies
@@ -1479,6 +1633,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] Error recovery paths implemented
 
 ### Documentation (10/10 ✅)
+
 - [ ] 0 broken internal references
 - [ ] All 5 missing documents created
 - [ ] Version numbers consistent
@@ -1487,6 +1642,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 - [ ] Examples use current versions
 
 ### Dependencies (10/10 ✅)
+
 - [ ] setuptools >= 75.0
 - [ ] Python >= 3.12 requirement
 - [ ] Dependabot configured
@@ -1502,6 +1658,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **YES - 100% CONFIDENCE**
 
 **Because:**
+
 1. All gaps are clearly identified and specific
 2. All solutions are proven and standard
 3. Timeline is realistic (111 hours)
@@ -1547,6 +1704,7 @@ This document provides the **EXACT path to 10/10 perfection** for Devkit across 
 **Devkit is already an 8.3/10 - well-engineered system.** The path to 10/10 is clear, achievable, and low-risk. With proper execution of the 111 hours of identified improvements across 7-9 weeks, you will have an **enterprise-grade, production-hardened development environment provisioning system** that is secure, well-tested, well-documented, and architecturally clean.
 
 **The confidence level is 98% because:**
+
 - We've already identified every single gap
 - We've already estimated every single fix
 - We've already assessed every single risk

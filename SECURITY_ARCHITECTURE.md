@@ -7,6 +7,7 @@
 ## Executive Summary
 
 Devkit implements a **12-layer defense-in-depth security model** with comprehensive protection against:
+
 - ✅ Supply chain attacks (bootstrap verification)
 - ✅ Information disclosure (encrypted backups, permission enforcement)
 - ✅ Malicious plugins (integrity checks, manifest validation)
@@ -21,11 +22,13 @@ Devkit implements a **12-layer defense-in-depth security model** with comprehens
 ## Layer 1: Bootstrap Script Integrity
 
 ### Threat Model
+
 **Vulnerability:** Man-in-the-middle (MITM) attack during bootstrap script download
 
 **CVSS:** 8.1 (High)
 
 **Attack Scenario:**
+
 ```
 User:     curl https://github.com/.../bootstrap.sh | bash
                          ↓
@@ -38,6 +41,7 @@ Result:   Complete system compromise
 ### Mitigation: SHA256 Checksum Verification
 
 **Implementation:**
+
 ```bash
 # User downloads with checksum verification
 export DEVKIT_BOOTSTRAP_CHECKSUM="dbc6106138b9c9c1b349d8e047465e33e4ec0bd175363131ed97423458a0ec1c"
@@ -45,18 +49,21 @@ curl -fsSL https://raw.githubusercontent.com/vietcgi/devkit/main/bootstrap.sh | 
 ```
 
 **Verification Process (in bootstrap.sh, lines 41-156):**
+
 1. Compute SHA256 of downloaded script
 2. Compare with `DEVKIT_BOOTSTRAP_CHECKSUM` env var
 3. Abort if mismatch (fail-secure)
 4. Log detailed error messages
 
 **Security Properties:**
+
 - ✅ Detects tampering (even 1-byte changes)
 - ✅ Deterministic verification
 - ✅ Can be published in GitHub releases
 - ✅ User verifies before executing
 
 **Current Checksum:**
+
 ```
 dbc6106138b9c9c1b349d8e047465e33e4ec0bd175363131ed97423458a0ec1c
 ```
@@ -68,9 +75,11 @@ See: [BOOTSTRAP_SECURITY.md](BOOTSTRAP_SECURITY.md)
 ## Layer 2: Config Backup Permissions
 
 ### Threat Model
+
 **Vulnerability:** Information disclosure of sensitive configuration data
 
 **Sensitive Data in Git Config:**
+
 - API keys (GitHub, GitLab, Azure, etc.)
 - SSH private keys or passphrases
 - OAuth tokens
@@ -80,6 +89,7 @@ See: [BOOTSTRAP_SECURITY.md](BOOTSTRAP_SECURITY.md)
 **CVSS:** 6.5 (Medium)
 
 **Attack Scenario:**
+
 ```
 Backup File Permissions: -rw-rw-r-- (0664)
                          ↓
@@ -93,6 +103,7 @@ Result: Credential compromise, account hijacking
 **File:** `cli/git_config_manager.py` (lines 292-301)
 
 **Implementation:**
+
 ```python
 def create_backup(self) -> Optional[Path]:
     """Create backup of git configuration."""
@@ -111,12 +122,14 @@ def create_backup(self) -> Optional[Path]:
 ```
 
 **Security Properties:**
+
 - ✅ Only owner can read/write (0o600 = -rw-------)
 - ✅ Fails securely if permissions can't be enforced
 - ✅ Verifies permissions after creation
 - ✅ Atomic: set and verify in same operation
 
 **Verification:**
+
 ```bash
 ls -la ~/.devkit/git/gitconfig.backup.*
 # Should show: -rw------- (0600)
@@ -127,11 +140,13 @@ ls -la ~/.devkit/git/gitconfig.backup.*
 ## Layer 3: Plugin Manifest Integrity
 
 ### Threat Model
+
 **Vulnerability:** Malicious plugin injection via manifest tampering
 
 **CVSS:** 7.2 (High)
 
 **Attack Scenario:**
+
 ```
 1. Attacker modifies plugin manifest.json
 2. Injects malicious code references
@@ -143,10 +158,12 @@ Result: Arbitrary code execution
 ### Mitigation: SHA256 Checksum Verification
 
 **Files:**
+
 - `cli/plugin_validator.py` (lines 20, 132-159) - Checksum computation & verification
 - `cli/plugin_system.py` (lines 194-207) - Integration into plugin loading
 
 **Implementation - Manifest Format:**
+
 ```json
 {
   "name": "example-plugin",
@@ -158,6 +175,7 @@ Result: Arbitrary code execution
 ```
 
 **Verification Process:**
+
 ```python
 def verify_integrity(self) -> Tuple[bool, str]:
     """Verify plugin manifest integrity using SHA256 checksum."""
@@ -179,6 +197,7 @@ def verify_integrity(self) -> Tuple[bool, str]:
 ```
 
 **Plugin Loading Pipeline:**
+
 ```
 1. Load plugin manifest.json
 2. Verify integrity (this function)
@@ -187,6 +206,7 @@ def verify_integrity(self) -> Tuple[bool, str]:
 ```
 
 **Security Properties:**
+
 - ✅ Detects any tampering with manifest
 - ✅ Fails secure - refuses to load bad plugins
 - ✅ Runs before code execution
@@ -197,11 +217,13 @@ def verify_integrity(self) -> Tuple[bool, str]:
 ## Layer 4: HMAC-Based Audit Logging
 
 ### Threat Model
+
 **Vulnerability:** Log tampering for covering up attack traces
 
 **CVSS:** 7.5 (High)
 
 **Attack Scenario:**
+
 ```
 1. Attacker performs unauthorized actions
 2. Tampers with audit logs to hide actions
@@ -210,7 +232,9 @@ Result: Undetectable breach
 ```
 
 ### Previous Implementation Issue
+
 **Old Code (SHA256 hash):**
+
 ```python
 def _sign_entry(self, entry: Dict) -> str:
     entry_json = json.dumps(entry, sort_keys=True, default=str)
@@ -225,6 +249,7 @@ def _sign_entry(self, entry: Dict) -> str:
 **File:** `cli/audit.py`
 
 **Key Management:**
+
 ```python
 def _load_or_create_hmac_key(self) -> bytes:
     """Load HMAC key from secure storage or create a new one."""
@@ -249,6 +274,7 @@ def _load_or_create_hmac_key(self) -> bytes:
 ```
 
 **Signing Process:**
+
 ```python
 def _sign_entry(self, entry: Dict[str, Any]) -> str:
     """Create HMAC-SHA256 signature for audit entry."""
@@ -265,6 +291,7 @@ def _sign_entry(self, entry: Dict[str, Any]) -> str:
 ```
 
 **Verification Process:**
+
 ```python
 def verify_signature(self, entry: Dict[str, Any]) -> bool:
     """Verify HMAC-SHA256 signature of an audit log entry."""
@@ -280,6 +307,7 @@ def verify_signature(self, entry: Dict[str, Any]) -> bool:
 ```
 
 **Integrity Validation:**
+
 ```python
 def validate_log_integrity(self) -> Dict[str, Any]:
     """Validate integrity of all audit log entries."""
@@ -292,6 +320,7 @@ def validate_log_integrity(self) -> Dict[str, Any]:
 ```
 
 **Security Properties:**
+
 - ✅ HMAC requires knowledge of secret key
 - ✅ Even single-byte tampering detected
 - ✅ Uses `hmac.compare_digest()` (constant-time, prevents timing attacks)
@@ -299,6 +328,7 @@ def validate_log_integrity(self) -> Dict[str, Any]:
 - ✅ Automatic tampering detection on verification
 
 **Key Rotation:** (Recommended practice)
+
 - Generate new HMAC key every 90 days
 - Archive old keys
 - Re-sign entries with old keys before rotation
@@ -308,11 +338,13 @@ def validate_log_integrity(self) -> Dict[str, Any]:
 ## Layer 5: Rate Limiting on Config Changes
 
 ### Threat Model
+
 **Vulnerability:** Brute force / abuse attacks on configuration changes
 
 **CVSS:** 7.0 (High)
 
 **Attack Scenario:**
+
 ```
 Attacker runs automated script:
 1. Tries 100 config changes per second
@@ -326,11 +358,13 @@ Result: Successful exploit discovery / DoS
 **File:** `cli/config_engine.py` (RateLimiter class)
 
 **Configuration:**
+
 - Max operations: 5
 - Time window: 60 seconds
 - Identifier: username (per-user limiting)
 
 **Implementation:**
+
 ```python
 class RateLimiter:
     """Prevent abuse of sensitive operations."""
@@ -374,6 +408,7 @@ class RateLimiter:
 ```
 
 **Integration with ConfigurationEngine.set():**
+
 ```python
 def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool, str]:
     """Set configuration value with rate limiting."""
@@ -391,6 +426,7 @@ def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool
 ```
 
 **Security Properties:**
+
 - ✅ Sliding window (not fixed window)
 - ✅ Per-user limiting
 - ✅ Provides feedback on remaining quota
@@ -398,32 +434,37 @@ def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool
 - ✅ Prevents script-based attacks
 
 **Admin Override:**
+
 - Administrators can disable rate limiting on trusted networks
-- Configuration: `enable_rate_limiting` flag in ConfigurationEngine.__init__()
+- Configuration: `enable_rate_limiting` flag in ConfigurationEngine.**init**()
 
 ---
 
 ## Layer 6: Permission Enforcement
 
 ### Audit Log Directory (0o700)
+
 ```bash
 # Only owner can enter/list/modify
 -rwx------ (0700)
 ```
 
 ### Audit Log Files (0o600)
+
 ```bash
 # Only owner can read/write
 -rw------- (0600)
 ```
 
 ### Git Config Backups (0o600)
+
 ```bash
 # Only owner can read/write
 -rw------- (0600)
 ```
 
 ### HMAC Key File (0o600)
+
 ```bash
 # Only owner can read/write (critical for audit signing)
 -rw------- (0600)
@@ -461,6 +502,7 @@ def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool
 ## Layer 8: Secure Error Handling
 
 **Principles:**
+
 - ✅ Never swallow exceptions silently
 - ✅ Always log errors with context
 - ✅ Provide user-friendly error messages
@@ -468,6 +510,7 @@ def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool
 - ✅ All error paths tested
 
 **Example (Fixed in Phase 2):**
+
 ```python
 # BEFORE: Silent failure
 def load_file(self, file_path: str) -> Dict:
@@ -502,6 +545,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Layer 9: Comprehensive Logging
 
 **Audit Events Logged:**
+
 - Installation start/completion/failure
 - Configuration changes
 - Plugin installation/removal
@@ -511,6 +555,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - Error detection
 
 **Logging Format (JSONL):**
+
 ```json
 {
   "timestamp": "2025-10-30T15:30:45.123456",
@@ -528,6 +573,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ```
 
 **Log Rotation:**
+
 - Archives logs older than 90 days
 - Preserves complete audit trail
 - Secure archive (0o600 permissions)
@@ -537,6 +583,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Layer 10: Configuration Validation
 
 **Schema Validation:**
+
 - Type checking for all config values
 - Enum constraints (e.g., valid values)
 - Length constraints (e.g., maxItems)
@@ -544,6 +591,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - Additional properties prevention
 
 **Semantic Validation:**
+
 - Enabled roles don't overlap with disabled roles
 - Valid environments (development/staging/production)
 - Valid logging levels (debug/info/warning/error)
@@ -558,6 +606,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 **Configuration:** `mypy.ini` with full strict mode enabled
 
 **Type Annotation Requirements:**
+
 - All functions must have complete type annotations
 - No implicit Optional types
 - No untyped calls
@@ -565,6 +614,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - All Union types explicit
 
 **CI/CD Integration:**
+
 - `.github/workflows/quality.yml` includes mypy type-checking job
 - Failures block merge to main branch
 - All new code must pass strict type checking
@@ -574,12 +624,14 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Layer 12: Dependency Security
 
 **Supply Chain Protection:**
+
 - All dependencies pinned to specific versions
 - Weekly vulnerability scans (safety)
 - No eval/exec in plugin code
 - No dynamic imports without validation
 
 **Lock Files:**
+
 - `requirements.txt` (development)
 - `pyproject.toml` (build)
 - All pinned versions reviewed for vulnerabilities
@@ -589,6 +641,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Security Checklist
 
 ### For Users
+
 - [ ] Download bootstrap.sh with checksum verification
 - [ ] Set `DEVKIT_BOOTSTRAP_CHECKSUM` environment variable
 - [ ] Verify git config backup permissions after installation
@@ -596,6 +649,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - [ ] Review security configuration in ~/.devkit/config.yaml
 
 ### For Administrators
+
 - [ ] Review SECURITY.md for vulnerability reporting
 - [ ] Enable rate limiting in production
 - [ ] Rotate HMAC keys every 90 days
@@ -603,6 +657,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - [ ] Keep dependencies up to date
 
 ### For Plugin Developers
+
 - [ ] Include checksum in manifest.json
 - [ ] Declare permissions accurately
 - [ ] Use only approved APIs
@@ -616,6 +671,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 **If tampering is detected:**
 
 1. **Audit Log Tampering**
+
    ```python
    integrity_report = audit_logger.validate_log_integrity()
    if integrity_report['tampering_detected']:
@@ -625,6 +681,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
    ```
 
 2. **Plugin Integrity Failure**
+
    ```
    Error: Plugin integrity check failed
    Action: Refuse to load plugin
@@ -632,6 +689,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
    ```
 
 3. **Permission Violation**
+
    ```
    Error: Backup file has insecure permissions
    Action: Raise PermissionError, halt operation
@@ -639,6 +697,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
    ```
 
 4. **Rate Limit Exceeded**
+
    ```
    Error: Rate limit exceeded (5/5 operations)
    Action: Reject operation, provide wait time
@@ -650,6 +709,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Compliance
 
 **Standards Alignment:**
+
 - ✅ OWASP Top 10: Addresses all major risks
 - ✅ CIS Benchmarks: Implements key controls
 - ✅ NIST Cybersecurity Framework: Identify → Protect → Detect → Respond
@@ -657,6 +717,7 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 - ✅ SOC 2: Audit logging and access controls
 
 **Certification:**
+
 - Type-safe: mypy --strict compliance
 - Secure-by-default: All security features enabled
 - Well-tested: 56%+ code coverage
@@ -696,11 +757,13 @@ def load_file(self, file_path: str | Path) -> Dict[str, Any]:
 ## Contact & Reporting
 
 **Security Issues:**
+
 - DO NOT create public GitHub issues
-- Email: security@devkit.example.com
+- Email: <security@devkit.example.com>
 - See [SECURITY.md](SECURITY.md) for full reporting process
 
 **Questions:**
+
 - Review this document first
 - Check [BOOTSTRAP_SECURITY.md](BOOTSTRAP_SECURITY.md) for bootstrap details
 - Check [SECURITY_FIXES_PHASE1.md](SECURITY_FIXES_PHASE1.md) for implementation details
