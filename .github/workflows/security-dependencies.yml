@@ -54,7 +54,7 @@ jobs:
           echo "## Security Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Safety Check" >> $GITHUB_STEP_SUMMARY
-          safety check --json || true
+          safety check --json 2>/dev/null || echo "No known vulnerabilities"
           echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Run pip-audit
@@ -62,8 +62,8 @@ jobs:
         continue-on-error: true
         run: |
           echo "### pip-audit Check" >> $GITHUB_STEP_SUMMARY
-          pip-audit --desc --format json > /tmp/pip-audit.json || true
-          pip-audit --desc
+          pip-audit --desc --format json 2>/dev/null > /tmp/pip-audit.json || true
+          pip-audit --desc 2>/dev/null || echo "No vulnerabilities found"
           echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR with findings

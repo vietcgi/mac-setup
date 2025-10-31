@@ -79,9 +79,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           python -m pytest tests/ --cov=cli --cov-report=term-missing --cov-report=json || true
           echo '```' >> $GITHUB_STEP_SUMMARY
-          python -c "import json; f=open('.coverage.json');
-            d=json.load(f); print(f\"Cov: {d['totals']['percent_covered']:.1f}%\")" \
-            >> $GITHUB_STEP_SUMMARY || echo "Coverage: unavailable"
+          python -c "import json; f=open('.coverage.json'); d=json.load(f);" \
+            "print(f'Coverage: {d.get(\"totals\", {}).get(\"percent_covered\", 0):.1f}%')" \
+            2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "Coverage: unavailable" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

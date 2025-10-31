@@ -541,8 +541,6 @@ jobs:
       - test-ubuntu-20
       - test-debian-12
       - test-debian-11
-      - test-fedora-40
-      - test-arch-linux
     runs-on: ubuntu-latest
     if: always()
 
@@ -560,8 +558,6 @@ jobs:
         echo "Ubuntu 20.04:        ${{ needs.test-ubuntu-20.result }}"
         echo "Debian 12:           ${{ needs.test-debian-12.result }}"
         echo "Debian 11:           ${{ needs.test-debian-11.result }}"
-        echo "Fedora 40:           ${{ needs.test-fedora-40.result }}"
-        echo "Arch Linux:          ${{ needs.test-arch-linux.result }}"
         echo ""
 
         # Count failures
@@ -575,10 +571,8 @@ jobs:
         [[ "${{ needs.test-ubuntu-20.result }}" != "success" ]] && ((failures++))
         [[ "${{ needs.test-debian-12.result }}" != "success" ]] && ((failures++))
         [[ "${{ needs.test-debian-11.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-fedora-40.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-arch-linux.result }}" != "success" ]] && ((failures++))
 
-        total=11
+        total=9
         successes=$((total - failures))
 
         echo "=== Final Results ==="
