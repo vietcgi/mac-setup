@@ -2,7 +2,7 @@
 """
 Mac-Setup Comprehensive Test Suite
 
-Tests all components of mac-setup including:
+Tests all components of devkit including:
 - Configuration validation
 - Ansible playbook syntax
 - Installation verification
@@ -49,7 +49,7 @@ class TestSuite:
         Initialize test suite.
 
         Args:
-            project_root: Path to mac-setup project root
+            project_root: Path to devkit project root
         """
         self.project_root = Path(project_root or Path(__file__).parent.parent)
         self.logger = self._setup_logger()
@@ -60,7 +60,7 @@ class TestSuite:
 
     def _setup_logger(self) -> logging.Logger:
         """Setup logger."""
-        logger = logging.getLogger("mac-setup.tests")
+        logger = logging.getLogger("devkit.tests")
         if not logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter("%(levelname)s: %(message)s")
@@ -229,7 +229,7 @@ class TestSuite:
         # Check plugin directory structure
         plugin_dirs = [
             self.project_root / "plugins",
-            Path.home() / ".mac-setup" / "plugins",
+            Path.home() / ".devkit" / "plugins",
         ]
 
         for plugin_dir in plugin_dirs:

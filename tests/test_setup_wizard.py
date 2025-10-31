@@ -250,7 +250,7 @@ class TestSetupWizard:
     def test_wizard_logger_setup(self) -> None:
         """Test that logger is properly set up."""
         assert self.wizard.logger is not None
-        assert self.wizard.logger.name == "mac-setup.wizard"
+        assert self.wizard.logger.name == "devkit.wizard"
 
     def test_wizard_step_counter(self) -> None:
         """Test wizard step counter initialization."""
@@ -401,7 +401,7 @@ class TestSetupWizard:
         """Test backup with default location."""
         self.wizard._ask_backup()
         assert self.wizard.config["backup_enabled"] is True
-        assert self.wizard.config["backup_location"] == "~/.mac-setup/backups"
+        assert self.wizard.config["backup_location"] == "~/.devkit/backups"
 
     @patch("builtins.input", return_value="n")
     @patch("builtins.print")

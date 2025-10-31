@@ -70,7 +70,7 @@ This assessment contains two comprehensive reports:
 
 3. **Version Inconsistencies** across documentation
 
-4. **Product Name Inconsistency** (mac-setup vs Devkit)
+4. **Product Name Inconsistency** (devkit vs Devkit)
 
 ### Category Ratings
 
@@ -180,7 +180,7 @@ This assessment contains two comprehensive reports:
 - <https://git-scm.com/>
 - <https://github.com/vietcgi/devkit>
 
-**Issue:** Some docs reference old "mac-setup" repo name
+**Issue:** Some docs reference old "devkit" repo name
 
 ---
 

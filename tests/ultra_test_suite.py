@@ -440,7 +440,7 @@ class UltraTestSuite:
 
         dangerous_path = "../../../etc/passwd"
         with tempfile.TemporaryDirectory() as tmpdir:
-            safe_dir = Path(tmpdir) / "mac-setup-test"
+            safe_dir = Path(tmpdir) / "devkit-test"
             safe_dir.mkdir(exist_ok=True)
 
             # Test that we normalize paths and prevent escape

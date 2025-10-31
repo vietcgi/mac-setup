@@ -15,7 +15,7 @@
     home_dir: "{{ lookup('env', 'HOME') or '/root' }}"
   tags: [always]
 
-- name: Create mac-setup directories
+- name: Create devkit directories
   ansible.builtin.file:
     path: "{{ home_dir }}/.devkit/{{ item }}"
     state: directory

@@ -1,6 +1,6 @@
 # Mac-Setup API Reference
 
-Complete API documentation for mac-setup v2.0 components.
+Complete API documentation for devkit v2.0 components.
 
 ---
 
@@ -177,7 +177,7 @@ loader = PluginLoader(logger=None)
 Add directory to plugin search path.
 
 ```python
-loader.add_plugin_path(Path.home() / ".mac-setup" / "plugins")
+loader.add_plugin_path(Path.home() / ".devkit" / "plugins")
 ```
 
 ##### discover_plugins()
@@ -315,7 +315,7 @@ class TestResult:
 
 ### Configuration Overrides
 
-Configure mac-setup via environment variables using MAC_SETUP_ prefix:
+Configure devkit via environment variables using MAC_SETUP_ prefix:
 
 ```bash
 # Simple values

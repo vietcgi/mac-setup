@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Breaking Changes
 
-- Changed config directory from ~/.mac-setup to ~/.devkit
+- Changed config directory from ~/.devkit to ~/.devkit
 - Removed support for Python < 3.9
 - Renamed MASTER branch to main
 

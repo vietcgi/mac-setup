@@ -54,7 +54,7 @@ git pull origin main
 
 **What Changed:**
 
-- Config directory: `~/.mac-setup` → `~/.devkit`
+- Config directory: `~/.devkit` → `~/.devkit`
 - Python requirement: 3.9+
 - Ansible requirement: 2.15+
 - Main branch renamed: MASTER → main
@@ -63,7 +63,7 @@ git pull origin main
 
 ```bash
 # 1. Backup your setup
-cp -r ~/.mac-setup ~/.mac-setup.v2.backup
+cp -r ~/.devkit ~/.devkit.v2.backup
 
 # 2. Update to main branch
 git remote set-url origin https://github.com/vietcgi/devkit.git
@@ -77,7 +77,7 @@ git pull origin main
 # Edit ~/.devkit/config.yaml with your preferences
 
 # 5. Copy custom plugins (if any)
-cp ~/.mac-setup.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
+cp ~/.devkit.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
 
 # 6. Verify installation
 ./verify-setup.sh
@@ -174,7 +174,7 @@ multipass exec test-devkit -- bash ~/devkit/verify-setup.sh
 
 ### "Config file conflicts"
 
-- Manually merge configs: `diff ~/.devkit/config.yaml ~/.mac-setup/config.yaml`
+- Manually merge configs: `diff ~/.devkit/config.yaml ~/.devkit/config.yaml`
 - Or start fresh: `rm ~/.devkit/config.yaml` then re-run
 
 ### "Missing dependencies"

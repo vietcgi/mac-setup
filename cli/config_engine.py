@@ -152,12 +152,12 @@ class ConfigMetadata:
 
 
 class ConfigurationEngine:
-    """Main configuration engine for mac-setup.
+    """Main configuration engine for devkit.
 
     Loads configuration from multiple sources in priority order:
     1. CLI arguments (highest priority)
     2. Environment variables
-    3. Local config file (~/.mac-setup/config.yaml)
+    3. Local config file (~/.devkit/config.yaml)
     4. Group config (config/groups/{group}.yaml)
     5. Role configs (config/roles/{role}.yaml)
     6. Platform config (config/platforms/{platform}.yaml)
@@ -174,7 +174,7 @@ class ConfigurationEngine:
         """Initialize configuration engine.
 
         Args:
-            project_root: Path to mac-setup project root
+            project_root: Path to devkit project root
             logger: Logger instance
             enable_rate_limiting: Enable rate limiting on sensitive operations
         """
@@ -191,7 +191,7 @@ class ConfigurationEngine:
     @staticmethod
     def _setup_logger() -> logging.Logger:
         """Setup default logger."""
-        return setup_logger("mac-setup.config")
+        return setup_logger("devkit.config")
 
     def validate_and_secure_config_file(self, config_path: Path) -> None:
         """Validate and secure configuration file permissions.
@@ -268,7 +268,7 @@ class ConfigurationEngine:
                 "logging": {
                     "enabled": True,
                     "level": "info",
-                    "file": "~/.mac-setup/logs/setup.log",
+                    "file": "~/.devkit/logs/setup.log",
                     "archive": True,
                 },
                 "performance": {
@@ -278,7 +278,7 @@ class ConfigurationEngine:
                 },
                 "backup": {
                     "enabled": True,
-                    "path": "~/.mac-setup/backups",
+                    "path": "~/.devkit/backups",
                     "max_backups": 10,
                     "compress": True,
                 },
@@ -305,7 +305,7 @@ class ConfigurationEngine:
             "plugins": {
                 "enabled": True,
                 "load_custom": True,
-                "custom_path": "~/.mac-setup/plugins",
+                "custom_path": "~/.devkit/plugins",
                 "hooks": {},
             },
         }
@@ -466,7 +466,7 @@ class ConfigurationEngine:
             self._deep_merge(self.config, local)
         else:
             # Try default local config location
-            local = self.load_file(Path.home() / ".mac-setup" / "config.yaml")
+            local = self.load_file(Path.home() / ".devkit" / "config.yaml")
             if local:
                 self._deep_merge(self.config, local)
 
@@ -697,7 +697,7 @@ def main() -> None:
         success, _ = engine.set(args.set[0], args.set[1])
         if not success:
             sys.exit(1)
-        engine.save(Path.home() / ".mac-setup" / "config.yaml")
+        engine.save(Path.home() / ".devkit" / "config.yaml")
         return
 
     if args.list_files:

@@ -1,10 +1,10 @@
 # Plugin Development Guide
 
-This guide explains how to create custom plugins and roles for mac-setup.
+This guide explains how to create custom plugins and roles for devkit.
 
 ## Plugin System Overview
 
-Plugins allow you to extend mac-setup with custom functionality without modifying core code.
+Plugins allow you to extend devkit with custom functionality without modifying core code.
 
 ### What Plugins Can Do
 
@@ -301,7 +301,7 @@ class ConfigBackupHook(HookInterface):
 
     def _backup_configs(self) -> None:
         home = Path.home()
-        backup_dir = home / ".mac-setup" / "config_backup" / datetime.now().isoformat()
+        backup_dir = home / ".devkit" / "config_backup" / datetime.now().isoformat()
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         files_to_backup = [
@@ -368,7 +368,7 @@ EOF
 git clone https://github.com/vietcgi/devkit-plugin.git ~/.devkit/plugins/my_plugin
 
 # Or as submodule
-cd /path/to/mac-setup
+cd /path/to/devkit
 git submodule add https://github.com/vietcgi/devkit-plugin.git plugins/my_plugin
 ```
 
@@ -504,11 +504,11 @@ python tests/test_suite.py
 
 ```bash
 # Create repository
-git init my-mac-setup-plugin
-cd my-mac-setup-plugin
+git init my-devkit-plugin
+cd my-devkit-plugin
 
 # Structure
-my-mac-setup-plugin/
+my-devkit-plugin/
 ├── my_plugin.py
 ├── roles/
 ├── tests/
@@ -516,7 +516,7 @@ my-mac-setup-plugin/
 └── README.md
 
 # Push to GitHub
-git remote add origin https://github.com/user/my-mac-setup-plugin
+git remote add origin https://github.com/user/my-devkit-plugin
 git push -u origin main
 ```
 
@@ -526,13 +526,13 @@ Once we establish a plugin registry, you'll be able to:
 
 ```bash
 # Install plugins from registry
-mac-setup plugin install user/plugin-name
+devkit plugin install user/plugin-name
 
 # Search for plugins
-mac-setup plugin search keyword
+devkit plugin search keyword
 
 # List installed plugins
-mac-setup plugin list
+devkit plugin list
 ```
 
 ## API Reference

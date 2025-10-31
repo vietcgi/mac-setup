@@ -3,8 +3,8 @@
 # !/usr/bin/env python3
 """Mac-Setup Plugin System.
 
-Allows users to extend mac-setup with custom roles, hooks, and tasks.
-Plugins can be defined in ~/.mac-setup/plugins/ and are auto-discovered.
+Allows users to extend devkit with custom roles, hooks, and tasks.
+Plugins can be defined in ~/.devkit/plugins/ and are auto-discovered.
 
 SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
@@ -71,7 +71,7 @@ class HookInterface(ABC):  # pylint: disable=too-few-public-methods
 
 
 class PluginInterface(ABC):
-    """Base class for mac-setup plugins."""
+    """Base class for devkit plugins."""
 
     name: str
     version: str
@@ -107,10 +107,10 @@ class PluginInterface(ABC):
 
 
 class PluginLoader:
-    """Loads and manages mac-setup plugins.
+    """Loads and manages devkit plugins.
 
     Searches for plugins in:
-    1. ~/.mac-setup/plugins/ (user plugins)
+    1. ~/.devkit/plugins/ (user plugins)
     2. ./plugins/ (project plugins)
     """
 
@@ -128,7 +128,7 @@ class PluginLoader:
     @staticmethod
     def _setup_logger() -> logging.Logger:
         """Setup default logger."""
-        return setup_logger("mac-setup.plugins")
+        return setup_logger("devkit.plugins")
 
     def add_plugin_path(self, path: Path) -> None:
         """Add directory to plugin search path."""
@@ -271,7 +271,7 @@ class PluginLoader:
         # Add default paths
         if not plugin_paths:
             plugin_paths = [
-                Path.home() / ".mac-setup" / "plugins",
+                Path.home() / ".devkit" / "plugins",
                 Path(__file__).parent.parent / "plugins",
             ]
 

@@ -36,7 +36,7 @@ See `config/schema.yaml` for the complete schema definition.
 from cli.config_engine import ConfigurationEngine
 
 # Load configuration
-engine = ConfigurationEngine(project_root="/path/to/mac-setup")
+engine = ConfigurationEngine(project_root="/path/to/devkit")
 config = engine.load_all(group="development", platform="macos")
 
 # Get values (dot notation)
@@ -75,7 +75,7 @@ MAC_SETUP_GLOBAL__PERFORMANCE__PARALLEL_TASKS=8
 
 ### 2. Plugin System (`cli/plugin_system.py`)
 
-The plugin system enables extending mac-setup with custom functionality.
+The plugin system enables extending devkit with custom functionality.
 
 #### Creating Plugins
 
@@ -131,7 +131,7 @@ Plugins are auto-discovered from:
 from cli.plugin_system import PluginLoader
 
 loader = PluginLoader()
-loader.add_plugin_path(Path.home() / ".mac-setup" / "plugins")
+loader.add_plugin_path(Path.home() / ".devkit" / "plugins")
 loaded_count = loader.load_all()
 
 # Get plugin roles
@@ -220,7 +220,7 @@ python cli/setup_wizard.py
 ```python
 from cli.setup_wizard import SetupWizard
 
-wizard = SetupWizard(project_root="/path/to/mac-setup")
+wizard = SetupWizard(project_root="/path/to/devkit")
 config = wizard.run()
 config_file = wizard.save_config("~/.devkit/config.yaml")
 ```
@@ -246,7 +246,7 @@ python tests/test_suite.py
 ```python
 from tests.test_suite import TestSuite
 
-suite = TestSuite(project_root="/path/to/mac-setup")
+suite = TestSuite(project_root="/path/to/devkit")
 exit_code = suite.run_all()
 ```
 

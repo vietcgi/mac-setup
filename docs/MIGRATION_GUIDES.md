@@ -15,7 +15,7 @@ Devkit follows [Semantic Versioning](https://semver.org/), so:
 ### Breaking Changes
 
 1. **Config Directory Migration**
-   - Old: `~/.mac-setup/`
+   - Old: `~/.devkit/`
    - New: `~/.devkit/`
 
 2. **Python Version Requirement**
@@ -34,7 +34,7 @@ Devkit follows [Semantic Versioning](https://semver.org/), so:
 
 ```bash
 # 1. Backup your setup
-cp -r ~/.mac-setup ~/.mac-setup.v2.backup
+cp -r ~/.devkit ~/.devkit.v2.backup
 
 # 2. Update repository
 cd devkit
@@ -49,7 +49,7 @@ git pull origin main
 # Edit ~/.devkit/config.yaml with your preferences
 
 # 5. Migrate custom plugins (if any)
-cp ~/.mac-setup.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
+cp ~/.devkit.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
 
 # 6. Verify installation
 ./verify-setup.sh
@@ -57,14 +57,14 @@ cp ~/.mac-setup.v2.backup/plugins/* ~/.devkit/plugins/ 2>/dev/null || true
 
 ### Migrating Custom Roles
 
-If you have custom roles in `~/.mac-setup/roles/`:
+If you have custom roles in `~/.devkit/roles/`:
 
 ```bash
 # Copy custom roles to new location
-cp -r ~/.mac-setup.v2.backup/roles/* ~/.devkit/roles/
+cp -r ~/.devkit.v2.backup/roles/* ~/.devkit/roles/
 
 # Update role paths in config.yaml
-sed -i 's|~/.mac-setup|~/.devkit|g' ~/.devkit/config.yaml
+sed -i 's|~/.devkit|~/.devkit|g' ~/.devkit/config.yaml
 
 # Verify roles still work
 ansible-playbook ~/.devkit/roles/custom-role/tasks/main.yml
@@ -83,7 +83,7 @@ ansible-playbook ~/.devkit/roles/custom-role/tasks/main.yml
 - **Solution**: Update shell profile:
 
   ```bash
-  sed -i 's|~/.mac-setup|~/.devkit|g' ~/.zshrc ~/.bashrc
+  sed -i 's|~/.devkit|~/.devkit|g' ~/.zshrc ~/.bashrc
   source ~/.zshrc
   ```
 

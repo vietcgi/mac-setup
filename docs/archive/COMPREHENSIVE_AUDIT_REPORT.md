@@ -503,7 +503,7 @@ validator.validate_plugin(module_name)  # Checks fields only
    - Fix Time: 1 hour
 
 4. **Product Name Inconsistency**
-   - "mac-setup" vs "Devkit" used interchangeably
+   - "devkit" vs "Devkit" used interchangeably
    - Impact: Confusing branding
    - Fix Time: 2 hours
 

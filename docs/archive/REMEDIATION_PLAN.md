@@ -685,7 +685,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [3.0.0] - 2025-09-15
 
 ### Breaking Changes
-- Changed config directory from ~/.mac-setup to ~/.devkit
+- Changed config directory from ~/.devkit to ~/.devkit
 - Dropped support for Python < 3.9
 
 [Unreleased]: https://github.com/vietcgi/devkit/compare/v3.1.0...HEAD
@@ -1300,7 +1300,7 @@ git pull origin main
 
 **What changed:**
 
-- Configuration directory: `~/.mac-setup` → `~/.devkit`
+- Configuration directory: `~/.devkit` → `~/.devkit`
 - New security features: config permission validation
 - Plugin system hardened
 
@@ -1308,13 +1308,13 @@ git pull origin main
 
 ```bash
 # Backup old config
-cp -r ~/.mac-setup ~/.mac-setup.backup
+cp -r ~/.devkit ~/.devkit.backup
 
 # New bootstrap will create ~/.devkit
 ./bootstrap.sh
 
 # Optional: Copy custom plugins (if any)
-cp ~/.mac-setup/plugins/* ~/.devkit/plugins/
+cp ~/.devkit/plugins/* ~/.devkit/plugins/
 ```
 
 **Backward compatibility:** ✅ Full (auto-migrates on first run)
@@ -1333,7 +1333,7 @@ cp ~/.mac-setup/plugins/* ~/.devkit/plugins/
 
 ```bash
 # 1. Backup everything
-cp -r ~/.mac-setup ~/.mac-setup.v2.backup
+cp -r ~/.devkit ~/.devkit.v2.backup
 
 # 2. Update to 3.x
 git checkout main

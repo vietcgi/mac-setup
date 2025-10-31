@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: MIT
 """Mac-Setup Interactive Setup Wizard.
 
-Provides an interactive CLI interface for configuring and running mac-setup.
+Provides an interactive CLI interface for configuring and running devkit.
 Includes progress tracking, validation, and real-time feedback.
 """
 
@@ -70,13 +70,13 @@ class ProgressBar:
 
 
 class SetupWizard:
-    """Interactive setup wizard for mac-setup."""
+    """Interactive setup wizard for devkit."""
 
     def __init__(self, project_root: str | None = None) -> None:
         """Initialize the setup wizard with project configuration.
 
         Args:
-            project_root: Path to mac-setup project root (defaults to parent of cli directory)
+            project_root: Path to devkit project root (defaults to parent of cli directory)
         """
         self.project_root = Path(project_root or Path(__file__).parent.parent)
         self.config: dict[str, str | list[str] | bool | dict[str, bool]] = {}
@@ -87,7 +87,7 @@ class SetupWizard:
     @staticmethod
     def _setup_logger() -> logging.Logger:
         """Setup logger using shared utility."""
-        return setup_logger("mac-setup.wizard")
+        return setup_logger("devkit.wizard")
 
     def run(self) -> dict[str, Any]:
         """Run the interactive setup wizard.
@@ -251,9 +251,9 @@ class SetupWizard:
 
         if self.config["backup_enabled"]:
             location = input(
-                f"{Colors.PROMPT}Backup location (default ~/.mac-setup/backups): {Colors.RESET}",
+                f"{Colors.PROMPT}Backup location (default ~/.devkit/backups): {Colors.RESET}",
             ).strip()
-            self.config["backup_location"] = location or "~/.mac-setup/backups"
+            self.config["backup_location"] = location or "~/.devkit/backups"
 
     def _ask_verification(self) -> None:
         """Ask for verification settings."""
@@ -300,7 +300,7 @@ class SetupWizard:
             Path to saved config file
         """
         if not file_path:
-            file_path = str(Path.home() / ".mac-setup" / "config.yaml")
+            file_path = str(Path.home() / ".devkit" / "config.yaml")
 
         path = Path(file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)

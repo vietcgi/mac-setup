@@ -209,8 +209,8 @@ The Devkit project has **substantial documentation** with **24,205 total lines**
 **INACCURATE/OUTDATED:**
 
 1. README references "bootstrap-ansible.sh" (doesn't exist - it's bootstrap.sh)
-2. SUPPORT.md mentions ~/.mac-setup (old, should be ~/.devkit)
-3. Some docs reference "mac-setup" product name, not "Devkit"
+2. SUPPORT.md mentions ~/.devkit (old, should be ~/.devkit)
+3. Some docs reference "devkit" product name, not "Devkit"
 4. FAQ references "macOS 10.15+" but README says "macOS 13.0+"
 5. References to Python version vary (some say 3.9+, FAQ says 3.9+)
 6. API_REFERENCE.md shows old module paths (cli.config_engine vs actual)
@@ -260,7 +260,7 @@ FAQ.md: (mentions above files)
 - <https://brew.sh/install.sh> - Valid
 - <https://github.com/vietcgi/devkit> - Valid
 
-**ISSUE:** GitHub links in docs/API_REFERENCE.md reference "mac-setup" repo (outdated name)
+**ISSUE:** GitHub links in docs/API_REFERENCE.md reference "devkit" repo (outdated name)
 
 ---
 
@@ -356,7 +356,7 @@ FAQ.md: (mentions above files)
 ### HIGH PRIORITY
 
 4. **Product Name Inconsistency**
-   - Mix of "mac-setup", "Mac-Setup", "Devkit", "devkit"
+   - Mix of "devkit", "Mac-Setup", "Devkit", "devkit"
    - **Action**: Standardize to "Devkit" throughout
 
 5. **Missing Interactive Mode Documentation**
@@ -371,7 +371,7 @@ FAQ.md: (mentions above files)
 
 7. **Outdated Information**
    - References to old file names (bootstrap-ansible.sh)
-   - SUPPORT.md mentions ~/.mac-setup not ~/.devkit
+   - SUPPORT.md mentions ~/.devkit not ~/.devkit
    - **Action**: Search and update all references
 
 8. **Missing Feature Documentation**
@@ -465,7 +465,7 @@ FAQ.md: (mentions above files)
    - Add missing files or update references
 
 4. Standardize product name
-   - Audit all docs for "mac-setup" vs "Devkit"
+   - Audit all docs for "devkit" vs "Devkit"
    - Update API_REFERENCE.md if needed
    - Update SUPPORT.md references
 

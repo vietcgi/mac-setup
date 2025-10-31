@@ -2,7 +2,7 @@
 """
 Example Docker Development Plugin
 
-Demonstrates how to create a custom plugin that extends mac-setup.
+Demonstrates how to create a custom plugin that extends devkit.
 This plugin sets up Docker and Kubernetes development environment.
 """
 
