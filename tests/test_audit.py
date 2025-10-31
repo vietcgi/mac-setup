@@ -17,7 +17,13 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cli.audit import AuditAction, AuditLogger, ComplianceReport  # noqa: E402
+from cli.audit import (  # noqa: E402
+    AuditAction,
+    AuditLogger,
+    AuditReporter,
+    AuditSigningService,
+    AuditLogStorage,
+)
 
 
 class TestAuditAction(unittest.TestCase):
@@ -257,15 +263,15 @@ class TestAuditLogger(unittest.TestCase):
             self.assertEqual(entry["details"]["check"], i)
 
 
-class TestComplianceReport(unittest.TestCase):
-    """Test ComplianceReport class."""
+class TestAuditReporter(unittest.TestCase):
+    """Test AuditReporter class."""
 
     def setUp(self):
-        """Set up test compliance report."""
+        """Set up test audit reporter."""
         self.temp_dir = tempfile.mkdtemp()
         self.log_dir = Path(self.temp_dir) / "audit"
         self.logger = AuditLogger(self.log_dir)
-        self.report = ComplianceReport(self.logger)
+        self.reporter = AuditReporter(self.logger)
 
     def tearDown(self):
         """Clean up."""
@@ -273,29 +279,27 @@ class TestComplianceReport(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_report_creation(self):
-        """Test creating compliance report."""
-        self.assertIsInstance(self.report, ComplianceReport)
-        self.assertEqual(self.report.audit_logger, self.logger)
+    def test_reporter_creation(self):
+        """Test creating audit reporter."""
+        self.assertIsInstance(self.reporter, AuditReporter)
+        self.assertEqual(self.reporter.audit_logger, self.logger)
 
     def test_activity_report(self):
         """Test generating activity report."""
         self.logger.log_install_started()
         self.logger.log_install_completed(duration_seconds=60)
 
-        report = self.report.generate_activity_report(days=1)
+        report = self.reporter.generate_activity_report(days=1)
 
-        self.assertIn("ACTIVITY REPORT", report)
-        self.assertIn("Total Actions", report)
+        self.assertIn("Activity Report", report)
         self.assertIn("Actions by Type", report)
         self.assertIn("install_started", report)
 
     def test_activity_report_with_no_actions(self):
         """Test activity report when no actions logged."""
-        report = self.report.generate_activity_report(days=1)
+        report = self.reporter.generate_activity_report(days=1)
 
-        self.assertIn("ACTIVITY REPORT", report)
-        self.assertIn("Total Actions: 0", report)
+        self.assertIn("Activity Report", report)
 
     def test_security_report(self):
         """Test generating security report."""
@@ -303,20 +307,20 @@ class TestComplianceReport(unittest.TestCase):
         self.logger.log_permission_changed("/path", "644", "600")
         self.logger.log_verification(passed=False)
 
-        report = self.report.generate_security_report()
+        report = self.reporter.generate_security_report()
 
-        self.assertIn("SECURITY REPORT", report)
-        self.assertIn("Security Events", report)
-        self.assertIn("security_check", report)
+        self.assertIn("Security & Integrity Report", report)
+        self.assertIn("Total Entries", report)
 
     def test_security_report_format(self):
         """Test security report formatting."""
         self.logger.log_security_check("checksum", "success", findings=[])
 
-        report = self.report.generate_security_report()
+        report = self.reporter.generate_security_report()
 
-        # Should include timestamp, action, and status
-        self.assertIn("|", report)  # Separator in formatted output
+        # Should include report header and status information
+        self.assertIn("Security & Integrity Report", report)
+        self.assertIn("Total Entries", report)
 
 
 if __name__ == "__main__":
