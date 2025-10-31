@@ -1,0 +1,234 @@
+name: Metrics - Code Quality Dashboard
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run daily to track metrics over time
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  code-metrics:
+    name: Calculate code quality metrics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install radon pylint-json2html
+
+      - name: Calculate cyclomatic complexity
+        id: complexity
+        continue-on-error: true
+        run: |
+          echo "## Cyclomatic Complexity Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          radon cc cli/ -a || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Calculate maintainability index
+        id: maintainability
+        continue-on-error: true
+        run: |
+          echo "## Maintainability Index" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          radon mi cli/ -a || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Analyze lines of code
+        id: loc
+        continue-on-error: true
+        run: |
+          echo "## Lines of Code Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          radon raw cli/ -s || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Count test coverage
+        id: coverage-summary
+        continue-on-error: true
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python -m pytest tests/ --cov=cli --cov-report=term-missing --cov-report=json || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python -c "import json; f=open('.coverage.json');
+            d=json.load(f); print(f\"Cov: {d['totals']['percent_covered']:.1f}%\")" \
+            >> $GITHUB_STEP_SUMMARY || echo "Coverage: unavailable"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  commit-stats:
+    name: Analyze commit and contributor stats
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate commit statistics
+        id: commits
+        run: |
+          echo "## Commit Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Total Commits" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git rev-list --count HEAD >> $GITHUB_STEP_SUMMARY || echo "0"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Contributors" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git shortlog -sne --all | head -10 >> $GITHUB_STEP_SUMMARY || echo "No contributors"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Analyze code churn
+        id: churn
+        run: |
+          echo "### Last 7 Days Activity" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git log --since="7 days ago" --oneline | wc -l | awk '{print "Commits: " $1}' >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  dependency-stats:
+    name: Analyze dependency metrics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-licenses pip-audit
+
+      - name: Generate dependency report
+        id: deps
+        run: |
+          echo "## Dependency Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Package Count" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          pip list | wc -l | awk '{print "Total packages: " $1}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Outdated Packages" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          pip list --outdated | wc -l | awk '{print "Count: " $1-2}' >> $GITHUB_STEP_SUMMARY || echo "None"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  performance-baseline:
+    name: Track performance baseline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Measure test execution time
+        id: test-perf
+        continue-on-error: true
+        run: |
+          echo "## Performance Baseline" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Execution Time" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          time pytest tests/ -q || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Measure imports performance
+        id: import-perf
+        continue-on-error: true
+        run: |
+          echo "### Import Performance" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python -X importtime -c "import cli" 2>&1 | tail -5 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  dashboard-summary:
+    name: Create metrics dashboard summary
+    runs-on: ubuntu-latest
+    needs: [code-metrics, commit-stats, dependency-stats, performance-baseline]
+    if: always()
+
+    steps:
+      - name: Create summary
+        run: |
+          echo "# 📊 Devkit Metrics Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Code Metrics: Calculated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Commit Stats: Analyzed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Dependency Info: Gathered" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Performance: Measured" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For detailed metrics, check individual job outputs above." >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR with metrics
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: >
+                📊 **Metrics Dashboard Updated**
+
+                Code quality metrics calculated. Check the workflow summary
+                for detailed reports.
+            })

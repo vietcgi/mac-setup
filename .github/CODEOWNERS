@@ -1,0 +1,35 @@
+# CODEOWNERS file for devkit project
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global code owners - required for all changes
+* @vietcgi
+
+# CLI modules
+/cli/ @vietcgi
+
+# Configuration and setup
+/ansible/ @vietcgi
+.pre-commit-config.yaml @vietcgi
+pyproject.toml @vietcgi
+setup.cfg @vietcgi
+Brewfile @vietcgi
+
+# Documentation
+/docs/ @vietcgi
+*.md @vietcgi
+
+# GitHub workflows and templates
+/.github/ @vietcgi
+
+# Git configuration
+/.gitignore @vietcgi
+/.gitattributes @vietcgi
+
+# Testing
+/tests/ @vietcgi
+pytest.ini @vietcgi
+
+# Scripts
+/scripts/ @vietcgi
+bootstrap.sh @vietcgi
+Justfile @vietcgi
