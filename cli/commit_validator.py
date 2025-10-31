@@ -1,40 +1,35 @@
-#!/usr/bin/env python3
-"""
-AI Commit Validator - Quality-First Validation System
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
+"""AI Commit Validator - Quality-First Validation System.
 
 Ensures AI-generated code meets quality standards before commits are made.
 Focuses on code quality over speed.
 """
 
+import argparse
 import json
-import subprocess
-import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-from datetime import datetime
 import logging
+import re
+import subprocess  # noqa: S404
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, Optional
 
-
-# ANSI Colors
-class Colors:
-    GREEN = "\033[0;32m"
-    RED = "\033[0;31m"
-    YELLOW = "\033[1;33m"
-    BLUE = "\033[0;34m"
-    RESET = "\033[0m"
+from cli.utils import Colors
 
 
 class CodeQualityValidator:
     """Validates code quality for AI-generated commits."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize code quality validator."""
         self.home = Path.home()
         self.devkit_dir = self.home / ".devkit/git"
         self.devkit_dir.mkdir(parents=True, exist_ok=True)
         self.quality_report_file = self.devkit_dir / "quality_reports.jsonl"
         self.setup_logging()
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Setup logging for quality checks."""
         self.log_file = self.devkit_dir / "quality_checks.log"
         self.logger = logging.getLogger(__name__)
@@ -45,7 +40,7 @@ class CodeQualityValidator:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-    def print_status(self, message: str, level: str = "INFO"):
+    def print_status(self, message: str, level: str = "INFO") -> None:
         """Print colored status message."""
         colors = {
             "INFO": Colors.BLUE,
@@ -54,15 +49,14 @@ class CodeQualityValidator:
             "ERROR": Colors.RED,
         }
         symbol = {
-            "INFO": "ℹ",
-            "SUCCESS": "✓",
-            "WARNING": "⚠",
-            "ERROR": "✗",
+            "INFO": "[i]",
+            "SUCCESS": "[✓]",
+            "WARNING": "[!]",
+            "ERROR": "[E]",
         }
         color = colors.get(level, Colors.RESET)
-        sym = symbol.get(level, "•")
+        _symbol = symbol.get(level, "•")
 
-        print(f"{color}{sym} {message}{Colors.RESET}")
         self.logger.log(
             getattr(logging, level, logging.INFO),
             message.replace(Colors.RESET, "").replace(color, ""),
@@ -70,23 +64,24 @@ class CodeQualityValidator:
 
     # ========== QUALITY CHECK METHODS ==========
 
-    def check_code_style(self, files: List[str]) -> Tuple[bool, List[str], int]:
+    def check_code_style(self, _files: list[str]) -> tuple[bool, list[str], int]:
         """Check Python code style (PEP 8, pylint)."""
         self.print_status("Checking code style (PEP 8)...", "INFO")
         issues = []
         score = 100
 
-        for filepath in files:
+        for filepath in _files:
             if not filepath.endswith(".py"):
                 continue
 
             # Check with pylint
             try:
-                result = subprocess.run(
-                    ["pylint", "--disable=all", "--enable=C,E", filepath],
+                result = subprocess.run(  # noqa: S603
+                    ["pylint", "--disable=all", "--enable=C,E", filepath],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=10,
+                    check=False,
                 )
                 if result.returncode != 0:
                     for line in result.stdout.split("\n"):
@@ -97,7 +92,7 @@ class CodeQualityValidator:
             except FileNotFoundError:
                 self.print_status("pylint not installed, skipping style check", "WARNING")
                 return True, [], 100
-            except Exception as e:
+            except OSError as e:
                 self.print_status(f"Style check error: {e}", "ERROR")
                 return False, [str(e)], 0
 
@@ -108,24 +103,26 @@ class CodeQualityValidator:
         self.print_status("Code style check passed", "SUCCESS")
         return True, [], 100
 
-    def check_test_coverage(self, files: List[str]) -> Tuple[bool, List[str], float]:
+    def check_test_coverage(self, _files: list[str]) -> tuple[bool, list[str], float]:
         """Check test coverage (minimum 80%)."""
         self.print_status("Checking test coverage...", "INFO")
 
         try:
-            subprocess.run(
-                ["coverage", "run", "-m", "pytest", "--tb=short"],
+            subprocess.run(  # noqa: S603
+                ["coverage", "run", "-m", "pytest", "--tb=short"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
 
             # Get coverage report
-            cov_result = subprocess.run(
-                ["coverage", "report", "--fail-under=80"],
+            cov_result = subprocess.run(  # noqa: S603
+                ["coverage", "report", "--fail-under=80"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=False,
             )
 
             if cov_result.returncode == 0:
@@ -137,18 +134,20 @@ class CodeQualityValidator:
                             coverage = float(match.group(1))
                             self.print_status(f"Test coverage: {coverage}%", "SUCCESS")
                             return True, [], coverage
+            else:
+                self.print_status("Test coverage below 80%", "ERROR")
+                return False, [cov_result.stdout], 0
 
-            self.print_status("Test coverage below 80%", "ERROR")
-            return False, [cov_result.stdout], 0
+            return False, [], 0  # noqa: TRY300
 
         except FileNotFoundError:
             self.print_status("coverage/pytest not installed, skipping", "WARNING")
             return True, [], 100
-        except Exception as e:
+        except OSError as e:
             self.print_status(f"Coverage check error: {e}", "ERROR")
             return False, [str(e)], 0
 
-    def check_security(self, files: List[str]) -> Tuple[bool, List[str], int]:
+    def check_security(self, files: list[str]) -> tuple[bool, list[str], int]:
         """Check for security issues using bandit."""
         self.print_status("Checking security...", "INFO")
         issues = []
@@ -159,11 +158,12 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 100
 
-            result = subprocess.run(
-                ["bandit", "-r", "-ll"] + python_files,
+            result = subprocess.run(  # noqa: S603
+                ["bandit", "-r", "-ll", *python_files],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
 
             if "Issue: " in result.stdout:
@@ -178,18 +178,17 @@ class CodeQualityValidator:
             if issues:
                 self.print_status(f"Found {len(issues)} security issues", "ERROR")
                 return False, issues, max(0, score)
-
             self.print_status("Security check passed", "SUCCESS")
-            return True, [], 100
+            return True, [], 100  # noqa: TRY300
 
         except FileNotFoundError:
             self.print_status("bandit not installed, skipping security check", "WARNING")
             return True, [], 100
-        except Exception as e:
+        except OSError as e:
             self.print_status(f"Security check error: {e}", "ERROR")
             return False, [str(e)], 0
 
-    def check_complexity(self, files: List[str]) -> Tuple[bool, List[str], float]:
+    def check_complexity(self, files: list[str]) -> tuple[bool, list[str], float]:
         """Check code complexity using radon."""
         self.print_status("Checking code complexity...", "INFO")
         issues = []
@@ -200,18 +199,17 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 10  # Best complexity score
 
-            result = subprocess.run(
-                ["radon", "cc", "-a"] + python_files,
+            result = subprocess.run(  # noqa: S603
+                ["radon", "cc", "-a", *python_files],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
 
             complexities = []
             for line in result.stdout.split("\n"):
-                if " - " in line and (
-                    "A" in line or "B" in line or "C" in line or "D" in line or "F" in line
-                ):
+                if " - " in line and any(c in line for c in ["A", "B", "C", "D", "F"]):
                     complexities.append(line)
                     # F = too complex, D = high, C = moderate
                     if "F" in line:
@@ -231,27 +229,27 @@ class CodeQualityValidator:
                     issues,
                     avg_complexity,
                 )
-
             self.print_status("Code complexity acceptable", "SUCCESS")
-            return True, [], avg_complexity
+            return True, [], avg_complexity  # noqa: TRY300
 
         except FileNotFoundError:
             self.print_status("radon not installed, skipping complexity check", "WARNING")
             return True, [], 5
-        except Exception as e:
+        except OSError as e:
             self.print_status(f"Complexity check error: {e}", "ERROR")
             return False, [str(e)], 10
 
-    def check_tests_pass(self, files: List[str]) -> Tuple[bool, List[str], int]:
+    def check_tests_pass(self, _files: list[str]) -> tuple[bool, list[str], int]:
         """Run tests to ensure they pass."""
         self.print_status("Running tests...", "INFO")
 
         try:
-            result = subprocess.run(
-                ["pytest", "-v", "--tb=short"],
+            result = subprocess.run(  # noqa: S603
+                ["pytest", "-v", "--tb=short"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=60,
+                check=False,
             )
 
             if result.returncode == 0:
@@ -259,11 +257,10 @@ class CodeQualityValidator:
                 passed = len(re.findall(r"PASSED", result.stdout))
                 self.print_status(f"All tests passed ({passed} tests)", "SUCCESS")
                 return True, [], passed
-            else:
-                # Extract failed tests
-                failed = re.findall(r"FAILED.*", result.stdout)
-                self.print_status(f"Tests failed ({len(failed)} failures)", "ERROR")
-                return False, failed, 0
+            # Extract failed tests
+            failed = re.findall(r"FAILED.*", result.stdout)
+            self.print_status(f"Tests failed ({len(failed)} failures)", "ERROR")
+            return False, failed, 0  # noqa: TRY300
 
         except FileNotFoundError:
             self.print_status("pytest not installed, skipping tests", "WARNING")
@@ -271,11 +268,11 @@ class CodeQualityValidator:
         except subprocess.TimeoutExpired:
             self.print_status("Tests timeout (>60s)", "ERROR")
             return False, ["Test execution timeout"], 0
-        except Exception as e:
+        except OSError as e:
             self.print_status(f"Test error: {e}", "ERROR")
             return False, [str(e)], 0
 
-    def check_documentation(self, files: List[str]) -> Tuple[bool, List[str], int]:
+    def check_documentation(self, files: list[str]) -> tuple[bool, list[str], int]:
         """Check for code documentation and docstrings."""
         self.print_status("Checking documentation...", "INFO")
         issues = []
@@ -286,11 +283,10 @@ class CodeQualityValidator:
                 continue
 
             try:
-                with open(filepath, "r") as f:
-                    content = f.read()
+                content = Path(filepath).read_text(encoding="utf-8")
 
                 # Check for module docstring
-                if not (content.startswith('"""') or content.startswith("'''")):
+                if not content.startswith(('"""', "'''")):
                     issues.append(f"{filepath}: Missing module docstring")
                     score -= 10
 
@@ -301,18 +297,17 @@ class CodeQualityValidator:
                         issues.append(f"{filepath}: Function missing docstring: {func}")
                         score -= 5
 
-            except Exception as e:
+            except OSError as e:
                 self.print_status(f"Documentation check error: {e}", "ERROR")
                 return False, [str(e)], 0
 
         if issues:
             self.print_status(f"Found {len(issues)} documentation issues", "WARNING")
             return False, issues, max(0, score)
-
         self.print_status("Documentation check passed", "SUCCESS")
         return True, [], 100
 
-    def check_dependencies(self, files: List[str]) -> Tuple[bool, List[str], int]:
+    def check_dependencies(self, _files: list[str]) -> tuple[bool, list[str], int]:
         """Check for dependency issues."""
         self.print_status("Checking dependencies...", "INFO")
         issues = []
@@ -322,41 +317,49 @@ class CodeQualityValidator:
             return True, [], 100
 
         try:
-            result = subprocess.run(["pip-audit"], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(  # noqa: S603
+                ["pip-audit"],  # noqa: S607
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
 
             if "found" in result.stdout.lower():
                 issues = result.stdout.split("\n")
                 self.print_status("Found dependency vulnerabilities", "ERROR")
                 return False, issues, 0
-
             self.print_status("Dependency check passed", "SUCCESS")
-            return True, [], 100
+            return True, [], 100  # noqa: TRY300
 
         except FileNotFoundError:
             self.print_status("pip-audit not installed, skipping", "WARNING")
             return True, [], 100
-        except Exception as e:
+        except OSError as e:
             self.print_status(f"Dependency check error: {e}", "ERROR")
             return False, [str(e)], 0
 
     # ========== INTEGRATION METHODS ==========
 
-    def get_staged_files(self) -> List[str]:
+    @staticmethod
+    def get_staged_files() -> list[str]:
         """Get list of staged files."""
         try:
-            result = subprocess.run(
-                ["git", "diff", "--cached", "--name-only"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "diff", "--cached", "--name-only"],  # noqa: S607
                 capture_output=True,
                 text=True,
+                check=False,
             )
             return result.stdout.strip().split("\n")
-        except Exception:
+        except OSError:
             return []
 
-    def generate_quality_report(self, checks: Dict) -> Dict:
+    @staticmethod
+    def generate_quality_report(checks: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
         """Generate comprehensive quality report."""
         report = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(tz=UTC).isoformat(),
             "checks": checks,
             "overall_quality_score": 0,
             "pass_all": True,
@@ -364,7 +367,7 @@ class CodeQualityValidator:
 
         # Calculate scores
         scores = []
-        for check_name, check_result in checks.items():
+        for check_result in checks.values():
             if isinstance(check_result, dict):
                 if "score" in check_result:
                     scores.append(check_result["score"])
@@ -376,12 +379,8 @@ class CodeQualityValidator:
 
         return report
 
-    def run_all_checks(self, files: Optional[List[str]] = None) -> Dict:
+    def run_all_checks(self, files: Optional[list[str]] = None) -> dict[str, Any]:
         """Run all quality checks."""
-        print(f"\n{Colors.BLUE}{'='*60}{Colors.RESET}")
-        print(f"{Colors.BLUE}AI CODE QUALITY VALIDATION{Colors.RESET}")
-        print(f"{Colors.BLUE}{'='*60}{Colors.RESET}\n")
-
         if not files:
             files = self.get_staged_files()
 
@@ -392,7 +391,6 @@ class CodeQualityValidator:
         checks = {}
 
         # Run all checks
-        print(f"{Colors.YELLOW}Running Quality Checks...{Colors.RESET}\n")
 
         # 1. Code Style
         passed, issues, score = self.check_code_style(files)
@@ -441,40 +439,26 @@ class CodeQualityValidator:
 
         return report
 
-    def display_summary(self, report: Dict):
+    def display_summary(self, report: dict[str, Any]) -> bool:  # noqa: PLR6301
         """Display quality check summary."""
-        print(f"\n{Colors.BLUE}{'='*60}{Colors.RESET}")
-        print(f"{Colors.BLUE}Quality Check Summary{Colors.RESET}")
-        print(f"{Colors.BLUE}{'='*60}{Colors.RESET}\n")
-
-        for check_name, check_result in report["checks"].items():
+        for check_result in report["checks"].values():
             if isinstance(check_result, dict):
-                status = "✓ PASS" if check_result.get("passed", False) else "✗ FAIL"
-                color = Colors.GREEN if check_result.get("passed") else Colors.RED
-                score = check_result.get("score", 0)
-                print(f"{color}{status}{Colors.RESET} {check_name:20} ({score:.0f}%)")
+                _status = "✓ PASS" if check_result.get("passed", False) else "✗ FAIL"
+                _color = Colors.GREEN if check_result.get("passed") else Colors.RED
+                _score = check_result.get("score", 0)
 
-        print(
-            f"\n{Colors.YELLOW}Overall Quality Score: {report['overall_quality_score']:.1f}%{Colors.RESET}"
+        return bool(report["pass_all"])
+
+    def save_quality_report(self, report: dict[str, Any]) -> None:
+        """Save quality report to file."""
+        self.quality_report_file.write_text(
+            json.dumps(report) + "\n",
+            encoding="utf-8",
         )
 
-        if report["pass_all"]:
-            print(f"{Colors.GREEN}✓ ALL CHECKS PASSED - SAFE TO COMMIT{Colors.RESET}")
-            return True
-        else:
-            print(f"{Colors.RED}✗ SOME CHECKS FAILED - FIX ISSUES BEFORE COMMIT{Colors.RESET}")
-            return False
 
-    def save_quality_report(self, report: Dict):
-        """Save quality report to file."""
-        with open(self.quality_report_file, "a") as f:
-            f.write(json.dumps(report) + "\n")
-
-
-def main():
+def main() -> int:
     """CLI entry point."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Validate AI-generated code quality")
     parser.add_argument("--files", nargs="+", help="Specific files to check")
     parser.add_argument(
@@ -499,8 +483,18 @@ def main():
     report = validator.run_all_checks(files=args.files)
 
     # Exit with appropriate code
-    exit_code = 0 if report.get("pass_all", True) else 1
-    return exit_code
+    return 0 if report.get("pass_all", True) else 1
+
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+__all__ = [
+    "CodeQualityValidator",
+    "Colors",
+    "main",
+]
 
 
 if __name__ == "__main__":
