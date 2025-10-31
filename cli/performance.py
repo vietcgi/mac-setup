@@ -195,10 +195,20 @@ class PerformanceMonitor:
         summary = self.get_summary()
 
         if not summary:
+            print("No performance metrics collected")
             return
 
-        for _label, _stats in sorted(summary.items()):
-            pass
+        print("\n" + "=" * 70)
+        print("PERFORMANCE METRICS REPORT")
+        print("=" * 70 + "\n")
+
+        for label, stats in sorted(summary.items()):
+            print(f"📊 {label}")
+            for key, value in stats.items():
+                if isinstance(value, float):
+                    print(f"   {key}: {value:.2f}")
+                else:
+                    print(f"   {key}: {value}")
 
 
 class InstallationOptimizer:

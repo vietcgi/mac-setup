@@ -117,9 +117,14 @@ class SetupWizard:
 
     def _print_header(self) -> None:
         """Print wizard header."""
+        print(f"\n{Colors.BLUE}{'=' * 70}{Colors.RESET}")
+        print(f"{Colors.BLUE}  Devkit Interactive Setup Wizard{Colors.RESET}")
+        print(f"{Colors.BLUE}{'=' * 70}{Colors.RESET}\n")
 
     def _step_header(self, title: str) -> None:
         """Print step header."""
+        print(f"\n{Colors.CYAN}>>> {title}{Colors.RESET}")
+        print(f"{Colors.CYAN}{'-' * (len(title) + 4)}{Colors.RESET}")
 
     def _ask_environment(self) -> None:
         """Ask for environment type."""
@@ -131,8 +136,8 @@ class SetupWizard:
             ("staging", "Staging (balanced)"),
         ]
 
-        for _i, (_value, _desc) in enumerate(options, 1):
-            pass
+        for i, (_value, desc) in enumerate(options, 1):
+            print(f"  {i}. {desc}")
 
         while True:
             choice = input(f"\n{Colors.PROMPT}Select (1-{len(options)}): {Colors.RESET}").strip()

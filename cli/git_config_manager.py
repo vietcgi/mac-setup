@@ -406,14 +406,21 @@ class GitConfigManager:
         Args:
             report: Report dictionary from generate_report()
         """
-        for _key, _value in report["config_status"].items():
-            pass
+        print(f"\n{Colors.BLUE}Configuration Status:{Colors.RESET}")
+        for key, value in report["config_status"].items():
+            formatted_key = key.replace("_", " ").title()
+            print(f"  {formatted_key}: {Colors.GREEN}{value}{Colors.RESET}")
 
-        for _hook, _exists in report["hooks_status"].items():
-            pass
+        print(f"\n{Colors.BLUE}Git Hooks Status:{Colors.RESET}")
+        for hook, exists in report["hooks_status"].items():
+            formatted_hook = hook.replace("_", " ").title()
+            status = f"{Colors.GREEN}✓ Present{Colors.RESET}" if exists else f"{Colors.RED}✗ Missing{Colors.RESET}"
+            print(f"  {formatted_hook}: {status}")
 
-        for _key, _path in report["directories"].items():
-            pass
+        print(f"\n{Colors.BLUE}Directory Paths:{Colors.RESET}")
+        for key, path in report["directories"].items():
+            formatted_key = key.replace("_", " ").title()
+            print(f"  {formatted_key}: {Colors.CYAN}{path}{Colors.RESET}")
 
     def reload_all(self, dry_run: bool = False) -> bool:  # noqa: FBT001, FBT002
         """Perform complete git configuration reload.

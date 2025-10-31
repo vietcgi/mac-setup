@@ -401,19 +401,37 @@ class HealthMonitor:
     def print_report(self) -> None:
         """Print health check report."""
         if not self.results:
+            print("No health checks have been run")
             return
 
-        self.get_overall_status()
+        overall = self.get_overall_status()
 
         # Status emoji
+        emoji = {
+            HealthStatus.HEALTHY: "✅",
+            HealthStatus.WARNING: "⚠️",
+            HealthStatus.CRITICAL: "❌",
+            HealthStatus.UNKNOWN: "❓",
+        }
 
-        for _status, _message, details in self.results.values():
+        print("\n" + "=" * 60)
+        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
+        print("=" * 60 + "\n")
+
+        for check_name, (status, message, details) in self.results.items():
+            print(f"{emoji.get(status, '?')} {check_name}: {status.upper()}")
+            print(f"   {message}")
+
             if details:
-                for value in details.values():
+                for key, value in details.items():
                     if isinstance(value, list) and len(value) > 3:
-                        pass
+                        print(f"   {key}: {value[:3]} ... ({len(value)} total)")
                     else:
-                        pass
+                        print(f"   {key}: {value}")
+
+            print()
+
+        print("=" * 60)
 
     def get_json_report(self) -> str:
         """Get health check report as JSON."""
