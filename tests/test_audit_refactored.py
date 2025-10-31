@@ -144,11 +144,11 @@ class TestAuditSigningService(unittest.TestCase):
         # This test just verifies it uses secure comparison
         result1 = self.service.verify_signature(entry)
 
-        # Modify signature slightly
-        entry["signature"] = "a" + signature[1:]
+        # Modify signature completely (all zeros)
+        entry["signature"] = "0" * 64
         result2 = self.service.verify_signature(entry)
 
-        # Both should complete without timing differences
+        # First should pass, second should fail
         self.assertTrue(result1)
         self.assertFalse(result2)
 
