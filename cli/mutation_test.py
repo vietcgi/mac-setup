@@ -24,7 +24,7 @@ This implementation:
 import ast
 import json
 import logging
-import subprocess  # noqa: S404
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass, field
@@ -146,7 +146,7 @@ class MutationDetector(ast.NodeVisitor):
             pass
         return self.mutations
 
-    def visit_Compare(self, node: ast.Compare) -> None:  # noqa: N802  # pylint: disable=invalid-name
+    def visit_Compare(self, node: ast.Compare) -> None:  # pylint: disable=invalid-name
         """Detect comparison operator mutations."""
         for op in node.ops:
             line_num = node.lineno
@@ -156,7 +156,7 @@ class MutationDetector(ast.NodeVisitor):
             self.mutations.extend(mutations_for_op)
         self.generic_visit(node)
 
-    def visit_BoolOp(self, node: ast.BoolOp) -> None:  # noqa: N802  # pylint: disable=invalid-name
+    def visit_BoolOp(self, node: ast.BoolOp) -> None:  # pylint: disable=invalid-name
         """Detect logical operator mutations (and/or)."""
         line_num = node.lineno
         line_code = self.lines[line_num - 1] if line_num <= len(self.lines) else ""
@@ -186,7 +186,7 @@ class MutationDetector(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def visit_Constant(self, node: ast.Constant) -> None:  # noqa: N802  # pylint: disable=invalid-name
+    def visit_Constant(self, node: ast.Constant) -> None:  # pylint: disable=invalid-name
         """Detect boolean literal mutations."""
         if isinstance(node.value, bool):
             line_num = node.lineno
@@ -338,8 +338,8 @@ class MutationTester:
             mutation.file_path.write_text(mutated_code)
 
             # Run tests
-            result = subprocess.run(  # noqa: S603
-                ["pytest", str(self.tests_dir), "-q", "--tb=no"],  # noqa: S607
+            result = subprocess.run(
+                ["pytest", str(self.tests_dir), "-q", "--tb=no"],
                 capture_output=True,
                 timeout=30,
                 check=False,
@@ -405,7 +405,7 @@ def print_mutation_report(report: MutationReport) -> None:
 def save_mutation_report(report: MutationReport, output_path: Path) -> None:
     """Save mutation report as JSON."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report.to_dict(), indent=2))
+    output_path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
 
 
 # ============================================================================

@@ -17,7 +17,7 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Security: Import validator
 from cli.utils import setup_logger
@@ -31,11 +31,11 @@ class HookContext:  # pylint: disable=too-few-public-methods
     def __init__(
         self,
         stage: str,
-        role: Optional[str] = None,
-        task: Optional[str] = None,
+        role: str | None = None,
+        task: str | None = None,
         status: str = "running",
-        error: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Initialize hook context.
 
@@ -114,7 +114,7 @@ class PluginLoader:
     2. ./plugins/ (project plugins)
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize plugin loader.
 
         Args:
@@ -169,7 +169,7 @@ class PluginLoader:
         self.logger.info("Discovered %d plugins", len(discovered))
         return discovered
 
-    def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:  # noqa: PLR0911  # pylint: disable=too-many-return-statements
+    def load_plugin(self, plugin_path: str, module_name: str) -> PluginInterface | None:  # pylint: disable=too-many-return-statements
         """Load a single plugin module with security validation.
 
         SECURITY: Before loading, validates:
@@ -259,7 +259,7 @@ class PluginLoader:
         self.logger.warning("No PluginInterface found in %s", module_name)
         return None
 
-    def load_all(self, plugin_paths: Optional[list[Path]] = None) -> int:
+    def load_all(self, plugin_paths: list[Path] | None = None) -> int:
         """Discover and load all plugins.
 
         Args:
@@ -298,7 +298,7 @@ class PluginLoader:
         self.logger.info("Successfully loaded %d/%d plugins", loaded, len(discovered))
         return loaded
 
-    def get_plugin(self, name: str) -> Optional[PluginInterface]:
+    def get_plugin(self, name: str) -> PluginInterface | None:
         """Get plugin by name."""
         return self.plugins.get(name)
 
@@ -313,7 +313,7 @@ class PluginLoader:
             roles.update(plugin.get_roles())
         return roles
 
-    def execute_hooks(self, stage: str, context: Optional[HookContext] = None) -> bool:
+    def execute_hooks(self, stage: str, context: HookContext | None = None) -> bool:
         """Execute all hooks for a given stage.
 
         Args:

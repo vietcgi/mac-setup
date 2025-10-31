@@ -9,8 +9,6 @@ This module provides custom exception types that include:
 - Suggestion for documentation references
 """
 
-from typing import Optional
-
 
 class DevkitError(Exception):
     """Base exception for all Devkit errors."""
@@ -18,9 +16,9 @@ class DevkitError(Exception):
     def __init__(
         self,
         message: str,
-        cause: Optional[str] = None,
-        solutions: Optional[list[str]] = None,
-        documentation: Optional[str] = None,
+        cause: str | None = None,
+        solutions: list[str] | None = None,
+        documentation: str | None = None,
     ) -> None:
         """Initialize enhanced exception.
 

@@ -27,7 +27,7 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class HMACKeyError(RuntimeError):
@@ -60,7 +60,7 @@ class AuditAction(Enum):
 class AuditSigningService:
     """Handles cryptographic signing and verification of audit entries."""
 
-    def __init__(self, log_dir: Path, hmac_key: Optional[bytes] = None) -> None:
+    def __init__(self, log_dir: Path, hmac_key: bytes | None = None) -> None:
         """Initialize signing service.
 
         Args:
@@ -210,7 +210,7 @@ class AuditLogStorage:
                 "Failed to write audit log. Check disk space and permissions.",
             )
 
-    def read_entries(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    def read_entries(self, limit: int | None = None) -> list[dict[str, Any]]:
         """Read audit log entries from file.
 
         Args:
@@ -276,10 +276,10 @@ class AuditLogger:
 
     def __init__(
         self,
-        log_dir: Optional[Path] = None,
+        log_dir: Path | None = None,
         *,
         enable_signing: bool = False,
-        hmac_key: Optional[bytes] = None,
+        hmac_key: bytes | None = None,
     ) -> None:
         """Initialize audit logger.
 
@@ -294,15 +294,15 @@ class AuditLogger:
 
         # Initialize storage and signing services
         self.storage = AuditLogStorage(self.log_dir)
-        self.signing_service: Optional[AuditSigningService] = None
+        self.signing_service: AuditSigningService | None = None
         if enable_signing:
             self.signing_service = AuditSigningService(self.log_dir, hmac_key)
 
     def log_action(
         self,
         action: AuditAction,
-        details: Optional[dict[str, Any]] = None,
-        user: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        user: str | None = None,
         status: str = "success",
     ) -> dict[str, Any]:
         """Log an action to the audit log.
@@ -335,8 +335,8 @@ class AuditLogger:
 
     def log_install_started(
         self,
-        roles: Optional[list[str]] = None,
-        details: Optional[dict[str, Any]] = None,
+        roles: list[str] | None = None,
+        details: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Log installation start."""
         return self.log_action(
@@ -347,7 +347,7 @@ class AuditLogger:
     def log_install_completed(
         self,
         duration_seconds: float,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Log successful installation."""
         return self.log_action(
@@ -358,7 +358,7 @@ class AuditLogger:
     def log_install_failed(
         self,
         error: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Log failed installation."""
         return self.log_action(
@@ -370,8 +370,8 @@ class AuditLogger:
     def log_config_changed(
         self,
         key: str,
-        old_value: str | int | float | bool | None,  # noqa: FBT001
-        new_value: str | int | float | bool | None,  # noqa: FBT001
+        old_value: str | int | float | bool | None,
+        new_value: str | int | float | bool | None,
     ) -> dict[str, Any]:
         """Log configuration change."""
         return self.log_action(
@@ -401,7 +401,7 @@ class AuditLogger:
         self,
         check_name: str,
         status: str,
-        findings: Optional[list[str]] = None,
+        findings: list[str] | None = None,
     ) -> dict[str, Any]:
         """Log security check."""
         return self.log_action(
@@ -430,7 +430,7 @@ class AuditLogger:
         self,
         *,
         passed: bool,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Log setup verification."""
         action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
@@ -443,7 +443,7 @@ class AuditLogger:
     def log_health_check(
         self,
         status: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Log health check result."""
         return self.log_action(
@@ -458,7 +458,7 @@ class AuditLogger:
 
     def get_audit_logs(
         self,
-        limit: Optional[int] = None,
+        limit: int | None = None,
         *,
         verify_signatures: bool = False,
     ) -> list[dict[str, Any]]:

@@ -13,10 +13,10 @@ Provides:
 import json
 import logging
 import os
-import subprocess  # noqa: S404
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 
 class HealthStatus:
@@ -88,8 +88,8 @@ class DependencyCheck(HealthCheck):
     def check_tool(tool: str) -> bool:
         """Check if single tool is available."""
         try:
-            result = subprocess.run(  # noqa: S603
-                ["which", tool],  # noqa: S607
+            result = subprocess.run(
+                ["which", tool],
                 capture_output=True,
                 timeout=2,
                 check=False,
@@ -107,8 +107,8 @@ class DependencyCheck(HealthCheck):
 
         for tool in self.tools:
             try:
-                result = subprocess.run(  # noqa: S603
-                    ["which", tool],  # noqa: S607
+                result = subprocess.run(
+                    ["which", tool],
                     capture_output=True,
                     timeout=2,
                     check=False,
@@ -155,11 +155,11 @@ class DiskSpaceCheck(HealthCheck):
         self.min_gb = min_gb
 
     @staticmethod
-    def get_available_space() -> Optional[int]:
+    def get_available_space() -> int | None:
         """Get available disk space in GB."""
         try:
-            result = subprocess.run(  # noqa: S603
-                ["df", "-B1G", "/"],  # noqa: S607
+            result = subprocess.run(
+                ["df", "-B1G", "/"],
                 capture_output=True,
                 timeout=2,
                 text=True,
@@ -177,8 +177,8 @@ class DiskSpaceCheck(HealthCheck):
     def run(self) -> tuple[str, str, dict[str, Any]]:
         """Check available disk space."""
         try:
-            result = subprocess.run(  # noqa: S603
-                ["df", "-B1G", "/"],  # noqa: S607
+            result = subprocess.run(
+                ["df", "-B1G", "/"],
                 capture_output=True,
                 timeout=2,
                 text=True,
@@ -217,7 +217,7 @@ class DiskSpaceCheck(HealthCheck):
 class ConfigurationCheck(HealthCheck):
     """Check configuration file health."""
 
-    def __init__(self, config_path: Optional[Path] = None) -> None:
+    def __init__(self, config_path: Path | None = None) -> None:
         """Initialize configuration check.
 
         Args:
@@ -226,7 +226,7 @@ class ConfigurationCheck(HealthCheck):
         super().__init__("Configuration", "Check configuration file integrity")
         self.config_path = config_path or Path.home() / ".devkit" / "config.yaml"
 
-    def check_permissions(self) -> Optional[str]:
+    def check_permissions(self) -> str | None:
         """Check file permissions, return permissions string or None if file doesn't exist."""
         if not self.config_path.exists():
             return None
@@ -284,7 +284,7 @@ class ConfigurationCheck(HealthCheck):
 class LogCheck(HealthCheck):
     """Check system logs for errors."""
 
-    def __init__(self, log_file: Optional[Path] = None, look_back_hours: int = 24) -> None:
+    def __init__(self, log_file: Path | None = None, look_back_hours: int = 24) -> None:
         """Initialize log check.
 
         Args:
@@ -377,7 +377,7 @@ class SystemCheck(HealthCheck):
         super().__init__("System", "Check overall system health")
 
     @staticmethod
-    def get_load_average() -> Optional[tuple[float, float, float]]:
+    def get_load_average() -> tuple[float, float, float] | None:
         """Get system load averages."""
         try:
             return os.getloadavg()
@@ -389,8 +389,8 @@ class SystemCheck(HealthCheck):
         """Check system health."""
         try:
             # Check if system is responsive
-            result = subprocess.run(  # noqa: S603
-                ["uname", "-a"],  # noqa: S607
+            result = subprocess.run(
+                ["uname", "-a"],
                 capture_output=True,
                 timeout=2,
                 text=True,
@@ -495,8 +495,6 @@ class HealthMonitor:
             if details:
                 for value in details.values():
                     if isinstance(value, list) and len(value) > 3:
-                        pass
-                    else:
                         pass
 
     def get_json_report(self) -> str:

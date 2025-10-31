@@ -15,13 +15,13 @@ import logging
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class CacheManager:
     """Manage installation and configuration caches."""
 
-    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+    def __init__(self, cache_dir: Path | None = None) -> None:
         """Initialize cache manager.
 
         Args:
@@ -62,7 +62,7 @@ class CacheManager:
         except OSError as e:
             self.logger.warning("Failed to cache %s: %s", key, e)
 
-    def get(self, key: str) -> Optional[Any]:  # noqa: ANN401
+    def get(self, key: str) -> Any | None:
         """Retrieve value from cache if valid.
 
         Args:
@@ -199,8 +199,6 @@ class PerformanceMonitor:
         for _label, stats in sorted(summary.items()):
             for value in stats.values():
                 if isinstance(value, float):
-                    pass
-                else:
                     pass
 
 

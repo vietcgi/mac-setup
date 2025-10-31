@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml  # pylint: disable=import-error
 
@@ -99,7 +99,7 @@ class RateLimiter:
             f"Please wait {wait_seconds:.1f} seconds."
         )
 
-    def reset(self, identifier: Optional[str] = None) -> None:
+    def reset(self, identifier: str | None = None) -> None:
         """Reset rate limit for identifier or all identifiers.
 
         Args:
@@ -166,8 +166,8 @@ class ConfigurationEngine:
 
     def __init__(
         self,
-        project_root: Optional[str] = None,
-        logger: Optional[logging.Logger] = None,
+        project_root: str | None = None,
+        logger: logging.Logger | None = None,
         *,
         enable_rate_limiting: bool = False,
     ) -> None:
@@ -234,9 +234,9 @@ class ConfigurationEngine:
         file_mode = stat_info.st_mode & 0o777
         if file_mode != 0o600:
             self.logger.warning(
-                "Config file %s has insecure permissions: %s",
+                "Config file %s has insecure permissions: %#o",
                 config_path,
-                oct(file_mode),
+                file_mode,
             )
             self.logger.info("Fixing permissions to 0600 (user read/write only)...")
 
@@ -316,7 +316,7 @@ class ConfigurationEngine:
             version="1.0",
         )
 
-    def load_file(self, file_path: str | Path, section: Optional[str] = None) -> dict[str, Any]:
+    def load_file(self, file_path: str | Path, section: str | None = None) -> dict[str, Any]:
         """Load configuration from YAML file.
 
         Args:
@@ -370,7 +370,7 @@ class ConfigurationEngine:
     def _set_nested_value(  # type: ignore[misc]
         target: dict[str, Any],
         key_parts: list[str],
-        value: str | bool | list[str],  # noqa: FBT001
+        value: str | bool | list[str],
     ) -> None:
         """Set value in nested dictionary using key parts.
 
@@ -423,9 +423,9 @@ class ConfigurationEngine:
 
     def load_all(
         self,
-        group: Optional[str] = None,
-        platform: Optional[str] = None,
-        local_config: Optional[str] = None,
+        group: str | None = None,
+        platform: str | None = None,
+        local_config: str | None = None,
     ) -> dict[str, Any]:
         """Load all configuration in priority order.
 
@@ -477,7 +477,7 @@ class ConfigurationEngine:
         self.logger.info("Configuration loaded from %d files", len(self._loaded_files))
         return self.config
 
-    def get(self, key: str, default: Any = None) -> Any:  # noqa: ANN401
+    def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by dot-notation key.
 
         Examples:
@@ -495,7 +495,7 @@ class ConfigurationEngine:
 
         return value
 
-    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> tuple[bool, str]:  # noqa: ANN401
+    def set(self, key: str, value: Any, user_id: str | None = None) -> tuple[bool, str]:
         """Set configuration value by dot-notation key.
 
         SECURITY: Applies rate limiting to prevent abuse of config changes.
@@ -640,7 +640,7 @@ class ConfigurationEngine:
             return config_value if isinstance(config_value, dict) else {}
         return {}
 
-    def get_rate_limit_stats(self, user_id: Optional[str] = None) -> dict[str, Any]:
+    def get_rate_limit_stats(self, user_id: str | None = None) -> dict[str, Any]:
         """Get rate limiting statistics for user.
 
         Args:
@@ -652,7 +652,7 @@ class ConfigurationEngine:
         user = user_id or os.getenv("USER") or "unknown"
         return self.rate_limiter.get_stats(user)
 
-    def reset_rate_limit(self, user_id: Optional[str] = None) -> None:
+    def reset_rate_limit(self, user_id: str | None = None) -> None:
         """Reset rate limit for user or all users.
 
         Args:

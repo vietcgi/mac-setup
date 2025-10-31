@@ -9,7 +9,7 @@ Provides common functionality used across multiple modules:
 """
 
 import logging
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 # ============================================================================
 # ANSI COLOR CODES
@@ -59,7 +59,7 @@ class Colors:  # pylint: disable=too-few-public-methods
 def setup_logger(
     name: str,
     level: int = logging.INFO,
-    format_string: Optional[str] = None,
+    format_string: str | None = None,
 ) -> logging.Logger:
     r"""Set up a logger with consistent formatting.
 
@@ -146,6 +146,44 @@ class FilePermissions:  # pylint: disable=too-few-public-methods
 
 
 # ============================================================================
+# VALIDATOR BASE CLASS
+# ============================================================================
+
+
+class ValidatorBase:  # pylint: disable=too-few-public-methods
+    """Base class for validators with common status printing."""
+
+    logger: logging.Logger
+
+    def print_status(self, message: str, level: str = "INFO") -> None:
+        """Print colored status message.
+
+        Args:
+            message: Status message
+            level: Log level (INFO, SUCCESS, WARNING, ERROR)
+        """
+        colors = {
+            "INFO": Colors.BLUE,
+            "SUCCESS": Colors.GREEN,
+            "WARNING": Colors.YELLOW,
+            "ERROR": Colors.RED,
+        }
+        symbol = {
+            "INFO": "[i]",
+            "SUCCESS": "[✓]",
+            "WARNING": "[!]",
+            "ERROR": "[E]",
+        }
+        color = colors.get(level, Colors.RESET)
+        _symbol = symbol.get(level, "•")
+
+        self.logger.log(
+            getattr(logging, level, logging.INFO),
+            message.replace(Colors.RESET, "").replace(color, ""),
+        )
+
+
+# ============================================================================
 # PUBLIC API
 # ============================================================================
 
@@ -155,5 +193,6 @@ __all__ = [
     "FilePermissions",
     "LogLevels",
     "PluginPermissions",
+    "ValidatorBase",
     "setup_logger",
 ]

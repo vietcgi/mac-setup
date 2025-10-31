@@ -18,7 +18,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 
 class PluginManifest:
@@ -186,7 +186,7 @@ class PluginValidator:
     - Permissions are declared
     """
 
-    def __init__(self, plugins_dir: Path, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, plugins_dir: Path, logger: logging.Logger | None = None) -> None:
         """Initialize plugin validator.
 
         Args:
@@ -196,7 +196,7 @@ class PluginValidator:
         self.plugins_dir = plugins_dir
         self.logger = logger or self._setup_logger()
 
-    def validate_plugin(self, plugin_name: str) -> tuple[bool, str]:  # noqa: PLR0911  # pylint: disable=too-many-return-statements
+    def validate_plugin(self, plugin_name: str) -> tuple[bool, str]:  # pylint: disable=too-many-return-statements
         """Validate plugin before loading.
 
         Checks:
@@ -315,7 +315,7 @@ class PluginValidator:
 
         return results
 
-    def get_plugin_info(self, plugin_name: str) -> Optional[dict[str, Any]]:
+    def get_plugin_info(self, plugin_name: str) -> dict[str, Any] | None:
         """Get plugin information from manifest.
 
         Args:
@@ -380,8 +380,6 @@ if __name__ == "__main__":
 
         for is_valid, _msg in validation_results.values():
             _ = "✓" if is_valid else "✗"
-    else:
-        pass
 
 # ============================================================================
 # PUBLIC API

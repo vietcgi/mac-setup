@@ -11,7 +11,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml  # pylint: disable=import-error
 
@@ -72,7 +72,7 @@ class ProgressBar:
 class SetupWizard:
     """Interactive setup wizard for mac-setup."""
 
-    def __init__(self, project_root: Optional[str] = None) -> None:
+    def __init__(self, project_root: str | None = None) -> None:
         """Initialize the setup wizard with project configuration.
 
         Args:
@@ -254,8 +254,6 @@ class SetupWizard:
                 f"{Colors.PROMPT}Backup location (default ~/.mac-setup/backups): {Colors.RESET}",
             ).strip()
             self.config["backup_location"] = location or "~/.mac-setup/backups"
-        else:
-            pass
 
     def _ask_verification(self) -> None:
         """Ask for verification settings."""
@@ -269,8 +267,6 @@ class SetupWizard:
         self.config["verify_after_setup"] = response in {"y", "yes"}
 
         if self.config["verify_after_setup"]:
-            pass
-        else:
             pass
 
     def _confirm_settings(self) -> None:
@@ -294,7 +290,7 @@ class SetupWizard:
         if response not in {"y", "yes"}:
             sys.exit(1)
 
-    def save_config(self, file_path: Optional[str] = None) -> str:
+    def save_config(self, file_path: str | None = None) -> str:
         """Save configuration to file.
 
         Args:

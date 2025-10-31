@@ -15,19 +15,19 @@ Features:
 
 import argparse
 import logging
-import subprocess  # noqa: S404
+import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from cli.utils import Colors
+from cli.utils import Colors, ValidatorBase
 
 
-class GitConfigManager:
+class GitConfigManager(ValidatorBase):
     """Manage git configuration and reload mechanisms."""
 
-    def __init__(self, home_dir: Optional[str] = None) -> None:
+    def __init__(self, home_dir: str | None = None) -> None:
         """Initialize git config manager.
 
         Args:
@@ -62,29 +62,6 @@ class GitConfigManager:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-    def print_status(self, message: str, level: str = "INFO") -> None:
-        """Print colored status message.
-
-        Args:
-            message: Status message
-            level: Log level (INFO, SUCCESS, WARNING, ERROR)
-        """
-        colors = {
-            "INFO": Colors.BLUE,
-            "SUCCESS": Colors.GREEN,
-            "WARNING": Colors.YELLOW,
-            "ERROR": Colors.RED,
-        }
-        _color = colors.get(level, Colors.RESET)
-        _symbol = {
-            "INFO": "[i]",
-            "SUCCESS": "[+]",
-            "WARNING": "[!]",
-            "ERROR": "[-]",
-        }.get(level, "•")
-
-        self.logger.log(getattr(logging, level, logging.INFO), message)
-
     def validate_git_config_syntax(self) -> bool:
         """Validate git config file syntax.
 
@@ -96,8 +73,8 @@ class GitConfigManager:
         try:
             # Check global config
             if self.git_global_config.exists():
-                result = subprocess.run(  # noqa: S603
-                    ["git", "config", "--list"],  # noqa: S607
+                result = subprocess.run(
+                    ["git", "config", "--list"],
                     capture_output=True,
                     text=True,
                     timeout=5,
@@ -125,8 +102,8 @@ class GitConfigManager:
             Dictionary of git config key-value pairs
         """
         try:
-            result = subprocess.run(  # noqa: S603
-                ["git", "config", "--list", "--null"],  # noqa: S607
+            result = subprocess.run(
+                ["git", "config", "--list", "--null"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -164,8 +141,8 @@ class GitConfigManager:
             return changed
 
         try:
-            result = subprocess.run(  # noqa: S603
-                [  # noqa: S607
+            result = subprocess.run(
+                [
                     "git",
                     "config",
                     "--file",
@@ -212,8 +189,8 @@ class GitConfigManager:
         try:
             # Git reads config from files on each invocation
             # We just need to verify it's readable
-            result = subprocess.run(  # noqa: S603
-                ["git", "config", "--list"],  # noqa: S607
+            result = subprocess.run(
+                ["git", "config", "--list"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -273,7 +250,7 @@ class GitConfigManager:
 
         return all_valid
 
-    def create_backup(self) -> Optional[Path]:
+    def create_backup(self) -> Path | None:
         """Create backup of git configuration.
 
         Returns:
@@ -324,8 +301,8 @@ class GitConfigManager:
             # Verify hooks can be executed
             test_hook = self.git_hooks_dir / "pre-commit"
             if test_hook.exists():
-                result = subprocess.run(  # noqa: S603
-                    ["bash", "-n", str(test_hook)],  # noqa: S607
+                result = subprocess.run(
+                    ["bash", "-n", str(test_hook)],
                     capture_output=True,
                     timeout=5,
                     check=False,
@@ -353,8 +330,8 @@ class GitConfigManager:
 
         try:
             # Get configured credential helper
-            result = subprocess.run(  # noqa: S603
-                ["git", "config", "--get", "credential.helper"],  # noqa: S607
+            result = subprocess.run(
+                ["git", "config", "--get", "credential.helper"],
                 capture_output=True,
                 text=True,
                 timeout=5,

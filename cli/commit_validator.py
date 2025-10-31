@@ -10,15 +10,15 @@ import argparse
 import json
 import logging
 import re
-import subprocess  # noqa: S404
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from cli.utils import Colors
+from cli.utils import Colors, ValidatorBase
 
 
-class CodeQualityValidator:
+class CodeQualityValidator(ValidatorBase):
     """Validates code quality for AI-generated commits."""
 
     def __init__(self) -> None:
@@ -40,28 +40,6 @@ class CodeQualityValidator:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-    def print_status(self, message: str, level: str = "INFO") -> None:
-        """Print colored status message."""
-        colors = {
-            "INFO": Colors.BLUE,
-            "SUCCESS": Colors.GREEN,
-            "WARNING": Colors.YELLOW,
-            "ERROR": Colors.RED,
-        }
-        symbol = {
-            "INFO": "[i]",
-            "SUCCESS": "[✓]",
-            "WARNING": "[!]",
-            "ERROR": "[E]",
-        }
-        color = colors.get(level, Colors.RESET)
-        _symbol = symbol.get(level, "•")
-
-        self.logger.log(
-            getattr(logging, level, logging.INFO),
-            message.replace(Colors.RESET, "").replace(color, ""),
-        )
-
     # ========== QUALITY CHECK METHODS ==========
 
     def check_code_style(self, _files: list[str]) -> tuple[bool, list[str], int]:
@@ -76,8 +54,8 @@ class CodeQualityValidator:
 
             # Check with pylint
             try:
-                result = subprocess.run(  # noqa: S603
-                    ["pylint", "--disable=all", "--enable=C,E", filepath],  # noqa: S607
+                result = subprocess.run(
+                    ["pylint", "--disable=all", "--enable=C,E", filepath],
                     capture_output=True,
                     text=True,
                     timeout=10,
@@ -109,8 +87,8 @@ class CodeQualityValidator:
         self.print_status("Checking test coverage...", "INFO")
 
         try:
-            subprocess.run(  # noqa: S603
-                ["coverage", "run", "-m", "pytest", "--tb=short"],  # noqa: S607
+            subprocess.run(
+                ["coverage", "run", "-m", "pytest", "--tb=short"],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -119,8 +97,8 @@ class CodeQualityValidator:
             )
 
             # Get coverage report
-            cov_result = subprocess.run(  # noqa: S603
-                ["coverage", "report", "--fail-under=80"],  # noqa: S607
+            cov_result = subprocess.run(
+                ["coverage", "report", "--fail-under=80"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -158,8 +136,8 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 100
 
-            result = subprocess.run(  # noqa: S603
-                ["bandit", "-r", "-ll", *python_files],  # noqa: S607
+            result = subprocess.run(
+                ["bandit", "-r", "-ll", *python_files],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -200,8 +178,8 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 10  # Best complexity score
 
-            result = subprocess.run(  # noqa: S603
-                ["radon", "cc", "-a", *python_files],  # noqa: S607
+            result = subprocess.run(
+                ["radon", "cc", "-a", *python_files],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -246,8 +224,8 @@ class CodeQualityValidator:
         self.print_status("Running tests...", "INFO")
 
         try:
-            result = subprocess.run(  # noqa: S603
-                ["pytest", "-v", "--tb=short"],  # noqa: S607
+            result = subprocess.run(
+                ["pytest", "-v", "--tb=short"],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -320,8 +298,8 @@ class CodeQualityValidator:
             return True, [], 100
 
         try:
-            result = subprocess.run(  # noqa: S603
-                ["pip-audit"],  # noqa: S607
+            result = subprocess.run(
+                ["pip-audit"],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -349,8 +327,8 @@ class CodeQualityValidator:
     def get_staged_files() -> list[str]:
         """Get list of staged files."""
         try:
-            result = subprocess.run(  # noqa: S603
-                ["git", "diff", "--cached", "--name-only"],  # noqa: S607
+            result = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -384,7 +362,7 @@ class CodeQualityValidator:
 
         return report
 
-    def run_all_checks(self, files: Optional[list[str]] = None) -> dict[str, Any]:
+    def run_all_checks(self, files: list[str] | None = None) -> dict[str, Any]:
         """Run all quality checks."""
         if not files:
             files = self.get_staged_files()
