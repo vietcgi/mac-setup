@@ -13,10 +13,10 @@ Features:
 - Log all changes to audit trail
 """
 
-import argparse
-import logging
-import subprocess  # noqa: S404
 import sys
+import logging
+import argparse
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -96,8 +96,8 @@ class GitConfigManager:
         try:
             # Check global config
             if self.git_global_config.exists():
-                result = subprocess.run(  # noqa: S603
-                    ["git", "config", "--list"],  # noqa: S607
+                result = subprocess.run(
+                    ["git", "config", "--list"],
                     capture_output=True,
                     text=True,
                     timeout=5,
@@ -108,7 +108,7 @@ class GitConfigManager:
                     return False
 
             self.print_status("Git config syntax valid", "SUCCESS")
-            return True  # noqa: TRY300
+            return True
 
         except subprocess.TimeoutExpired:
             self.print_status("Config validation timed out", "ERROR")
@@ -414,7 +414,11 @@ class GitConfigManager:
         print(f"\n{Colors.BLUE}Git Hooks Status:{Colors.RESET}")
         for hook, exists in report["hooks_status"].items():
             formatted_hook = hook.replace("_", " ").title()
-            status = f"{Colors.GREEN}✓ Present{Colors.RESET}" if exists else f"{Colors.RED}✗ Missing{Colors.RESET}"
+            status = (
+                f"{Colors.GREEN}✓ Present{Colors.RESET}"
+                if exists
+                else f"{Colors.RED}✗ Missing{Colors.RESET}"
+            )
             print(f"  {formatted_hook}: {status}")
 
         print(f"\n{Colors.BLUE}Directory Paths:{Colors.RESET}")

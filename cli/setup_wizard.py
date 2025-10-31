@@ -6,9 +6,9 @@ Provides an interactive CLI interface for configuring and running mac-setup.
 Includes progress tracking, validation, and real-time feedback.
 """
 
-import logging
 import sys
 import time
+import logging
 from pathlib import Path
 from typing import Any, Optional
 
@@ -117,14 +117,14 @@ class SetupWizard:
 
     def _print_header(self) -> None:
         """Print wizard header."""
-        print(f"\n{Colors.BLUE}{'=' * 70}{Colors.RESET}")
+        print(f"\n{Colors.BLUE}{"=" * 70}{Colors.RESET}")
         print(f"{Colors.BLUE}  Devkit Interactive Setup Wizard{Colors.RESET}")
-        print(f"{Colors.BLUE}{'=' * 70}{Colors.RESET}\n")
+        print(f"{Colors.BLUE}{"=" * 70}{Colors.RESET}\n")
 
     def _step_header(self, title: str) -> None:
         """Print step header."""
         print(f"\n{Colors.CYAN}>>> {title}{Colors.RESET}")
-        print(f"{Colors.CYAN}{'-' * (len(title) + 4)}{Colors.RESET}")
+        print(f"{Colors.CYAN}{"-" * (len(title) + 4)}{Colors.RESET}")
 
     def _ask_environment(self) -> None:
         """Ask for environment type."""
