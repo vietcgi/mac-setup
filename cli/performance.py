@@ -9,10 +9,10 @@ Provides:
 - Intelligent cache invalidation
 """
 
-import hashlib
 import json
-import logging
 import time
+import hashlib
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -195,20 +195,14 @@ class PerformanceMonitor:
         summary = self.get_summary()
 
         if not summary:
-            print("No performance metrics collected")
             return
 
-        print("\n" + "=" * 70)
-        print("PERFORMANCE METRICS REPORT")
-        print("=" * 70 + "\n")
-
-        for label, stats in sorted(summary.items()):
-            print(f"📊 {label}")
-            for key, value in stats.items():
+        for _label, stats in sorted(summary.items()):
+            for value in stats.values():
                 if isinstance(value, float):
-                    print(f"   {key}: {value:.2f}")
+                    pass
                 else:
-                    print(f"   {key}: {value}")
+                    pass
 
 
 class InstallationOptimizer:

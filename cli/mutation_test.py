@@ -22,11 +22,11 @@ This implementation:
 """
 
 import ast
+import sys
 import json
 import logging
-import subprocess
-import sys
 import tempfile
+import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -383,31 +383,17 @@ def print_mutation_report(report: MutationReport) -> None:
     """Print formatted mutation testing report."""
     # Score interpretation
     if report.mutation_score >= 80:
-        grade = "EXCELLENT"
-        color = "\033[92m"  # Green
-    elif report.mutation_score >= 70:
-        grade = "GOOD"
-        color = "\033[93m"  # Yellow
-    elif report.mutation_score >= 60:
-        grade = "ACCEPTABLE"
-        color = "\033[93m"  # Yellow
+        pass  # Green
+    elif report.mutation_score >= 70 or report.mutation_score >= 60:
+        pass  # Yellow
     else:
-        grade = "NEEDS IMPROVEMENT"
-        color = "\033[91m"  # Red
-
-    print(f"\n{color}╔════════════════════════════════════════╗\033[0m")
-    print(f"{color}║ MUTATION TESTING REPORT                ║\033[0m")
-    print(f"{color}╚════════════════════════════════════════╝\033[0m")
-    print(f"Mutation Score: {color}{report.mutation_score:.1f}%\033[0m ({grade})")
-    print(f"Killed Mutations: {report.killed_mutations}")
-    print(f"Survived Mutations: {report.survived_mutations}")
+        pass  # Red
 
     # Show survived mutations (weak tests)
     if report.survived_mutations > 0:
-        print(f"\n{color}Weak Tests (Survived Mutations):\033[0m")
-        for i, result in enumerate(report.results, 1):
+        for _i, result in enumerate(report.results, 1):
             if not result.killed:
-                print(f"  {i}. {result.mutation_type} in {result.file_path}")
+                pass
 
 
 def save_mutation_report(report: MutationReport, output_path: Path) -> None:

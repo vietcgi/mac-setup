@@ -17,13 +17,13 @@ Architecture (Refactored - Phase 2):
 - AuditReporter: Generates reports and summaries
 """
 
-import hashlib
+import os
 import hmac
 import json
+import shutil
+import hashlib
 import logging
 import operator
-import os
-import shutil
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -81,10 +81,9 @@ class AuditSigningService:
         # Try to load existing key
         if key_file.exists():
             try:
-                with open(key_file, "rb") as f:
-                    key = f.read()
-                    if len(key) == 32:  # Validate key length
-                        return key
+                key = key_file.read_bytes()
+                if len(key) == 32:  # Validate key length
+                    return key
             except Exception as e:
                 self.logger.warning(f"Failed to load HMAC key, generating new one: {e}")
 
@@ -94,8 +93,7 @@ class AuditSigningService:
         # Store key securely
         try:
             key_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(key_file, "wb") as f:
-                f.write(key)
+            key_file.write_bytes(key)
             key_file.chmod(0o600)  # Owner read/write only
             self.logger.info("Generated new HMAC key for audit log signing")
         except Exception as e:
@@ -656,8 +654,9 @@ class AuditReporter:
 
         if integrity["invalid_entry_timestamps"]:
             report_lines.append("⚠️ Invalid Entries at:")
-            for timestamp in integrity["invalid_entry_timestamps"]:
-                report_lines.append(f"  - {timestamp}")
+            report_lines.extend(
+                f"  - {timestamp}" for timestamp in integrity["invalid_entry_timestamps"]
+            )
 
         return "\n".join(report_lines)
 

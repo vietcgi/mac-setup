@@ -10,9 +10,9 @@ SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
-import importlib.util
-import logging
 import sys
+import logging
+import importlib.util
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -347,6 +347,7 @@ class BuiltinHook(HookInterface):
     """Base class for builtin hooks."""
 
     def __init__(self, name: str) -> None:
+        """Initialize builtin hook with name."""
         self.name = name
 
     def execute(self, context: HookContext) -> bool:
@@ -432,10 +433,10 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
+    "BuiltinHook",
     "HookContext",
     "HookInterface",
     "PluginInterface",
     "PluginLoader",
-    "BuiltinHook",
     "SimplePlugin",
 ]

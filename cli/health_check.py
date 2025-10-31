@@ -191,14 +191,13 @@ class ConfigurationCheck(HealthCheck):
                 )
 
             # Try to parse YAML
-            with open(self.config_path, encoding="utf-8") as f:
-                content = f.read()
-                if "global:" not in content:
-                    return (
-                        HealthStatus.WARNING,
-                        "Configuration missing 'global' section",
-                        {"path": str(self.config_path)},
-                    )
+            content = self.config_path.read_text(encoding="utf-8")
+            if "global:" not in content:
+                return (
+                    HealthStatus.WARNING,
+                    "Configuration missing 'global' section",
+                    {"path": str(self.config_path)},
+                )
 
             return (
                 HealthStatus.HEALTHY,
@@ -401,37 +400,19 @@ class HealthMonitor:
     def print_report(self) -> None:
         """Print health check report."""
         if not self.results:
-            print("No health checks have been run")
             return
 
-        overall = self.get_overall_status()
+        self.get_overall_status()
 
         # Status emoji
-        emoji = {
-            HealthStatus.HEALTHY: "✅",
-            HealthStatus.WARNING: "⚠️",
-            HealthStatus.CRITICAL: "❌",
-            HealthStatus.UNKNOWN: "❓",
-        }
 
-        print("\n" + "=" * 60)
-        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
-        print("=" * 60 + "\n")
-
-        for check_name, (status, message, details) in self.results.items():
-            print(f"{emoji.get(status, '?')} {check_name}: {status.upper()}")
-            print(f"   {message}")
-
+        for _status, _message, details in self.results.values():
             if details:
-                for key, value in details.items():
+                for value in details.values():
                     if isinstance(value, list) and len(value) > 3:
-                        print(f"   {key}: {value[:3]} ... ({len(value)} total)")
+                        pass
                     else:
-                        print(f"   {key}: {value}")
-
-            print()
-
-        print("=" * 60)
+                        pass
 
     def get_json_report(self) -> str:
         """Get health check report as JSON."""

@@ -12,7 +12,7 @@ This module provides custom exception types that include:
 from typing import Optional
 
 
-class DevkitException(Exception):
+class DevkitError(Exception):
     """Base exception for all Devkit errors."""
 
     def __init__(
@@ -54,7 +54,7 @@ class DevkitException(Exception):
         return "\n".join(lines)
 
 
-class BootstrapError(DevkitException):
+class BootstrapError(DevkitError):
     """Bootstrap script execution failed."""
 
     @staticmethod
@@ -119,7 +119,7 @@ class BootstrapError(DevkitException):
         )
 
 
-class ConfigError(DevkitException):
+class ConfigError(DevkitError):
     """Configuration file handling error."""
 
     @staticmethod
@@ -181,7 +181,7 @@ class ConfigError(DevkitException):
         )
 
 
-class PluginError(DevkitException):
+class PluginError(DevkitError):
     """Plugin system error."""
 
     @staticmethod
@@ -246,11 +246,11 @@ class PluginError(DevkitException):
         )
 
 
-class SecurityError(DevkitException):
+class SecurityError(DevkitError):
     """Security-related error."""
 
     @staticmethod
-    def checksum_mismatch(expected: str, actual: str) -> "SecurityError":
+    def checksum_mismatch(_expected: str, _actual: str) -> "SecurityError":
         """Create checksum mismatch exception."""
         return SecurityError(
             message="Checksum verification failed",
@@ -280,7 +280,7 @@ class SecurityError(DevkitException):
         )
 
 
-class DependencyError(DevkitException):
+class DependencyError(DevkitError):
     """Missing or incompatible dependency."""
 
     @staticmethod
@@ -315,7 +315,7 @@ class DependencyError(DevkitException):
         )
 
 
-class VerificationError(DevkitException):
+class VerificationError(DevkitError):
     """Setup verification failed."""
 
     @staticmethod
@@ -358,7 +358,7 @@ __all__ = [
     "BootstrapError",
     "ConfigError",
     "DependencyError",
-    "DevkitException",
+    "DevkitError",
     "PluginError",
     "SecurityError",
     "VerificationError",

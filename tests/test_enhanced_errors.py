@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from cli.exceptions import (  # noqa: E402
-    DevkitException,
+    DevkitError,
     BootstrapError,
     ConfigError,
     PluginError,
@@ -26,12 +26,12 @@ from cli.exceptions import (  # noqa: E402
 )
 
 
-class TestDevkitException(unittest.TestCase):
-    """Test base DevkitException class."""
+class TestDevkitError(unittest.TestCase):
+    """Test base DevkitError class."""
 
     def test_exception_creation_with_all_fields(self):
         """Test creating exception with all fields."""
-        exc = DevkitException(
+        exc = DevkitError(
             message="Test error",
             cause="Root cause",
             solutions=["Solution 1", "Solution 2"],
@@ -45,7 +45,7 @@ class TestDevkitException(unittest.TestCase):
 
     def test_exception_with_minimal_fields(self):
         """Test creating exception with minimal fields."""
-        exc = DevkitException(message="Test error")
+        exc = DevkitError(message="Test error")
 
         self.assertEqual(exc.message, "Test error")
         self.assertIsNone(exc.cause)
@@ -54,7 +54,7 @@ class TestDevkitException(unittest.TestCase):
 
     def test_formatted_message_includes_all_parts(self):
         """Test formatted message includes all information."""
-        exc = DevkitException(
+        exc = DevkitError(
             message="Test error",
             cause="Root cause explanation",
             solutions=["Fix 1", "Fix 2"],
@@ -75,7 +75,7 @@ class TestDevkitException(unittest.TestCase):
 
     def test_str_representation_shows_formatted_message(self):
         """Test string representation shows formatted message."""
-        exc = DevkitException(message="Test error", cause="Reason")
+        exc = DevkitError(message="Test error", cause="Reason")
         exc_str = str(exc)
 
         self.assertIn("Test error", exc_str)
@@ -287,7 +287,7 @@ class TestErrorMessageFormatting(unittest.TestCase):
 
     def test_multiline_error_formatting(self):
         """Test that multi-line errors are properly formatted."""
-        exc = DevkitException(
+        exc = DevkitError(
             message="Complex error",
             cause="Multiple reasons",
             solutions=["First solution", "Second solution", "Third solution"],
