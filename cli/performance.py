@@ -9,11 +9,11 @@ Provides:
 - Intelligent cache invalidation
 """
 
-import json
-import time
 import hashlib
+import json
 import logging
-from datetime import datetime, timedelta
+import time
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -33,10 +33,10 @@ class CacheManager:
 
     def get_cache_file(self, key: str) -> Path:
         """Get path to cache file for key."""
-        safe_key = hashlib.md5(key.encode()).hexdigest()
+        safe_key = hashlib.sha256(key.encode()).hexdigest()
         return self.cache_dir / f"{safe_key}.cache"
 
-    def set(self, key: str, value: dict, ttl_hours: int = 24) -> None:
+    def set(self, key: str, value: dict[str, Any], ttl_hours: int = 24) -> None:
         """Store value in cache with optional TTL.
 
         Args:
@@ -45,24 +45,24 @@ class CacheManager:
             ttl_hours: Time-to-live in hours (default 24)
         """
         cache_file = self.get_cache_file(key)
-        expires_at = datetime.now() + timedelta(hours=ttl_hours)
+        expires_at = datetime.now(tz=UTC) + timedelta(hours=ttl_hours)
 
         cache_data = {
             "key": key,
             "value": value,
-            "created": datetime.now().isoformat(),
+            "created": datetime.now(tz=UTC).isoformat(),
             "expires": expires_at.isoformat(),
             "ttl_hours": ttl_hours,
         }
 
         try:
-            with open(cache_file, "w", encoding="utf-8") as f:
+            with cache_file.open("w", encoding="utf-8") as f:
                 json.dump(cache_data, f)
-            self.logger.debug(f"Cached {key} for {ttl_hours} hours")
-        except Exception as e:
-            self.logger.warning(f"Failed to cache {key}: {e}")
+            self.logger.debug("Cached %s for %d hours", key, ttl_hours)
+        except OSError as e:
+            self.logger.warning("Failed to cache %s: %s", key, e)
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Optional[Any]:  # noqa: ANN401
         """Retrieve value from cache if valid.
 
         Args:
@@ -77,21 +77,22 @@ class CacheManager:
             return None
 
         try:
-            with open(cache_file, encoding="utf-8") as f:
+            with cache_file.open(encoding="utf-8") as f:
                 cache_data: dict[str, Any] = json.load(f)
 
             expires = datetime.fromisoformat(cache_data["expires"])
-            if datetime.now() > expires:
+            if datetime.now(tz=UTC) > expires:
                 cache_file.unlink()  # Delete expired cache
-                self.logger.debug(f"Cache expired for {key}")
+                self.logger.debug("Cache expired for %s", key)
                 return None
 
-            self.logger.debug(f"Cache hit for {key}")
+            self.logger.debug("Cache hit for %s", key)
             value: Any = cache_data["value"]
-            return value
-        except Exception as e:
-            self.logger.warning(f"Failed to read cache for {key}: {e}")
+        except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
+            self.logger.warning("Failed to read cache for %s: %s", key, e)
             return None
+
+        return value
 
     def invalidate(self, key: str) -> None:
         """Invalidate cache entry."""
@@ -99,9 +100,9 @@ class CacheManager:
         if cache_file.exists():
             try:
                 cache_file.unlink()
-                self.logger.debug(f"Invalidated cache for {key}")
-            except Exception as e:
-                self.logger.warning(f"Failed to invalidate cache for {key}: {e}")
+                self.logger.debug("Invalidated cache for %s", key)
+            except (OSError, PermissionError) as e:
+                self.logger.warning("Failed to invalidate cache for %s: %s", key, e)
 
     def clear(self) -> None:
         """Clear all cache entries."""
@@ -109,10 +110,10 @@ class CacheManager:
             for cache_file in self.cache_dir.glob("*.cache"):
                 cache_file.unlink()
             self.logger.info("Cleared all cache entries")
-        except Exception as e:
-            self.logger.warning(f"Failed to clear cache: {e}")
+        except (OSError, PermissionError) as e:
+            self.logger.warning("Failed to clear cache: %s", e)
 
-    def get_cache_stats(self) -> dict:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         cache_files = list(self.cache_dir.glob("*.cache"))
         total_size = sum(f.stat().st_size for f in cache_files)
@@ -133,11 +134,9 @@ class PerformanceMonitor:
         self.metrics: dict[str, list[float]] = {}
         self.logger = logging.getLogger(__name__)
 
-    def start_timer(self, label: str) -> float:
+    @staticmethod
+    def start_timer() -> float:
         """Start a timer for performance measurement.
-
-        Args:
-            label: Metric label
 
         Returns:
             Start time (for manual tracking if needed)
@@ -156,7 +155,7 @@ class PerformanceMonitor:
             self.metrics[label] = []
 
         self.metrics[label].append(duration)
-        self.logger.debug(f"Metric {label}: {duration:.2f} {unit}")
+        self.logger.debug("Metric %s: %.2f %s", label, duration, unit)
 
     def end_timer(self, label: str, start_time: float) -> float:
         """End a timer and record the metric.
@@ -172,9 +171,9 @@ class PerformanceMonitor:
         self.record_metric(label, elapsed)
         return elapsed
 
-    def get_summary(self) -> dict:
+    def get_summary(self) -> dict[str, dict[str, Any]]:
         """Get performance metrics summary."""
-        summary = {}
+        summary: dict[str, dict[str, Any]] = {}
 
         for label, durations in self.metrics.items():
             if not durations:
@@ -214,13 +213,12 @@ class InstallationOptimizer:
         self.performance = PerformanceMonitor()
         self.logger = logging.getLogger(__name__)
 
-    def should_reinstall(self, package: str, version: str, cache_ttl: int = 24) -> bool:
+    def should_reinstall(self, package: str, version: str) -> bool:
         """Check if package should be reinstalled based on cache.
 
         Args:
             package: Package name
             version: Package version
-            cache_ttl: Cache TTL in hours
 
         Returns:
             True if should reinstall, False if cached version is still valid
@@ -229,12 +227,12 @@ class InstallationOptimizer:
         cached = self.cache.get(cache_key)
 
         if cached and cached.get("success"):
-            self.logger.info(f"Using cached installation for {package}@{version}")
+            self.logger.info("Using cached installation for %s@%s", package, version)
             return False
 
         return True
 
-    def mark_installed(self, package: str, version: str, success: bool = True) -> None:
+    def mark_installed(self, package: str, version: str, *, success: bool = True) -> None:
         """Mark package as installed in cache.
 
         Args:
@@ -249,7 +247,7 @@ class InstallationOptimizer:
                 "package": package,
                 "version": version,
                 "success": success,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(tz=UTC).isoformat(),
             },
         )
 
@@ -285,7 +283,7 @@ class ParallelInstaller:
         self.optimizer = InstallationOptimizer()
         self.logger = logging.getLogger(__name__)
 
-    def get_install_order(self, packages: list[dict]) -> list[list[dict]]:
+    def get_install_order(self, packages: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
         """Get optimal installation order for packages.
 
         Handles dependency ordering and parallelization.
@@ -340,7 +338,7 @@ class ParallelInstaller:
 
         return waves
 
-    def estimate_duration(self, packages: list[dict]) -> float:
+    def estimate_duration(self, packages: list[dict[str, Any]]) -> float:
         """Estimate total installation duration.
 
         Args:
@@ -361,8 +359,8 @@ class ParallelInstaller:
 
 
 __all__ = [
+    "CacheManager",
+    "InstallationOptimizer",
     "ParallelInstaller",
-    "PerformanceAnalyzer",
-    "PerformanceReport",
-    "SystemMonitor",
+    "PerformanceMonitor",
 ]

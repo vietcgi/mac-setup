@@ -12,10 +12,11 @@ Provides:
 
 import json
 import logging
-import subprocess
-from datetime import datetime
+import os
+import subprocess  # noqa: S404
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 
 class HealthStatus:
@@ -26,7 +27,18 @@ class HealthStatus:
     CRITICAL = "critical"
     UNKNOWN = "unknown"
 
-    ALL_STATUSES = [HEALTHY, WARNING, CRITICAL, UNKNOWN]
+    ALL_STATUSES: ClassVar[list[str]] = [HEALTHY, WARNING, CRITICAL, UNKNOWN]
+
+    @classmethod
+    def is_valid(cls, status: str) -> bool:
+        """Check if status is valid."""
+        return status in cls.ALL_STATUSES
+
+    @classmethod
+    def get_severity(cls, status: str) -> int:
+        """Get numeric severity (0=healthy, 3=unknown)."""
+        severity_map = {cls.HEALTHY: 0, cls.WARNING: 1, cls.CRITICAL: 2, cls.UNKNOWN: 3}
+        return severity_map.get(status, 3)
 
 
 class HealthCheck:
@@ -54,6 +66,11 @@ class HealthCheck:
         """
         raise NotImplementedError
 
+    def get_result_summary(self, result: tuple[str, str, dict[str, Any]]) -> str:
+        """Get formatted summary of check result."""
+        status, message, _ = result
+        return f"[{status.upper()}] {self.name}: {message}"
+
 
 class DependencyCheck(HealthCheck):
     """Check if required dependencies are installed."""
@@ -67,26 +84,44 @@ class DependencyCheck(HealthCheck):
         super().__init__("Dependencies", "Check required tools are installed")
         self.tools = tools
 
-    def run(self) -> tuple[str, str, dict]:
+    @staticmethod
+    def check_tool(tool: str) -> bool:
+        """Check if single tool is available."""
+        try:
+            result = subprocess.run(  # noqa: S603
+                ["which", tool],  # noqa: S607
+                capture_output=True,
+                timeout=2,
+                check=False,
+                shell=False,
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+
+        return result.returncode == 0
+
+    def run(self) -> tuple[str, str, dict[str, Any]]:
         """Check if all dependencies are available."""
         missing = []
         installed = []
 
         for tool in self.tools:
             try:
-                result = subprocess.run(
-                    ["which", tool],
+                result = subprocess.run(  # noqa: S603
+                    ["which", tool],  # noqa: S607
                     capture_output=True,
                     timeout=2,
                     check=False,
+                    shell=False,
                 )
+            except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+                self.logger.debug("Failed to check %s: %s", tool, e)
+                missing.append(tool)
+            else:
                 if result.returncode == 0:
                     installed.append(tool)
                 else:
                     missing.append(tool)
-            except Exception as e:
-                self.logger.debug(f"Failed to check {tool}: {e}")
-                missing.append(tool)
 
         if not missing:
             return (
@@ -119,42 +154,64 @@ class DiskSpaceCheck(HealthCheck):
         super().__init__("Disk Space", f"Check {min_gb}GB free space available")
         self.min_gb = min_gb
 
-    def run(self) -> tuple[str, str, dict]:
-        """Check available disk space."""
+    @staticmethod
+    def get_available_space() -> Optional[int]:
+        """Get available disk space in GB."""
         try:
-            result = subprocess.run(
-                ["df", "-B1G", "/"],
+            result = subprocess.run(  # noqa: S603
+                ["df", "-B1G", "/"],  # noqa: S607
                 capture_output=True,
                 timeout=2,
                 text=True,
                 check=True,
+                shell=False,
             )
-
             lines = result.stdout.strip().split("\n")
-            if len(lines) < 2:
-                return (HealthStatus.UNKNOWN, "Could not parse disk space", {})
+            if len(lines) >= 2:
+                parts = lines[1].split()
+                return int(parts[3].rstrip("G"))
+        except (subprocess.SubprocessError, ValueError, IndexError):
+            pass
+        return None
 
-            # Parse df output
-            parts = lines[1].split()
-            available_gb = int(parts[3].rstrip("G"))
-
-            if available_gb >= self.min_gb:
-                return (
-                    HealthStatus.HEALTHY,
-                    f"{available_gb}GB free space available",
-                    {"available_gb": available_gb, "minimum_gb": self.min_gb},
-                )
-            return (
-                HealthStatus.CRITICAL,
-                f"Only {available_gb}GB free (need {self.min_gb}GB)",
-                {"available_gb": available_gb, "minimum_gb": self.min_gb},
+    def run(self) -> tuple[str, str, dict[str, Any]]:
+        """Check available disk space."""
+        try:
+            result = subprocess.run(  # noqa: S603
+                ["df", "-B1G", "/"],  # noqa: S607
+                capture_output=True,
+                timeout=2,
+                text=True,
+                check=True,
+                shell=False,
             )
-        except Exception as e:
+        except (subprocess.SubprocessError, ValueError, IndexError) as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check disk space: {e}",
                 {"error": str(e)},
             )
+
+        lines = result.stdout.strip().split("\n")
+        if len(lines) < 2:
+            return (HealthStatus.UNKNOWN, "Could not parse disk space", {})
+
+        # Parse df output
+        parts = lines[1].split()
+        available_gb = int(parts[3].rstrip("G"))
+
+        if available_gb >= self.min_gb:
+            return (
+                HealthStatus.HEALTHY,
+                f"{available_gb}GB free space available",
+                {"available_gb": available_gb, "minimum_gb": self.min_gb},
+            )
+
+        return (
+            HealthStatus.CRITICAL,
+            f"Only {available_gb}GB free (need {self.min_gb}GB)",
+            {"available_gb": available_gb, "minimum_gb": self.min_gb},
+        )
 
 
 class ConfigurationCheck(HealthCheck):
@@ -169,7 +226,14 @@ class ConfigurationCheck(HealthCheck):
         super().__init__("Configuration", "Check configuration file integrity")
         self.config_path = config_path or Path.home() / ".devkit" / "config.yaml"
 
-    def run(self) -> tuple[str, str, dict]:
+    def check_permissions(self) -> Optional[str]:
+        """Check file permissions, return permissions string or None if file doesn't exist."""
+        if not self.config_path.exists():
+            return None
+        mode = self.config_path.stat().st_mode
+        return oct(mode)[-3:]
+
+    def run(self) -> tuple[str, str, dict[str, Any]]:
         """Check configuration file."""
         if not self.config_path.exists():
             return (
@@ -209,7 +273,7 @@ class ConfigurationCheck(HealthCheck):
                 },
             )
 
-        except Exception as e:
+        except OSError as e:
             return (
                 HealthStatus.WARNING,
                 f"Failed to check configuration: {e}",
@@ -231,7 +295,21 @@ class LogCheck(HealthCheck):
         self.log_file = log_file or Path.home() / ".devkit" / "logs" / "setup.log"
         self.look_back_hours = look_back_hours
 
-    def run(self) -> tuple[str, str, dict]:
+    def count_errors_and_warnings(self) -> tuple[int, int]:
+        """Count errors and warnings in log file."""
+        if not self.log_file.exists():
+            return 0, 0
+        try:
+            with self.log_file.open(encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            return 0, 0
+
+        errors = sum(1 for line in lines if "ERROR" in line.upper())
+        warnings = sum(1 for line in lines if "WARNING" in line.upper())
+        return errors, warnings
+
+    def run(self) -> tuple[str, str, dict[str, Any]]:
         """Check log file for errors."""
         if not self.log_file.exists():
             return (
@@ -241,7 +319,7 @@ class LogCheck(HealthCheck):
             )
 
         try:
-            with open(self.log_file, encoding="utf-8") as f:
+            with self.log_file.open(encoding="utf-8") as f:
                 lines = f.readlines()
 
             errors = []
@@ -283,7 +361,7 @@ class LogCheck(HealthCheck):
                 },
             )
 
-        except Exception as e:
+        except OSError as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check logs: {e}",
@@ -298,52 +376,59 @@ class SystemCheck(HealthCheck):
         """Initialize system check."""
         super().__init__("System", "Check overall system health")
 
-    def run(self) -> tuple[str, str, dict]:
+    @staticmethod
+    def get_load_average() -> Optional[tuple[float, float, float]]:
+        """Get system load averages."""
+        try:
+            return os.getloadavg()
+        except (OSError, AttributeError):
+            return None
+
+    @staticmethod
+    def run() -> tuple[str, str, dict[str, Any]]:  # type: ignore[misc]  # pylint: disable=arguments-differ
         """Check system health."""
         try:
             # Check if system is responsive
-            result = subprocess.run(
-                ["uname", "-a"],
+            result = subprocess.run(  # noqa: S603
+                ["uname", "-a"],  # noqa: S607
                 capture_output=True,
                 timeout=2,
                 text=True,
                 check=True,
+                shell=False,
             )
-
-            uname = result.stdout.strip()
-
-            # Check load average
-            import os
-
-            load_avg = os.getloadavg()
-
-            # Simple heuristic: if load is too high, flag it
-            cpu_count = os.cpu_count() or 1
-            load_ratio = load_avg[0] / cpu_count
-
-            if load_ratio > 2.0:
-                status = HealthStatus.WARNING
-                message = f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
-            else:
-                status = HealthStatus.HEALTHY
-                message = f"System healthy: {uname[:40]}..."
-
-            return (
-                status,
-                message,
-                {
-                    "load_average": list(load_avg),
-                    "cpu_count": cpu_count,
-                    "load_ratio": round(load_ratio, 2),
-                },
-            )
-
-        except Exception as e:
+        except (subprocess.SubprocessError, OSError) as e:
             return (
                 HealthStatus.UNKNOWN,
                 f"Failed to check system: {e}",
                 {"error": str(e)},
             )
+
+        uname = result.stdout.strip()
+
+        # Check load average
+        load_avg = os.getloadavg()
+
+        # Simple heuristic: if load is too high, flag it
+        cpu_count = os.cpu_count() or 1
+        load_ratio = load_avg[0] / cpu_count
+
+        if load_ratio > 2.0:
+            status = HealthStatus.WARNING
+            message = f"High system load: {load_avg[0]:.2f} (critical: {load_ratio:.2f})"
+        else:
+            status = HealthStatus.HEALTHY
+            message = f"System healthy: {uname[:40]}..."
+
+        return (
+            status,
+            message,
+            {
+                "load_average": list(load_avg),
+                "cpu_count": cpu_count,
+                "load_ratio": round(load_ratio, 2),
+            },
+        )
 
 
 class HealthMonitor:
@@ -352,14 +437,14 @@ class HealthMonitor:
     def __init__(self) -> None:
         """Initialize health monitor."""
         self.checks: list[HealthCheck] = []
-        self.results: dict[str, tuple[str, str, dict]] = {}
+        self.results: dict[str, tuple[str, str, dict[str, Any]]] = {}
         self.logger = logging.getLogger(__name__)
 
     def add_check(self, check: HealthCheck) -> None:
         """Add a health check."""
         self.checks.append(check)
 
-    def run_all(self) -> dict[str, tuple[str, str, dict]]:
+    def run_all(self) -> dict[str, tuple[str, str, dict[str, Any]]]:
         """Run all health checks.
 
         Returns:
@@ -371,9 +456,9 @@ class HealthMonitor:
             try:
                 status, message, details = check.run()
                 self.results[check.name] = (status, message, details)
-                self.logger.debug(f"{check.name}: {status} - {message}")
-            except Exception as e:
-                self.logger.exception(f"Health check {check.name} failed: {e}")
+                self.logger.debug("%s: %s - %s", check.name, status, message)
+            except (OSError, subprocess.SubprocessError, RuntimeError) as e:
+                self.logger.exception("Health check %s failed", check.name)
                 self.results[check.name] = (
                     HealthStatus.UNKNOWN,
                     f"Check failed: {e}",
@@ -426,7 +511,7 @@ class HealthMonitor:
             }
 
         report: dict[str, Any] = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(tz=UTC).isoformat(),
             "overall_status": self.get_overall_status(),
             "checks": checks_dict,
         }

@@ -1,67 +1,97 @@
+---
+# Pre-commit Framework Configuration for devkit
+# 100% HIGHEST INDUSTRY STANDARDS - STRICT MODE
+# Enterprise-grade quality gates for local development
+#
+# All developers MUST pass these checks before committing.
+# These gates ensure: type safety, security, complexity limits, & test coverage.
+#
+# Docs: https://pre-commit.com
+# Setup: pre-commit install
+# Test: pre-commit run --all-files
+# Update: pre-commit autoupdate
+
 default_language_version:
   python: python3.14
 
 repos:
+  # =========================================================================
+  # TIER 1: CRITICAL INTEGRITY CHECKS
+  # =========================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
+      # File format validation (prevent corrupted files)
       - id: check-json
-        name: Check JSON files are valid
+        name: "Check JSON files are valid"
       - id: check-yaml
         args: [--unsafe]
-        name: Check YAML files are valid
+        name: "Check YAML files are valid"
       - id: check-toml
-        name: Check TOML files are valid
+        name: "Check TOML files are valid"
       - id: check-xml
-        name: Check XML files are valid
+        name: "Check XML files are valid"
+
+      # Whitespace & line endings (strict mode)
       - id: trailing-whitespace
-        name: Trim trailing whitespace
+        name: "Trim trailing whitespace"
       - id: end-of-file-fixer
-        name: Fix end of file
+        name: "Fix end of file"
       - id: mixed-line-ending
         args: [--fix=lf]
-        name: Fix mixed line endings
+        name: "Fix mixed line endings"
+
+      # Security - prevent accidental secret commits
       - id: detect-private-key
-        name: Detect private keys
+        name: "Detect private keys"
+
+      # Git integrity
       - id: check-merge-conflict
-        name: Check for merge conflicts
+        name: "Check for merge conflicts"
       - id: check-added-large-files
         args: [--maxkb=102400]
-        name: Prevent large file commits
-      - id: debug-statements
-        name: Check for debug statements
-      - id: check-ast
-        name: Check Python AST syntax
+        name: "Prevent large file commits"
 
+      # Code quality checks
+      - id: debug-statements
+        name: "Check for debug statements"
+      - id: check-ast
+        name: "Check Python AST syntax"
+
+  # =========================================================================
+  # TIER 2: IMPORT MANAGEMENT (isort)
+  # =========================================================================
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        name: Sort and organize imports
+        name: "Sort and organize imports"
         args: [--profile=black, --line-length=100]
         files: ^cli/
 
+  # =========================================================================
+  # TIER 3: LINTING & CODE QUALITY (Ruff)
+  # =========================================================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
       - id: ruff
-        name: Lint Python code (Ruff)
-        args:
-          - --fix
-          - --unsafe-fixes
-          - --ignore=G004,BLE001,TRY401,DTZ005,PLR6301,PTH123,TRY003,PLC0415,ANN401,F822,TRY300,FBT001,FBT002,S603,S607,S404,RUF012,N802,ARG002,PLR0911,CPY001,I001,S324
-          - --config=pyproject.toml
+        name: "Lint Python code (Ruff)"
+        args: [--fix, --unsafe-fixes, --config=pyproject.toml]
         files: ^cli/
       - id: ruff-format
-        name: Format Python code (Ruff)
+        name: "Format Python code (Ruff)"
         args: [--line-length=100, --config=pyproject.toml]
         files: ^cli/
 
+  # =========================================================================
+  # TIER 4: STATIC TYPE CHECKING (mypy - STRICT MODE)
+  # =========================================================================
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.1
     hooks:
       - id: mypy
-        name: Type check with mypy (STRICT)
+        name: "Type check with mypy (STRICT)"
         additional_dependencies:
           - types-PyYAML>=6.0.12
           - types-requests>=2.31.0
@@ -72,75 +102,93 @@ repos:
           - --pretty
         files: ^cli/
 
+  # =========================================================================
+  # TIER 5: SECURITY SCANNING (Bandit)
+  # =========================================================================
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
     hooks:
       - id: bandit
-        name: Security scan (Bandit)
-        args:
-          - --severity-level=medium
-          - -r
-          - cli/
-        files: ^cli/
-        types: [python]
+        name: "Security scan (Bandit)"
         additional_dependencies: [pbr]
+        args: [--severity-level=medium, -r, cli/]
+        types: [python]
+        files: ^cli/
 
+  # =========================================================================
+  # TIER 6: COMPREHENSIVE LINTING (pylint) - STRICT
+  # =========================================================================
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.0.2
     hooks:
       - id: pylint
-        name: Comprehensive linting (pylint)
+        name: "Comprehensive linting (pylint)"
         args:
-          - --disable=too-many-arguments,too-many-branches,too-many-locals,too-many-statements,logging-fstring-interpolation,undefined-all-variable,import-outside-toplevel,too-few-public-methods,duplicate-code,no-member,invalid-unary-operand-type,too-many-return-statements,unused-argument,redefined-outer-name,pointless-statement,expression-not-assigned,invalid-name,import-error,broad-exception-caught
+          - --disable=too-many-arguments,too-many-branches,too-many-locals,too-many-statements
           - --max-line-length=100
         files: ^cli/
-        require_serial: true
         types: [python]
+        require_serial: true
 
+  # =========================================================================
+  # TIER 7: SHELL SCRIPTS (ShellCheck)
+  # =========================================================================
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        name: Check shell scripts (ShellCheck)
+        name: "Check shell scripts (ShellCheck)"
         args: [--severity=warning]
         types: [shell]
 
+  # =========================================================================
+  # TIER 8: YAML CONFIGURATION (yamllint)
+  # =========================================================================
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
     hooks:
       - id: yamllint
-        name: Lint YAML files (yamllint)
+        name: "Lint YAML files (yamllint)"
         args: [--config-file=.yamllint, --format=parsable]
         types: [yaml]
 
+  # =========================================================================
+  # TIER 9: MARKDOWN DOCUMENTATION (markdownlint)
+  # =========================================================================
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.40.0
     hooks:
       - id: markdownlint
-        name: Lint Markdown (markdownlint)
+        name: "Lint Markdown (markdownlint)"
         args: [--fix, --config=.markdownlint.json]
         types: [markdown]
 
+  # =========================================================================
+  # TIER 10: DOCSTRING VALIDATION (pydocstyle)
+  # =========================================================================
   - repo: https://github.com/PyCQA/pydocstyle
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        name: Check docstring conventions (pydocstyle)
+        name: "Check docstring conventions (pydocstyle)"
         args: [--config=pyproject.toml]
         files: ^cli/
         types: [python]
 
+  # =========================================================================
+  # TIER 11: COMPLEXITY ANALYSIS (radon)
+  # =========================================================================
   - repo: local
     hooks:
       - id: radon-cc
+        name: "Check cyclomatic complexity (Radon)"
         entry: bash -c 'radon cc -x B --no-assert cli/'
         language: system
-        name: Check cyclomatic complexity (Radon)
         pass_filenames: false
         stages: [commit]
       - id: radon-mi
+        name: "Check maintainability index (Radon)"
         entry: bash -c 'radon mi -n B cli/'
         language: system
-        name: Check maintainability index (Radon)
         pass_filenames: false
         stages: [commit]

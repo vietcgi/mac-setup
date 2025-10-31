@@ -13,19 +13,19 @@ Provides comprehensive validation for Devkit plugins:
 All plugins must have a manifest.json file and implement the PluginInterface.
 """
 
-import re
-import json
 import hashlib
+import json
 import logging
+import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 
 class PluginManifest:
     """Validates plugin manifest files."""
 
     # Required fields that every plugin must have
-    REQUIRED_FIELDS: dict[str, type[Any]] = {
+    REQUIRED_FIELDS: ClassVar[dict[str, type[Any]]] = {
         "name": str,
         "version": str,
         "author": str,
@@ -33,7 +33,7 @@ class PluginManifest:
     }
 
     # Optional fields with type checking
-    OPTIONAL_FIELDS: dict[str, type[Any]] = {
+    OPTIONAL_FIELDS: ClassVar[dict[str, type[Any]]] = {
         "homepage": str,
         "repository": str,
         "license": str,
@@ -42,7 +42,7 @@ class PluginManifest:
     }
 
     # Valid permission declarations
-    VALID_PERMISSIONS = {
+    VALID_PERMISSIONS: ClassVar[set[str]] = {
         "filesystem",  # Can read/write files
         "network",  # Can make network requests
         "system",  # Can execute system commands
@@ -60,14 +60,16 @@ class PluginManifest:
             json.JSONDecodeError: If manifest is invalid JSON
         """
         if not manifest_path.exists():
-            raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+            msg = f"Manifest not found: {manifest_path}"
+            raise FileNotFoundError(msg)
 
         self.path = manifest_path
         try:
-            with open(manifest_path, encoding="utf-8") as f:
+            with manifest_path.open(encoding="utf-8") as f:
                 self.data = json.load(f)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid manifest JSON in {manifest_path}: {e}") from e
+            msg = f"Invalid manifest JSON in {manifest_path}: {e}"
+            raise ValueError(msg) from e
 
     def validate(self) -> tuple[bool, list[str]]:
         """Validate manifest against schema.
@@ -194,7 +196,7 @@ class PluginValidator:
         self.plugins_dir = plugins_dir
         self.logger = logger or self._setup_logger()
 
-    def validate_plugin(self, plugin_name: str) -> tuple[bool, str]:
+    def validate_plugin(self, plugin_name: str) -> tuple[bool, str]:  # noqa: PLR0911  # pylint: disable=too-many-return-statements
         """Validate plugin before loading.
 
         Checks:
@@ -220,9 +222,9 @@ class PluginValidator:
         manifest_path = plugin_dir / "manifest.json"
         try:
             manifest = PluginManifest(manifest_path)
-            is_valid, errors = manifest.validate()
+            manifest_is_valid, errors = manifest.validate()
 
-            if not is_valid:
+            if not manifest_is_valid:
                 error_msg = "; ".join(errors)
                 return False, f"Manifest validation failed: {error_msg}"
 
@@ -247,18 +249,21 @@ class PluginValidator:
         try:
             if not self._verify_plugin_class(plugin_dir):
                 return False, "Plugin class not properly defined in __init__.py"
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             return False, f"Cannot load plugin class: {e}"
 
         # Log successful validation
         self.logger.info(
-            f"✓ Plugin validated: {plugin_name} v{plugin_info.get("version", "?")} "
-            f"by {plugin_info.get("author", "Unknown")}",
+            "✓ Plugin validated: %s v%s by %s",
+            plugin_name,
+            plugin_info.get("version", "?"),
+            plugin_info.get("author", "Unknown"),
         )
 
         return True, "Plugin validation passed"
 
-    def _verify_plugin_class(self, plugin_dir: Path) -> bool:
+    @staticmethod
+    def _verify_plugin_class(plugin_dir: Path) -> bool:
         """Verify plugin implements required interface.
 
         Checks that __init__.py contains:
@@ -292,7 +297,7 @@ class PluginValidator:
             Dictionary mapping plugin names to (is_valid, message) tuples
         """
         if not self.plugins_dir.exists():
-            self.logger.warning(f"Plugins directory not found: {self.plugins_dir}")
+            self.logger.warning("Plugins directory not found: %s", self.plugins_dir)
             return {}
 
         results = {}
@@ -300,13 +305,13 @@ class PluginValidator:
             d for d in self.plugins_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
         ]
 
-        for plugin_dir in plugin_dirs:
-            plugin_name = plugin_dir.name
-            is_valid, message = self.validate_plugin(plugin_name)
-            results[plugin_name] = (is_valid, message)
+        for plugin_directory in plugin_dirs:
+            plugin_name = plugin_directory.name
+            validation_result, validation_msg = self.validate_plugin(plugin_name)
+            results[plugin_name] = (validation_result, validation_msg)
 
-            if not is_valid:
-                self.logger.warning(f"✗ {plugin_name}: {message}")
+            if not validation_result:
+                self.logger.warning("✗ %s: %s", plugin_name, validation_msg)
 
         return results
 
@@ -319,14 +324,14 @@ class PluginValidator:
         Returns:
             Plugin manifest dict or None if invalid
         """
-        plugin_dir = self.plugins_dir / plugin_name
-        manifest_path = plugin_dir / "manifest.json"
+        plugin_directory = self.plugins_dir / plugin_name
+        manifest_path = plugin_directory / "manifest.json"
 
         try:
-            manifest = PluginManifest(manifest_path)
-            is_valid, _ = manifest.validate()
-            if is_valid:
-                data: Any = manifest.data
+            plugin_manifest = PluginManifest(manifest_path)
+            manifest_valid, _ = plugin_manifest.validate()
+            if manifest_valid:
+                data: Any = plugin_manifest.data
                 if isinstance(data, dict):
                     return data
         except (FileNotFoundError, ValueError):
@@ -369,12 +374,12 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
-        plugins_dir = Path(sys.argv[1])
-        validator = PluginValidator(plugins_dir)
-        results = validator.validate_all_plugins()
+        plugins_directory = Path(sys.argv[1])
+        validator = PluginValidator(plugins_directory)
+        validation_results = validator.validate_all_plugins()
 
-        for is_valid, _message in results.values():
-            status = "✓" if is_valid else "✗"
+        for is_valid, _msg in validation_results.values():
+            _ = "✓" if is_valid else "✗"
     else:
         pass
 

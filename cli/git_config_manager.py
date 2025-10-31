@@ -13,10 +13,10 @@ Features:
 - Log all changes to audit trail
 """
 
-import sys
-import logging
 import argparse
-import subprocess
+import logging
+import subprocess  # noqa: S404
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -96,26 +96,27 @@ class GitConfigManager:
         try:
             # Check global config
             if self.git_global_config.exists():
-                result = subprocess.run(
-                    ["git", "config", "--list"],
+                result = subprocess.run(  # noqa: S603
+                    ["git", "config", "--list"],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=5,
                     check=False,
+                    shell=False,
                 )
-                if result.returncode != 0:
-                    self.print_status(f"Git config validation failed: {result.stderr}", "ERROR")
-                    return False
-
-            self.print_status("Git config syntax valid", "SUCCESS")
-            return True
-
         except subprocess.TimeoutExpired:
             self.print_status("Config validation timed out", "ERROR")
             return False
         except OSError as e:
             self.print_status(f"Config validation error: {e}", "ERROR")
             return False
+
+        if self.git_global_config.exists() and result.returncode != 0:
+            self.print_status(f"Git config validation failed: {result.stderr}", "ERROR")
+            return False
+
+        self.print_status("Git config syntax valid", "SUCCESS")
+        return True
 
     def get_current_config(self) -> dict[str, str]:
         """Get current git configuration.
@@ -124,26 +125,26 @@ class GitConfigManager:
             Dictionary of git config key-value pairs
         """
         try:
-            result = subprocess.run(
-                ["git", "config", "--list", "--null"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "config", "--list", "--null"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
                 check=False,
+                shell=False,
             )
-
-            config = {}
-            if result.returncode == 0:
-                for line in result.stdout.split("\0"):
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        config[key] = value
-
-            return config
-
         except OSError as e:
             self.print_status(f"Error reading config: {e}", "ERROR")
             return {}
+
+        config = {}
+        if result.returncode == 0:
+            for line in result.stdout.split("\0"):
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    config[key] = value
+
+        return config
 
     def detect_config_changes(self) -> dict[str, str]:
         """Detect what git config values have changed.
@@ -163,8 +164,8 @@ class GitConfigManager:
             return changed
 
         try:
-            result = subprocess.run(
-                [
+            result = subprocess.run(  # noqa: S603
+                [  # noqa: S607
                     "git",
                     "config",
                     "--file",
@@ -176,29 +177,29 @@ class GitConfigManager:
                 text=True,
                 timeout=5,
                 check=False,
+                shell=False,
             )
-
-            if result.returncode == 0:
-                for line in result.stdout.split("\0"):
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        if current_config.get(key) != value:
-                            changed[key] = value
-
-            if changed:
-                self.print_status(f"Found {len(changed)} configuration changes", "WARNING")
-                for _key, _value in list(changed.items())[:5]:
-                    pass
-                if len(changed) > 5:
-                    pass
-            else:
-                self.print_status("No configuration changes detected", "SUCCESS")
-
-            return changed
-
         except OSError as e:
             self.print_status(f"Error detecting changes: {e}", "ERROR")
             return {}
+
+        if result.returncode == 0:
+            for line in result.stdout.split("\0"):
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    if current_config.get(key) != value:
+                        changed[key] = value
+
+        if changed:
+            self.print_status(f"Found {len(changed)} configuration changes", "WARNING")
+            for _key, _value in list(changed.items())[:5]:
+                pass
+            if len(changed) > 5:
+                pass
+        else:
+            self.print_status("No configuration changes detected", "SUCCESS")
+
+        return changed
 
     def reload_git_config(self) -> bool:
         """Reload git configuration.
@@ -211,24 +212,25 @@ class GitConfigManager:
         try:
             # Git reads config from files on each invocation
             # We just need to verify it's readable
-            result = subprocess.run(
-                ["git", "config", "--list"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "config", "--list"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
                 check=False,
+                shell=False,
             )
-
-            if result.returncode == 0:
-                self.print_status("Git configuration reloaded", "SUCCESS")
-                self.logger.info("Git configuration reloaded successfully")
-                return True
-            self.print_status(f"Reload failed: {result.stderr}", "ERROR")
-            return False
-
         except OSError as e:
             self.print_status(f"Reload error: {e}", "ERROR")
             return False
+
+        if result.returncode == 0:
+            self.print_status("Git configuration reloaded", "SUCCESS")
+            self.logger.info("Git configuration reloaded successfully")
+            return True
+
+        self.print_status(f"Reload failed: {result.stderr}", "ERROR")
+        return False
 
     def verify_hooks(self) -> bool:
         """Verify and make git hooks executable.
@@ -296,16 +298,15 @@ class GitConfigManager:
             # Verify permissions are correctly set
             stat_info = backup_path.stat()
             if stat_info.st_mode & 0o077:  # Check if world/group readable
-                raise PermissionError(
-                    f"Backup file has insecure permissions: {oct(stat_info.st_mode)}",
-                )
-
-            self.print_status(f"Configuration backed up: {backup_path.name}", "SUCCESS")
-            return backup_path
+                msg = f"Backup file has insecure permissions: {oct(stat_info.st_mode)}"
+                raise PermissionError(msg)
 
         except OSError as e:
             self.print_status(f"Backup failed: {e}", "ERROR")
             return None
+
+        self.print_status(f"Configuration backed up: {backup_path.name}", "SUCCESS")
+        return backup_path
 
     def reload_hooks(self) -> bool:
         """Reload git hooks configuration.
@@ -323,23 +324,24 @@ class GitConfigManager:
             # Verify hooks can be executed
             test_hook = self.git_hooks_dir / "pre-commit"
             if test_hook.exists():
-                result = subprocess.run(
-                    ["bash", "-n", str(test_hook)],
+                result = subprocess.run(  # noqa: S603
+                    ["bash", "-n", str(test_hook)],  # noqa: S607
                     capture_output=True,
                     timeout=5,
                     check=False,
+                    shell=False,
                 )
                 if result.returncode != 0:
                     self.print_status("Hook syntax error", "ERROR")
                     return False
 
-            self.print_status("Hooks reloaded successfully", "SUCCESS")
-            self.logger.info("Git hooks reloaded successfully")
-            return True
-
         except OSError as e:
             self.print_status(f"Hook reload error: {e}", "ERROR")
             return False
+
+        self.print_status("Hooks reloaded successfully", "SUCCESS")
+        self.logger.info("Git hooks reloaded successfully")
+        return True
 
     def reload_credential_helpers(self) -> bool:
         """Reload credential helper configuration.
@@ -351,25 +353,25 @@ class GitConfigManager:
 
         try:
             # Get configured credential helper
-            result = subprocess.run(
-                ["git", "config", "--get", "credential.helper"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "config", "--get", "credential.helper"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
                 check=False,
+                shell=False,
             )
-
-            if result.returncode == 0 and result.stdout.strip():
-                helper = result.stdout.strip()
-                self.print_status(f"Credential helper: {helper}", "INFO")
-            else:
-                self.print_status("Credential helpers verified", "SUCCESS")
-
-            return True
-
         except OSError as e:
             self.print_status(f"Credential helper error: {e}", "ERROR")
             return False
+
+        if result.returncode == 0 and result.stdout.strip():
+            helper = result.stdout.strip()
+            self.print_status(f"Credential helper: {helper}", "INFO")
+        else:
+            self.print_status("Credential helpers verified", "SUCCESS")
+
+        return True
 
     def generate_report(self) -> dict[str, Any]:
         """Generate detailed reload report.
@@ -400,7 +402,8 @@ class GitConfigManager:
             },
         }
 
-    def display_report(self, report: dict[str, Any]) -> None:
+    @staticmethod
+    def display_report(report: dict[str, Any]) -> None:  # type: ignore[misc]
         """Display formatted reload report.
 
         Args:
@@ -415,7 +418,7 @@ class GitConfigManager:
         for key in report["directories"]:
             key.replace("_", " ").title()
 
-    def reload_all(self, dry_run: bool = False) -> bool:
+    def reload_all(self, *, dry_run: bool = False) -> bool:
         """Perform complete git configuration reload.
 
         Args:
@@ -472,10 +475,13 @@ class GitConfigManager:
         """
         if component == "config":
             return self.reload_git_config()
+
         if component == "hooks":
             return self.reload_hooks()
+
         if component == "credentials":
             return self.reload_credential_helpers()
+
         self.print_status(f"Unknown component: {component}", "ERROR")
         return False
 

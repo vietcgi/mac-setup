@@ -10,31 +10,52 @@ SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
-import sys
-import logging
+import argparse
 import importlib.util
+import json
+import logging
+import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 # Security: Import validator
-from .plugin_validator import PluginValidator
+from cli.utils import setup_logger
+
+from .plugin_validator import PluginManifest, PluginValidator
 
 
-@dataclass
-class HookContext:
+class HookContext:  # pylint: disable=too-few-public-methods
     """Context passed to hooks."""
 
-    stage: str  # "pre_setup", "post_setup", "pre_role", "post_role"
-    role: Optional[str] = None
-    task: Optional[str] = None
-    status: str = "running"  # "running", "success", "failed"
-    error: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    def __init__(
+        self,
+        stage: str,
+        role: Optional[str] = None,
+        task: Optional[str] = None,
+        status: str = "running",
+        error: Optional[str] = None,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> None:
+        """Initialize hook context.
+
+        Args:
+            stage: Hook stage ("pre_setup", "post_setup", "pre_role", "post_role")
+            role: Role name (optional)
+            task: Task name (optional)
+            status: Status ("running", "success", "failed")
+            error: Error message (optional)
+            metadata: Additional metadata (optional)
+        """
+        self.stage = stage
+        self.role = role
+        self.task = task
+        self.status = status
+        self.error = error
+        self.metadata = metadata
 
 
-class HookInterface(ABC):
+class HookInterface(ABC):  # pylint: disable=too-few-public-methods
     """Base class for plugin hooks."""
 
     @abstractmethod
@@ -104,25 +125,19 @@ class PluginLoader:
         self.hooks: dict[str, list[HookInterface]] = {}
         self.plugin_paths: list[Path] = []
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Setup default logger."""
-        logger = logging.getLogger("mac-setup.plugins")
-        if not logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(levelname)s: %(message)s")
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-            logger.setLevel(logging.INFO)
-        return logger
+        return setup_logger("mac-setup.plugins")
 
     def add_plugin_path(self, path: Path) -> None:
         """Add directory to plugin search path."""
         path = Path(path).expanduser()
         if path.exists() and path.is_dir():
             self.plugin_paths.append(path)
-            self.logger.debug(f"Added plugin path: {path}")
+            self.logger.debug("Added plugin path: %s", path)
         else:
-            self.logger.warning(f"Plugin path not found: {path}")
+            self.logger.warning("Plugin path not found: %s", path)
 
     def discover_plugins(self) -> list[tuple[str, str]]:
         """Auto-discover plugins in configured paths.
@@ -151,10 +166,10 @@ class PluginLoader:
                     module_name = item.name
                     discovered.append((str(item), module_name))
 
-        self.logger.info(f"Discovered {len(discovered)} plugins")
+        self.logger.info("Discovered %d plugins", len(discovered))
         return discovered
 
-    def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:
+    def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:  # noqa: PLR0911  # pylint: disable=too-many-return-statements
         """Load a single plugin module with security validation.
 
         SECURITY: Before loading, validates:
@@ -176,30 +191,31 @@ class PluginLoader:
             is_valid, message = validator.validate_plugin(module_name)
 
             if not is_valid:
-                self.logger.error(f"Plugin validation failed for {module_name}: {message}")
+                self.logger.error("Plugin validation failed for %s: %s", module_name, message)
                 return None
 
             # SECURITY: Verify manifest integrity (detect tampering)
             manifest_path = plugin_dir / "manifest.json"
             if manifest_path.exists():
-                from .plugin_validator import PluginManifest
-
                 try:
                     manifest = PluginManifest(manifest_path)
                     integrity_valid, integrity_message = manifest.verify_integrity()
                     if not integrity_valid:
                         self.logger.error(
-                            f"Plugin integrity check failed for {module_name}: {integrity_message}",
+                            "Plugin integrity check failed for %s: %s",
+                            module_name,
+                            integrity_message,
                         )
                         return None
-                    self.logger.debug(f"Plugin integrity verified for {module_name}")
-                except Exception as e:
+                    self.logger.debug("Plugin integrity verified for %s", module_name)
+                except (OSError, ValueError, json.JSONDecodeError):
                     self.logger.exception(
-                        f"Failed to verify plugin integrity for {module_name}: {e}",
+                        "Failed to verify plugin integrity for %s",
+                        module_name,
                     )
                     return None
 
-            self.logger.debug(f"Plugin validation passed for {module_name}")
+            self.logger.debug("Plugin validation passed for %s", module_name)
 
             # Create a proper module name with namespace
             full_module_name = f"mac_setup_plugins.{module_name}"
@@ -207,7 +223,7 @@ class PluginLoader:
             # Load the module
             spec = importlib.util.spec_from_file_location(full_module_name, plugin_path)
             if not spec or not spec.loader:
-                self.logger.error(f"Could not load spec for {module_name}")
+                self.logger.error("Could not load spec for %s", module_name)
                 return None
 
             module = importlib.util.module_from_spec(spec)
@@ -227,20 +243,21 @@ class PluginLoader:
 
                     is_valid, errors = plugin_instance.validate()
                     if not is_valid:
-                        self.logger.warning(f"Plugin {module_name} validation failed: {errors}")
+                        self.logger.warning("Plugin %s validation failed: %s", module_name, errors)
                         return None
 
                     self.logger.info(
-                        f"Loaded plugin: {plugin_instance.name} v{plugin_instance.version}",
+                        "Loaded plugin: %s v%s",
+                        plugin_instance.name,
+                        plugin_instance.version,
                     )
                     return plugin_instance
-
-            self.logger.warning(f"No PluginInterface found in {module_name}")
+        except (ImportError, AttributeError, OSError):
+            self.logger.exception("Error loading plugin %s", module_name)
             return None
 
-        except Exception as e:
-            self.logger.exception(f"Error loading plugin {module_name}: {e}")
-            return None
+        self.logger.warning("No PluginInterface found in %s", module_name)
+        return None
 
     def load_all(self, plugin_paths: Optional[list[Path]] = None) -> int:
         """Discover and load all plugins.
@@ -278,7 +295,7 @@ class PluginLoader:
                         self.hooks[stage] = []
                     self.hooks[stage].extend(hooks)
 
-        self.logger.info(f"Successfully loaded {loaded}/{len(discovered)} plugins")
+        self.logger.info("Successfully loaded %d/%d plugins", loaded, len(discovered))
         return loaded
 
     def get_plugin(self, name: str) -> Optional[PluginInterface]:
@@ -291,7 +308,7 @@ class PluginLoader:
 
     def get_plugin_roles(self) -> dict[str, Path]:
         """Get all custom roles from loaded plugins."""
-        roles = {}
+        roles: dict[str, Path] = {}
         for plugin in self.plugins.values():
             roles.update(plugin.get_roles())
         return roles
@@ -313,16 +330,16 @@ class PluginLoader:
         if not hooks:
             return True
 
-        self.logger.debug(f"Executing {len(hooks)} hooks for stage: {stage}")
+        self.logger.debug("Executing %d hooks for stage: %s", len(hooks), stage)
 
         for hook in hooks:
             try:
                 if not hook.execute(context):
-                    self.logger.warning(f"Hook failed for stage {stage}")
+                    self.logger.warning("Hook failed for stage %s", stage)
                     context.status = "failed"
                     return False
-            except Exception as e:
-                self.logger.exception(f"Hook execution error: {e}")
+            except (OSError, RuntimeError, ValueError) as e:
+                self.logger.exception("Hook execution error")
                 context.error = str(e)
                 context.status = "failed"
                 return False
@@ -343,14 +360,15 @@ class PluginLoader:
         return info
 
 
-class BuiltinHook(HookInterface):
+class BuiltinHook(HookInterface):  # pylint: disable=too-few-public-methods
     """Base class for builtin hooks."""
 
     def __init__(self, name: str) -> None:
         """Initialize builtin hook with name."""
         self.name = name
 
-    def execute(self, context: HookContext) -> bool:
+    @staticmethod
+    def execute(_context: HookContext) -> bool:  # pylint: disable=arguments-differ
         """Execute hook."""
         return True
 
@@ -368,23 +386,24 @@ class SimplePlugin(PluginInterface):
     def initialize(self) -> None:
         """Initialize plugin."""
 
-    def get_roles(self) -> dict[str, Path]:
+    @staticmethod
+    def get_roles() -> dict[str, Path]:  # pylint: disable=arguments-differ
         """Return custom roles."""
         return {}
 
-    def get_hooks(self) -> dict[str, list[HookInterface]]:
+    @staticmethod
+    def get_hooks() -> dict[str, list[HookInterface]]:  # pylint: disable=arguments-differ
         """Return hooks."""
         return {}
 
-    def validate(self) -> tuple[bool, list[str]]:
+    @staticmethod
+    def validate() -> tuple[bool, list[str]]:  # pylint: disable=arguments-differ
         """Validate plugin."""
         return True, []
 
 
 def main() -> None:
     """CLI interface for plugin system."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Mac-Setup Plugin System")
     parser.add_argument("--plugin-path", action="append", help="Add plugin path")
     parser.add_argument("--list", action="store_true", help="List plugins")

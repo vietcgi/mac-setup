@@ -22,13 +22,13 @@ This implementation:
 """
 
 import ast
-import sys
 import json
 import logging
+import subprocess  # noqa: S404
+import sys
 import tempfile
-import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -88,7 +88,7 @@ class MutationReport:
     survived_mutations: int = 0
     mutation_score: float = 0.0
     results: list[MutationResult] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def update(self) -> None:
         """Calculate metrics from results."""
@@ -146,7 +146,7 @@ class MutationDetector(ast.NodeVisitor):
             pass
         return self.mutations
 
-    def visit_Compare(self, node: ast.Compare) -> None:
+    def visit_Compare(self, node: ast.Compare) -> None:  # noqa: N802  # pylint: disable=invalid-name
         """Detect comparison operator mutations."""
         for op in node.ops:
             line_num = node.lineno
@@ -156,7 +156,7 @@ class MutationDetector(ast.NodeVisitor):
             self.mutations.extend(mutations_for_op)
         self.generic_visit(node)
 
-    def visit_BoolOp(self, node: ast.BoolOp) -> None:
+    def visit_BoolOp(self, node: ast.BoolOp) -> None:  # noqa: N802  # pylint: disable=invalid-name
         """Detect logical operator mutations (and/or)."""
         line_num = node.lineno
         line_code = self.lines[line_num - 1] if line_num <= len(self.lines) else ""
@@ -186,7 +186,7 @@ class MutationDetector(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def visit_Constant(self, node: ast.Constant) -> None:
+    def visit_Constant(self, node: ast.Constant) -> None:  # noqa: N802  # pylint: disable=invalid-name
         """Detect boolean literal mutations."""
         if isinstance(node.value, bool):
             line_num = node.lineno
@@ -258,25 +258,30 @@ class MutationTester:
         self.logger = self._setup_logging()
         self.report = MutationReport()
 
-    def _setup_logging(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logging() -> logging.Logger:
         """Set up logging."""
         logger = logging.getLogger("mutation_test")
         logger.setLevel(logging.INFO)
         return logger
 
+    def get_mutation_count(self) -> int:
+        """Get total number of detected mutations."""
+        return len(self.report.results)
+
     def run(self) -> MutationReport:
         """Execute mutation testing."""
-        self.logger.info("🧬 Starting Mutation Testing")
-        self.logger.info(f"   CLI directory: {self.cli_dir}")
-        self.logger.info(f"   Tests directory: {self.tests_dir}")
+        self.logger.info("Starting Mutation Testing")
+        self.logger.info("   CLI directory: %s", self.cli_dir)
+        self.logger.info("   Tests directory: %s", self.tests_dir)
 
         # Step 1: Detect mutations
         mutations = self._detect_all_mutations()
-        self.logger.info(f"   Detected {len(mutations)} potential mutation points")
+        self.logger.info("   Detected %d potential mutation points", len(mutations))
 
         # Step 2: Run tests against each mutation
         for i, mutation in enumerate(mutations, 1):
-            self.logger.info(f"   Testing mutation {i}/{len(mutations)}...")
+            self.logger.info("   Testing mutation %d/%d...", i, len(mutations))
             result = self._test_mutation(mutation)
             self.report.results.append(result)
 
@@ -299,8 +304,8 @@ class MutationTester:
                 detector = MutationDetector(source, py_file)
                 file_mutations = detector.detect()
                 mutations.extend(file_mutations)
-            except Exception as e:
-                self.logger.warning(f"Error detecting mutations in {py_file}: {e}")
+            except (OSError, SyntaxError) as e:
+                self.logger.warning("Error detecting mutations in %s: %s", py_file, e)
 
         return mutations
 
@@ -333,31 +338,13 @@ class MutationTester:
             mutation.file_path.write_text(mutated_code)
 
             # Run tests
-            result = subprocess.run(
-                ["pytest", str(self.tests_dir), "-q", "--tb=no"],
+            result = subprocess.run(  # noqa: S603
+                ["pytest", str(self.tests_dir), "-q", "--tb=no"],  # noqa: S607
                 capture_output=True,
                 timeout=30,
                 check=False,
+                shell=False,
             )
-
-            # Restore original
-            mutation.file_path.write_text(original_code)
-            if backup_path.exists():
-                backup_path.unlink()
-
-            # Determine if mutation was killed
-            if result.returncode != 0:
-                return MutationResult(
-                    mutation=mutation,
-                    test_result="killed",
-                    details="Tests failed (mutation caught)",
-                )
-            return MutationResult(
-                mutation=mutation,
-                test_result="survived",
-                details="Tests passed (mutation not caught)",
-            )
-
         except subprocess.TimeoutExpired:
             mutation.file_path.write_text(original_code)
             return MutationResult(
@@ -365,13 +352,32 @@ class MutationTester:
                 test_result="survived",
                 details="Test timeout (mutation not caught)",
             )
-        except Exception as e:
+        except OSError as e:
             mutation.file_path.write_text(original_code)
             return MutationResult(
                 mutation=mutation,
                 test_result="survived",
                 details=f"Error during testing: {e}",
             )
+
+        # Restore original
+        mutation.file_path.write_text(original_code)
+        if backup_path.exists():
+            backup_path.unlink()
+
+        # Determine if mutation was killed
+        if result.returncode != 0:
+            return MutationResult(
+                mutation=mutation,
+                test_result="killed",
+                details="Tests failed (mutation caught)",
+            )
+
+        return MutationResult(
+            mutation=mutation,
+            test_result="survived",
+            details="Tests passed (mutation not caught)",
+        )
 
 
 # ============================================================================
@@ -434,5 +440,8 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
-    "MutationTestRunner",
+    "MutationDetector",
+    "MutationReport",
+    "MutationTester",
+    "MutationType",
 ]

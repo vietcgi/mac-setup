@@ -17,17 +17,24 @@ Architecture (Refactored - Phase 2):
 - AuditReporter: Generates reports and summaries
 """
 
-import os
+import hashlib
 import hmac
 import json
-import shutil
-import hashlib
 import logging
 import operator
-from datetime import datetime, timedelta
+import os
+import shutil
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
+
+
+class HMACKeyError(RuntimeError):
+    """Raised when HMAC signing is enabled but no key is available."""
+
+    def __init__(self) -> None:
+        super().__init__("HMAC signing enabled but no key available")
 
 
 class AuditAction(Enum):
@@ -84,8 +91,8 @@ class AuditSigningService:
                 key = key_file.read_bytes()
                 if len(key) == 32:  # Validate key length
                     return key
-            except Exception as e:
-                self.logger.warning(f"Failed to load HMAC key, generating new one: {e}")
+            except (OSError, ValueError) as e:
+                self.logger.warning("Failed to load HMAC key, generating new one: %s", e)
 
         # Generate new HMAC key (256 bits = 32 bytes)
         key = os.urandom(32)
@@ -96,8 +103,8 @@ class AuditSigningService:
             key_file.write_bytes(key)
             key_file.chmod(0o600)  # Owner read/write only
             self.logger.info("Generated new HMAC key for audit log signing")
-        except Exception as e:
-            self.logger.exception(f"Failed to store HMAC key: {e}")
+        except OSError:
+            self.logger.exception("Failed to store HMAC key")
 
         return key
 
@@ -114,7 +121,7 @@ class AuditSigningService:
             HMAC-SHA256 signature in hexadecimal format
         """
         if not self.hmac_key:
-            raise RuntimeError("HMAC signing enabled but no key available")
+            raise HMACKeyError
 
         entry_json = json.dumps(entry, sort_keys=True, default=str)
         return hmac.new(
@@ -148,8 +155,8 @@ class AuditSigningService:
         try:
             computed_signature = self.sign_entry(entry_copy)
             return hmac.compare_digest(computed_signature, stored_signature)
-        except Exception as e:
-            self.logger.exception(f"Error verifying signature: {e}")
+        except (ValueError, TypeError):
+            self.logger.exception("Error verifying signature")
             return False
 
 
@@ -164,7 +171,7 @@ class AuditLogStorage:
         """
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.log_file = log_dir / f"audit-{datetime.now().strftime("%Y%m%d")}.jsonl"
+        self.log_file = log_dir / f"audit-{datetime.now(tz=UTC).strftime("%Y%m%d")}.jsonl"
         self.logger = logging.getLogger(__name__)
         self._ensure_secure_permissions()
 
@@ -174,8 +181,8 @@ class AuditLogStorage:
             self.log_dir.chmod(0o700)
             if self.log_file.exists():
                 self.log_file.chmod(0o600)
-        except Exception as e:
-            self.logger.warning(f"Could not set audit log permissions: {e}")
+        except (OSError, PermissionError) as e:
+            self.logger.warning("Could not set audit log permissions: %s", e)
 
     def write_entry(self, entry: dict[str, Any]) -> None:
         """Write audit entry to log file.
@@ -191,19 +198,17 @@ class AuditLogStorage:
             self.log_dir.mkdir(parents=True, exist_ok=True)
 
             # Write entry with atomic append
-            with open(self.log_file, "a", encoding="utf-8") as f:
+            with self.log_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(entry) + "\n")
             self._ensure_secure_permissions()
-        except json.JSONEncodeError as e:
+        except (TypeError, ValueError):  # Covers JSON serialization errors
             self.logger.exception(
-                f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data.",
+                "Failed to serialize audit entry. Entry may contain non-serializable data.",
             )
-        except OSError as e:
+        except OSError:
             self.logger.exception(
-                f"Failed to write audit log: {e}. Check disk space and permissions.",
+                "Failed to write audit log. Check disk space and permissions.",
             )
-        except Exception as e:
-            self.logger.exception(f"Unexpected error writing audit log: {e}")
 
     def read_entries(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Read audit log entries from file.
@@ -214,13 +219,13 @@ class AuditLogStorage:
         Returns:
             List of audit log entries
         """
-        entries = []
+        entries: list[dict[str, Any]] = []
 
         try:
             if not self.log_file.exists():
                 return entries
 
-            with open(self.log_file, encoding="utf-8") as f:
+            with self.log_file.open(encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     if line.strip():
                         try:
@@ -228,16 +233,15 @@ class AuditLogStorage:
                             entries.append(entry)
                         except json.JSONDecodeError as e:
                             self.logger.warning(
-                                f"Skipping invalid JSON on line {line_num}: {e}. "
-                                f"Entry may be corrupt.",
+                                "Skipping invalid JSON on line %d: %s. Entry may be corrupt.",
+                                line_num,
+                                e,
                             )
                             continue
         except OSError as e:
-            self.logger.warning(f"Failed to read audit logs: {e}")
-        except Exception as e:
-            self.logger.exception(f"Unexpected error reading audit logs: {e}")
+            self.logger.warning("Failed to read audit logs: %s", e)
 
-        if limit:
+        if limit is not None:
             entries = entries[-limit:]
 
         return entries
@@ -253,7 +257,7 @@ class AuditLogStorage:
             days: Archive logs older than this many days (default 90)
         """
         try:
-            cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
+            cutoff_date = (datetime.now(tz=UTC) - timedelta(days=days)).strftime("%Y%m%d")
             archive_dir = self.log_dir / "archive"
             archive_dir.mkdir(exist_ok=True)
 
@@ -262,9 +266,9 @@ class AuditLogStorage:
                 if file_date < cutoff_date:
                     archive_path = archive_dir / log_file.name
                     shutil.move(str(log_file), str(archive_path))
-                    self.logger.info(f"Archived log file: {log_file.name}")
-        except Exception as e:
-            self.logger.exception(f"Failed to rotate logs: {e}")
+                    self.logger.info("Archived log file: %s", log_file.name)
+        except (OSError, shutil.Error):
+            self.logger.exception("Failed to rotate logs")
 
 
 class AuditLogger:
@@ -273,6 +277,7 @@ class AuditLogger:
     def __init__(
         self,
         log_dir: Optional[Path] = None,
+        *,
         enable_signing: bool = False,
         hmac_key: Optional[bytes] = None,
     ) -> None:
@@ -312,7 +317,7 @@ class AuditLogger:
             Audit log entry
         """
         entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(tz=UTC).isoformat(),
             "action": action.value,
             "status": status,
             "user": user or os.getenv("USER", "unknown"),
@@ -331,8 +336,8 @@ class AuditLogger:
     def log_install_started(
         self,
         roles: Optional[list[str]] = None,
-        details: Optional[dict] = None,
-    ) -> dict:
+        details: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Log installation start."""
         return self.log_action(
             AuditAction.INSTALL_STARTED,
@@ -342,15 +347,19 @@ class AuditLogger:
     def log_install_completed(
         self,
         duration_seconds: float,
-        details: Optional[dict] = None,
-    ) -> dict:
+        details: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Log successful installation."""
         return self.log_action(
             AuditAction.INSTALL_COMPLETED,
             details={"duration_seconds": duration_seconds, **(details or {})},
         )
 
-    def log_install_failed(self, error: str, details: Optional[dict] = None) -> dict:
+    def log_install_failed(
+        self,
+        error: str,
+        details: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Log failed installation."""
         return self.log_action(
             AuditAction.INSTALL_FAILED,
@@ -361,9 +370,9 @@ class AuditLogger:
     def log_config_changed(
         self,
         key: str,
-        old_value: Any,
-        new_value: Any,
-    ) -> dict:
+        old_value: str | int | float | bool | None,  # noqa: FBT001
+        new_value: str | int | float | bool | None,  # noqa: FBT001
+    ) -> dict[str, Any]:
         """Log configuration change."""
         return self.log_action(
             AuditAction.CONFIG_CHANGED,
@@ -374,14 +383,14 @@ class AuditLogger:
             },
         )
 
-    def log_plugin_installed(self, plugin_name: str, version: str) -> dict:
+    def log_plugin_installed(self, plugin_name: str, version: str) -> dict[str, Any]:
         """Log plugin installation."""
         return self.log_action(
             AuditAction.PLUGIN_INSTALLED,
             details={"plugin": plugin_name, "version": version},
         )
 
-    def log_plugin_removed(self, plugin_name: str) -> dict:
+    def log_plugin_removed(self, plugin_name: str) -> dict[str, Any]:
         """Log plugin removal."""
         return self.log_action(
             AuditAction.PLUGIN_REMOVED,
@@ -393,7 +402,7 @@ class AuditLogger:
         check_name: str,
         status: str,
         findings: Optional[list[str]] = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Log security check."""
         return self.log_action(
             AuditAction.SECURITY_CHECK,
@@ -419,6 +428,7 @@ class AuditLogger:
 
     def log_verification(
         self,
+        *,
         passed: bool,
         details: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
@@ -449,6 +459,7 @@ class AuditLogger:
     def get_audit_logs(
         self,
         limit: Optional[int] = None,
+        *,
         verify_signatures: bool = False,
     ) -> list[dict[str, Any]]:
         """Get audit log entries.
@@ -471,7 +482,8 @@ class AuditLogger:
                         filtered_entries.append(entry)
                     else:
                         self.logger.warning(
-                            f"Audit entry has invalid signature: {entry.get("timestamp")}",
+                            "Audit entry has invalid signature: %s",
+                            entry.get("timestamp"),
                         )
             return filtered_entries
 
@@ -509,7 +521,7 @@ class AuditLogger:
             else:
                 invalid_count += 1
                 invalid_timestamps.append(entry.get("timestamp", "unknown"))
-                self.logger.error(f"Tampering detected in audit entry: {entry.get("timestamp")}")
+                self.logger.error("Tampering detected in audit entry: %s", entry.get("timestamp"))
 
         return {
             "total_entries": len(entries),
@@ -533,7 +545,7 @@ class AuditLogger:
         Returns:
             Summary statistics
         """
-        cutoff = datetime.now() - timedelta(hours=hours)
+        cutoff = datetime.now(tz=UTC) - timedelta(hours=hours)
         entries = self.storage.read_entries()
 
         summary: dict[str, Any] = {
@@ -563,8 +575,8 @@ class AuditLogger:
 
                 users = summary["users"]
                 users.add(user)
-            except Exception as e:
-                self.logger.debug(f"Error parsing audit entry: {e}")
+            except (ValueError, KeyError) as e:
+                self.logger.debug("Error parsing audit entry: %s", e)
 
         users_set = summary["users"]
         summary["users"] = list(users_set)
@@ -592,7 +604,7 @@ class AuditReporter:
         Returns:
             Formatted activity report
         """
-        cutoff = datetime.now() - timedelta(days=days)
+        cutoff = datetime.now(tz=UTC) - timedelta(days=days)
         entries = self.audit_logger.get_audit_logs()
 
         report_lines = [
@@ -615,8 +627,8 @@ class AuditReporter:
 
                 action_counts[action] = action_counts.get(action, 0) + 1
                 user_counts[user] = user_counts.get(user, 0) + 1
-            except Exception as e:
-                self.logger.debug(f"Error parsing entry: {e}")
+            except (ValueError, KeyError) as e:
+                self.logger.debug("Error parsing entry: %s", e)
 
         report_lines.append("Actions by Type:")
         for action, count in sorted(

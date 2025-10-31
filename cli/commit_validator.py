@@ -6,11 +6,11 @@ Ensures AI-generated code meets quality standards before commits are made.
 Focuses on code quality over speed.
 """
 
-import re
+import argparse
 import json
 import logging
-import argparse
-import subprocess
+import re
+import subprocess  # noqa: S404
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -76,25 +76,26 @@ class CodeQualityValidator:
 
             # Check with pylint
             try:
-                result = subprocess.run(
-                    ["pylint", "--disable=all", "--enable=C,E", filepath],
+                result = subprocess.run(  # noqa: S603
+                    ["pylint", "--disable=all", "--enable=C,E", filepath],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=10,
                     check=False,
+                    shell=False,
                 )
-                if result.returncode != 0:
-                    for line in result.stdout.split("\n"):
-                        if "C:" in line or "E:" in line:
-                            issues.append(f"{filepath}: {line}")
-                            score -= 5
-
             except FileNotFoundError:
                 self.print_status("pylint not installed, skipping style check", "WARNING")
                 return True, [], 100
             except OSError as e:
                 self.print_status(f"Style check error: {e}", "ERROR")
                 return False, [str(e)], 0
+
+            if result.returncode != 0:
+                for line in result.stdout.split("\n"):
+                    if "C:" in line or "E:" in line:
+                        issues.append(f"{filepath}: {line}")
+                        score -= 5
 
         if issues:
             self.print_status(f"Found {len(issues)} style issues", "WARNING")
@@ -108,44 +109,43 @@ class CodeQualityValidator:
         self.print_status("Checking test coverage...", "INFO")
 
         try:
-            subprocess.run(
-                ["coverage", "run", "-m", "pytest", "--tb=short"],
+            subprocess.run(  # noqa: S603
+                ["coverage", "run", "-m", "pytest", "--tb=short"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
                 check=False,
+                shell=False,
             )
 
             # Get coverage report
-            cov_result = subprocess.run(
-                ["coverage", "report", "--fail-under=80"],
+            cov_result = subprocess.run(  # noqa: S603
+                ["coverage", "report", "--fail-under=80"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=10,
                 check=False,
+                shell=False,
             )
-
-            if cov_result.returncode == 0:
-                # Extract coverage percentage
-                for line in cov_result.stdout.split("\n"):
-                    if "TOTAL" in line:
-                        match = re.search(r"(\d+)%", line)
-                        if match:
-                            coverage = float(match.group(1))
-                            self.print_status(f"Test coverage: {coverage}%", "SUCCESS")
-                            return True, [], coverage
-            else:
-                self.print_status("Test coverage below 80%", "ERROR")
-                return False, [cov_result.stdout], 0
-
-            return False, [], 0
-
         except FileNotFoundError:
             self.print_status("coverage/pytest not installed, skipping", "WARNING")
             return True, [], 100
         except OSError as e:
             self.print_status(f"Coverage check error: {e}", "ERROR")
             return False, [str(e)], 0
+
+        if cov_result.returncode == 0:
+            # Extract coverage percentage
+            for line in cov_result.stdout.split("\n"):
+                if "TOTAL" in line:
+                    match = re.search(r"(\d+)%", line)
+                    if match:
+                        coverage = float(match.group(1))
+                        self.print_status(f"Test coverage: {coverage}%", "SUCCESS")
+                        return True, [], coverage
+
+        self.print_status("Test coverage below 80%", "ERROR")
+        return False, [cov_result.stdout], 0
 
     def check_security(self, files: list[str]) -> tuple[bool, list[str], int]:
         """Check for security issues using bandit."""
@@ -158,35 +158,36 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 100
 
-            result = subprocess.run(
-                ["bandit", "-r", "-ll", *python_files],
+            result = subprocess.run(  # noqa: S603
+                ["bandit", "-r", "-ll", *python_files],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
                 check=False,
+                shell=False,
             )
-
-            if "Issue: " in result.stdout:
-                for line in result.stdout.split("\n"):
-                    if "Issue: " in line or "Severity: " in line:
-                        issues.append(line)
-                        if "HIGH" in line:
-                            score -= 20
-                        elif "MEDIUM" in line:
-                            score -= 10
-
-            if issues:
-                self.print_status(f"Found {len(issues)} security issues", "ERROR")
-                return False, issues, max(0, score)
-            self.print_status("Security check passed", "SUCCESS")
-            return True, [], 100
-
         except FileNotFoundError:
             self.print_status("bandit not installed, skipping security check", "WARNING")
             return True, [], 100
         except OSError as e:
             self.print_status(f"Security check error: {e}", "ERROR")
             return False, [str(e)], 0
+
+        if "Issue: " in result.stdout:
+            for line in result.stdout.split("\n"):
+                if "Issue: " in line or "Severity: " in line:
+                    issues.append(line)
+                    if "HIGH" in line:
+                        score -= 20
+                    elif "MEDIUM" in line:
+                        score -= 10
+
+        if issues:
+            self.print_status(f"Found {len(issues)} security issues", "ERROR")
+            return False, issues, max(0, score)
+
+        self.print_status("Security check passed", "SUCCESS")
+        return True, [], 100
 
     def check_complexity(self, files: list[str]) -> tuple[bool, list[str], float]:
         """Check code complexity using radon."""
@@ -199,39 +200,14 @@ class CodeQualityValidator:
             if not python_files:
                 return True, [], 10  # Best complexity score
 
-            result = subprocess.run(
-                ["radon", "cc", "-a", *python_files],
+            result = subprocess.run(  # noqa: S603
+                ["radon", "cc", "-a", *python_files],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
                 check=False,
+                shell=False,
             )
-
-            complexities = []
-            for line in result.stdout.split("\n"):
-                if " - " in line and any(c in line for c in ["A", "B", "C", "D", "F"]):
-                    complexities.append(line)
-                    # F = too complex, D = high, C = moderate
-                    if "F" in line:
-                        issues.append(f"HIGH COMPLEXITY: {line}")
-                        avg_complexity += 10
-                    elif "D" in line:
-                        issues.append(f"Moderate complexity: {line}")
-                        avg_complexity += 3
-
-            if complexities:
-                avg_complexity = float(avg_complexity / len(complexities)) if complexities else 5.0
-
-            if issues:
-                self.print_status(f"Found {len(issues)} complexity issues", "WARNING")
-                return (
-                    len([i for i in issues if "HIGH" in i]) == 0,
-                    issues,
-                    avg_complexity,
-                )
-            self.print_status("Code complexity acceptable", "SUCCESS")
-            return True, [], avg_complexity
-
         except FileNotFoundError:
             self.print_status("radon not installed, skipping complexity check", "WARNING")
             return True, [], 5
@@ -239,29 +215,45 @@ class CodeQualityValidator:
             self.print_status(f"Complexity check error: {e}", "ERROR")
             return False, [str(e)], 10
 
+        complexities = []
+        for line in result.stdout.split("\n"):
+            if " - " in line and any(c in line for c in ["A", "B", "C", "D", "F"]):
+                complexities.append(line)
+                # F = too complex, D = high, C = moderate
+                if "F" in line:
+                    issues.append(f"HIGH COMPLEXITY: {line}")
+                    avg_complexity += 10
+                elif "D" in line:
+                    issues.append(f"Moderate complexity: {line}")
+                    avg_complexity += 3
+
+        if complexities:
+            avg_complexity = float(avg_complexity / len(complexities)) if complexities else 5.0
+
+        if issues:
+            self.print_status(f"Found {len(issues)} complexity issues", "WARNING")
+            return (
+                len([i for i in issues if "HIGH" in i]) == 0,
+                issues,
+                avg_complexity,
+            )
+
+        self.print_status("Code complexity acceptable", "SUCCESS")
+        return True, [], avg_complexity
+
     def check_tests_pass(self, _files: list[str]) -> tuple[bool, list[str], int]:
         """Run tests to ensure they pass."""
         self.print_status("Running tests...", "INFO")
 
         try:
-            result = subprocess.run(
-                ["pytest", "-v", "--tb=short"],
+            result = subprocess.run(  # noqa: S603
+                ["pytest", "-v", "--tb=short"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=60,
                 check=False,
+                shell=False,
             )
-
-            if result.returncode == 0:
-                # Count passed tests
-                passed = len(re.findall(r"PASSED", result.stdout))
-                self.print_status(f"All tests passed ({passed} tests)", "SUCCESS")
-                return True, [], passed
-            # Extract failed tests
-            failed = re.findall(r"FAILED.*", result.stdout)
-            self.print_status(f"Tests failed ({len(failed)} failures)", "ERROR")
-            return False, failed, 0
-
         except FileNotFoundError:
             self.print_status("pytest not installed, skipping tests", "WARNING")
             return True, [], 0
@@ -271,6 +263,17 @@ class CodeQualityValidator:
         except OSError as e:
             self.print_status(f"Test error: {e}", "ERROR")
             return False, [str(e)], 0
+
+        if result.returncode == 0:
+            # Count passed tests
+            passed = len(re.findall(r"PASSED", result.stdout))
+            self.print_status(f"All tests passed ({passed} tests)", "SUCCESS")
+            return True, [], passed
+
+        # Extract failed tests
+        failed = re.findall(r"FAILED.*", result.stdout)
+        self.print_status(f"Tests failed ({len(failed)} failures)", "ERROR")
+        return False, failed, 0
 
     def check_documentation(self, files: list[str]) -> tuple[bool, list[str], int]:
         """Check for code documentation and docstrings."""
@@ -317,21 +320,14 @@ class CodeQualityValidator:
             return True, [], 100
 
         try:
-            result = subprocess.run(
-                ["pip-audit"],
+            result = subprocess.run(  # noqa: S603
+                ["pip-audit"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=30,
                 check=False,
+                shell=False,
             )
-
-            if "found" in result.stdout.lower():
-                issues = result.stdout.split("\n")
-                self.print_status("Found dependency vulnerabilities", "ERROR")
-                return False, issues, 0
-            self.print_status("Dependency check passed", "SUCCESS")
-            return True, [], 100
-
         except FileNotFoundError:
             self.print_status("pip-audit not installed, skipping", "WARNING")
             return True, [], 100
@@ -339,17 +335,26 @@ class CodeQualityValidator:
             self.print_status(f"Dependency check error: {e}", "ERROR")
             return False, [str(e)], 0
 
+        if "found" in result.stdout.lower():
+            issues = result.stdout.split("\n")
+            self.print_status("Found dependency vulnerabilities", "ERROR")
+            return False, issues, 0
+
+        self.print_status("Dependency check passed", "SUCCESS")
+        return True, [], 100
+
     # ========== INTEGRATION METHODS ==========
 
     @staticmethod
     def get_staged_files() -> list[str]:
         """Get list of staged files."""
         try:
-            result = subprocess.run(
-                ["git", "diff", "--cached", "--name-only"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "diff", "--cached", "--name-only"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 check=False,
+                shell=False,
             )
             return result.stdout.strip().split("\n")
         except OSError:
@@ -439,7 +444,8 @@ class CodeQualityValidator:
 
         return report
 
-    def display_summary(self, report: dict[str, Any]) -> bool:
+    @staticmethod
+    def display_summary(report: dict[str, Any]) -> bool:  # type: ignore[misc]
         """Display quality check summary."""
         for check_result in report["checks"].values():
             if isinstance(check_result, dict):

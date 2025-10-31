@@ -7,21 +7,28 @@ Handles loading, validating, merging, and managing configuration from multiple s
 Supports YAML configuration files, environment variables, and runtime overrides.
 """
 
-import os
-import sys
+import argparse
 import json
 import logging
+import os
+import sys
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-import yaml
+import yaml  # pylint: disable=import-error
+
+from cli.utils import setup_logger
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+class ConfigPermissionError(PermissionError):
+    """Raised when config file has permission issues."""
 
 
 class ConfigEnvironment(Enum):
@@ -51,7 +58,7 @@ class RateLimiter:
         """
         self.max_operations = max_operations
         self.window_seconds = window_seconds
-        self.operations: dict[str, deque] = {}
+        self.operations: dict[str, deque[datetime]] = {}
 
     def is_allowed(self, identifier: str) -> tuple[bool, str]:
         """Check if operation is allowed for given identifier.
@@ -62,7 +69,7 @@ class RateLimiter:
         Returns:
             Tuple of (is_allowed, message)
         """
-        now = datetime.now()
+        now = datetime.now(tz=UTC)
 
         # Initialize operation list if needed
         if identifier not in self.operations:
@@ -119,7 +126,7 @@ class RateLimiter:
             }
 
         operations = self.operations[identifier]
-        datetime.now()
+        datetime.now(tz=UTC)
 
         next_reset = None
         if operations:
@@ -161,6 +168,7 @@ class ConfigurationEngine:
         self,
         project_root: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
+        *,
         enable_rate_limiting: bool = False,
     ) -> None:
         """Initialize configuration engine.
@@ -180,16 +188,10 @@ class ConfigurationEngine:
         self.enable_rate_limiting = enable_rate_limiting
         self.rate_limiter = RateLimiter(max_operations=5, window_seconds=60)
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Setup default logger."""
-        logger = logging.getLogger("mac-setup.config")
-        if not logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(levelname)s: %(message)s")
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-            logger.setLevel(logging.INFO)
-        return logger
+        return setup_logger("mac-setup.config")
 
     def validate_and_secure_config_file(self, config_path: Path) -> None:
         """Validate and secure configuration file permissions.
@@ -208,39 +210,43 @@ class ConfigurationEngine:
             # Create with secure permissions (0600)
             config_path.parent.mkdir(parents=True, exist_ok=True)
             config_path.touch(mode=0o600)
-            self.logger.debug(f"Created {config_path} with secure permissions (0600)")
+            self.logger.debug("Created %s with secure permissions (0600)", config_path)
             return
 
         # Get file stats
         try:
             stat_info = config_path.stat()
-        except OSError as e:
-            self.logger.exception(f"Cannot access config file: {e}")
+        except OSError:
+            self.logger.exception("Cannot access config file")
             raise
 
         # Verify ownership - file must be owned by current user
         current_uid = os.getuid()
         if stat_info.st_uid != current_uid:
-            raise PermissionError(
+            msg = (
                 f"Config file {config_path} is owned by different user "
                 f"(uid: {stat_info.st_uid}, current: {current_uid}). "
-                f"This could be a security risk.",
+                f"This could be a security risk."
             )
+            raise ConfigPermissionError(msg)
 
         # Check file permissions
         file_mode = stat_info.st_mode & 0o777
         if file_mode != 0o600:
             self.logger.warning(
-                f"Config file {config_path} has insecure permissions: {oct(file_mode)}",
+                "Config file %s has insecure permissions: %s",
+                config_path,
+                oct(file_mode),
             )
             self.logger.info("Fixing permissions to 0600 (user read/write only)...")
 
             try:
                 config_path.chmod(0o600)
-                self.logger.info(f"✓ Fixed config permissions for {config_path}")
+                self.logger.info("Fixed config permissions for %s", config_path)
             except OSError as e:
-                self.logger.exception(f"Cannot fix file permissions: {e}")
-                raise PermissionError(f"Unable to fix permissions on {config_path}: {e}") from e
+                self.logger.exception("Cannot fix file permissions")
+                msg = f"Unable to fix permissions on {config_path}: {e}"
+                raise ConfigPermissionError(msg) from e
 
     def load_defaults(self) -> None:
         """Load default configuration from schema."""
@@ -322,27 +328,28 @@ class ConfigurationEngine:
         """
         path = Path(file_path).expanduser()
         if not path.exists():
-            self.logger.warning(f"Configuration file not found: {path}")
+            self.logger.warning("Configuration file not found: %s", path)
             return {}
 
         try:
-            with open(path, encoding="utf-8") as f:
+            with Path(path).open(encoding="utf-8") as f:
                 config = yaml.safe_load(f) or {}
             self._loaded_files.append(path)
-            self.logger.debug(f"Loaded config from {path}")
+            self.logger.debug("Loaded config from %s", path)
 
             if section and section in config:
                 config = config[section]
-
-            return config
-        except yaml.YAMLError as e:
-            self.logger.exception(f"Invalid YAML in {path}: {e}")
+        except yaml.YAMLError:
+            self.logger.exception("Invalid YAML in %s", path)
             return {}
-        except Exception as e:
-            self.logger.exception(f"Error loading {path}: {e}")
+        except OSError:
+            self.logger.exception("Error loading %s", path)
             return {}
 
-    def _parse_config_value(self, value: str) -> str | bool | list[str]:
+        return config
+
+    @staticmethod
+    def _parse_config_value(value: str) -> str | bool | list[str]:
         """Parse configuration value from environment variable.
 
         Handles boolean strings, comma-separated lists, and plain strings.
@@ -359,11 +366,11 @@ class ConfigurationEngine:
             return [v.strip() for v in value.split(",")]
         return value
 
-    def _set_nested_value(
-        self,
+    @staticmethod
+    def _set_nested_value(  # type: ignore[misc]
         target: dict[str, Any],
         key_parts: list[str],
-        value: Any,
+        value: str | bool | list[str],  # noqa: FBT001
     ) -> None:
         """Set value in nested dictionary using key parts.
 
@@ -405,7 +412,7 @@ class ConfigurationEngine:
                 overrides[config_key] = parsed_value
 
         if overrides:
-            self.logger.debug(f"Loaded environment overrides: {overrides}")
+            self.logger.debug("Loaded environment overrides: %s", overrides)
             self.metadata["environment"] = ConfigMetadata(
                 source="environment",
                 timestamp=self._get_timestamp(),
@@ -441,13 +448,13 @@ class ConfigurationEngine:
                 self.project_root / "config" / "platforms" / f"{platform}.yaml",
             )
             self._deep_merge(self.config, platform_config)
-            self.logger.debug(f"Merged platform config: {platform}")
+            self.logger.debug("Merged platform config: %s", platform)
 
         # 3. Load group config
         if group:
             group_config = self.load_file(self.project_root / "config" / "groups" / f"{group}.yaml")
             self._deep_merge(self.config, group_config)
-            self.logger.debug(f"Merged group config: {group}")
+            self.logger.debug("Merged group config: %s", group)
 
         # 4. Load global config from project
         global_config = self.load_file(self.project_root / "config" / "config.yaml")
@@ -467,10 +474,10 @@ class ConfigurationEngine:
         env_overrides = self.load_environment_overrides()
         self._deep_merge(self.config, {"global": env_overrides})
 
-        self.logger.info(f"Configuration loaded from {len(self._loaded_files)} files")
+        self.logger.info("Configuration loaded from %d files", len(self._loaded_files))
         return self.config
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: Any = None) -> Any:  # noqa: ANN401
         """Get configuration value by dot-notation key.
 
         Examples:
@@ -483,11 +490,12 @@ class ConfigurationEngine:
         try:
             for k in keys:
                 value = value[k]
-            return value
         except (KeyError, TypeError):
             return default
 
-    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> tuple[bool, str]:
+        return value
+
+    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> tuple[bool, str]:  # noqa: ANN401
         """Set configuration value by dot-notation key.
 
         SECURITY: Applies rate limiting to prevent abuse of config changes.
@@ -506,11 +514,11 @@ class ConfigurationEngine:
         """
         # Check rate limit if enabled
         if self.enable_rate_limiting:
-            user = user_id or os.getenv("USER", "unknown")
+            user = user_id or os.getenv("USER") or "unknown"
             allowed, message = self.rate_limiter.is_allowed(user)
 
             if not allowed:
-                self.logger.warning(f"Rate limit: {message}")
+                self.logger.warning("Rate limit: %s", message)
                 return False, message
 
         keys = key.split(".")
@@ -522,7 +530,7 @@ class ConfigurationEngine:
             target = target[k]
 
         target[keys[-1]] = value
-        self.logger.debug(f"Set {key} = {value}")
+        self.logger.debug("Set %s = %s", key, value)
         return True, "Configuration updated"
 
     def _validate_environment(self, errors: list[str]) -> None:
@@ -584,10 +592,13 @@ class ConfigurationEngine:
         """
         if format_type == "json":
             return json.dumps(self.config, indent=2)
+
         if format_type == "yaml":
             yaml_str = yaml.dump(self.config, default_flow_style=False)
             return yaml_str if yaml_str is not None else ""
-        raise ValueError(f"Unsupported format: {format_type}")
+
+        msg = f"Unsupported format: {format_type}"
+        raise ValueError(msg)
 
     def save(self, file_path: str | Path) -> None:
         """Save current configuration to file."""
@@ -596,9 +607,9 @@ class ConfigurationEngine:
 
         path.write_text(self.export("yaml"), encoding="utf-8")
 
-        self.logger.info(f"Configuration saved to {path}")
+        self.logger.info("Configuration saved to %s", path)
 
-    def _deep_merge(self, base: dict, override: dict) -> None:
+    def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> None:
         """Deep merge override into base dictionary."""
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -609,7 +620,7 @@ class ConfigurationEngine:
     @staticmethod
     def _get_timestamp() -> str:
         """Get current timestamp in ISO format."""
-        return datetime.now().isoformat()
+        return datetime.now(tz=UTC).isoformat()
 
     def list_loaded_files(self) -> list[str]:
         """Get list of loaded configuration files."""
@@ -638,7 +649,7 @@ class ConfigurationEngine:
         Returns:
             Rate limit statistics
         """
-        user = user_id or os.getenv("USER", "unknown")
+        user = user_id or os.getenv("USER") or "unknown"
         return self.rate_limiter.get_stats(user)
 
     def reset_rate_limit(self, user_id: Optional[str] = None) -> None:
@@ -652,8 +663,6 @@ class ConfigurationEngine:
 
 def main() -> None:
     """CLI interface for configuration engine."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Mac-Setup Configuration Engine")
     parser.add_argument("--project-root", default=str(Path(__file__).parent.parent))
     parser.add_argument("--group", help="Machine group")
@@ -680,37 +689,40 @@ def main() -> None:
         is_valid, errors = engine.validate()
         if is_valid:
             sys.exit(0)
-        else:
-            for _error in errors:
-                pass
-            sys.exit(1)
 
-    elif args.get:
+        for _error in errors:
+            pass
+        sys.exit(1)
+
+    if args.get:
         engine.get(args.get)
+        return
 
-    elif args.set:
+    if args.set:
         success, _message = engine.set(args.set[0], args.set[1])
         if success:
             engine.save(Path.home() / ".mac-setup" / "config.yaml")
         else:
             sys.exit(1)
+        return
 
-    elif args.list_files:
+    if args.list_files:
         for _f in engine.list_loaded_files():
             pass
+        return
 
-    elif args.list_roles:
+    if args.list_roles:
         for _role in engine.get_enabled_roles():
             pass
+        return
 
-    elif args.export:
+    if args.export:
+        return
+
+    # Default: show summary
+    is_valid, errors = engine.validate()
+    if errors:
         pass
-
-    else:
-        # Default: show summary
-        is_valid, errors = engine.validate()
-        if errors:
-            pass
 
 
 if __name__ == "__main__":
@@ -721,6 +733,7 @@ if __name__ == "__main__":
 # ============================================================================
 
 __all__ = [
-    "ConfigEngine",
-    "ConfigValidator",
+    "ConfigEnvironment",
+    "ConfigurationEngine",
+    "RateLimiter",
 ]
