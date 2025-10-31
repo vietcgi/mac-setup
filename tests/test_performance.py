@@ -110,11 +110,11 @@ class TestCacheManager(unittest.TestCase):
         cache_files = list(Path(self.temp_dir).glob("*.cache"))
         self.assertEqual(len(cache_files), 1)
 
-        # Filename should be MD5 hash + .cache extension
+        # Filename should be SHA256 hash + .cache extension
         filename = cache_files[0].name
         self.assertTrue(filename.endswith(".cache"))
-        # MD5 hash is 32 hex chars, plus ".cache" (6 chars) = 38
-        self.assertEqual(len(filename), 38)
+        # SHA256 hash is 64 hex chars, plus ".cache" (6 chars) = 70
+        self.assertEqual(len(filename), 70)
 
     def test_cache_with_complex_data(self):
         """Test caching complex nested data."""

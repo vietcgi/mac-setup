@@ -134,13 +134,17 @@ class PerformanceMonitor:
         self.metrics: dict[str, list[float]] = {}
         self.logger = logging.getLogger(__name__)
 
-    @staticmethod
-    def start_timer() -> float:
+    def start_timer(self, label: str = "") -> float:
         """Start a timer for performance measurement.
+
+        Args:
+            label: Label for the timer (optional, used for tracking)
 
         Returns:
             Start time (for manual tracking if needed)
         """
+        if label and label not in self.metrics:
+            self.metrics[label] = []
         return time.time()
 
     def record_metric(self, label: str, duration: float, unit: str = "seconds") -> None:
