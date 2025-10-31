@@ -27,7 +27,6 @@ jobs:
   ansible-lint:
     name: Ansible Lint
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -36,10 +35,10 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install Ansible and ansible-lint
       run: |
-        # Use compatible versions: ansible-core 2.20.0+ supports Python 3.14
         pip install ansible ansible-lint
 
     - name: Run ansible-lint
@@ -104,6 +103,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install Ansible
       run: |
@@ -167,6 +167,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install pre-commit
       run: pip install pre-commit

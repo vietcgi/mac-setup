@@ -33,6 +33,7 @@ Created a Python 3.14-compatible mutation testing framework from scratch:
 ```
 
 **Mutation Types Detected:**
+
 - Comparison operators (`==` → `!=`, `>` → `>=`, etc.)
 - Boolean literals (`True` → `False`)
 - Logical operators (`and` → `or`)
@@ -40,6 +41,7 @@ Created a Python 3.14-compatible mutation testing framework from scratch:
 - Return value mutations
 
 **Architecture:**
+
 ```
 MutationDetector (AST visitor)
     ↓
@@ -80,6 +82,7 @@ Created 24 new configuration engine tests:
 **File:** `tests/test_config_engine.py` (254 lines)
 
 Tests added:
+
 - ✅ Default configuration loading (12 tests)
 - ✅ Configuration validation (3 tests)
 - ✅ Engine initialization (5 tests)
@@ -105,6 +108,7 @@ mutation-testing:
 ```
 
 **Quality Pipeline:**
+
 ```
 python-quality ────┐
 bash-quality ──────┤
@@ -115,6 +119,7 @@ mutation-testing ──┘   ← NEW!
 ```
 
 **Thresholds:**
+
 - 🔴 < 70%: CI Fails (unacceptable)
 - 🟡 70-80%: CI Passes with warning (acceptable)
 - 🟢 ≥ 80%: CI Passes (excellent - target)
@@ -122,11 +127,13 @@ mutation-testing ──┘   ← NEW!
 ### 5. Comprehensive Documentation 📚
 
 **Files Created:**
+
 - `MUTATION_TESTING.md` (187 lines) - Complete guide
 - `MUTATION_TESTING_IMPLEMENTATION.md` (this file) - Implementation report
 - `.mutation_test/report.json` - Automated JSON report
 
 **Documentation Covers:**
+
 - What is mutation testing and why it matters
 - How to run locally: `python cli/mutation_test.py`
 - How to improve weak tests (5 best practices)
@@ -139,6 +146,7 @@ mutation-testing ──┘   ← NEW!
 Fixed test modules to handle CLI modules with `main()` functions:
 
 **Updated Test Files:**
+
 - `tests/test_commit_validator.py` - Added sys.argv mocking
 - `tests/test_plugin_system.py` - Added sys.argv mocking
 - `tests/test_setup_wizard.py` - Added sys.argv mocking
@@ -162,18 +170,21 @@ from cli.module_name import MyClass
 **Location:** All in `commit_validator.py`
 
 **Type 1: Subprocess Parameters (12 mutations)**
+
 - Lines: 87-88, 118-119, 126-127, 164-165, 205-206, 252-253, 349-350
 - Mutations: `capture_output=True → False`, `text=True → False`
 - **Why they survive:** These are subprocess.run() parameters mocked in tests. Changing them doesn't affect test behavior because the subprocess is mocked.
 - **Status:** ✅ **Acceptable** - Not a code quality issue, tests are correct
 
 **Type 2: Logical Operator (1 mutation)**
+
 - Line: 213
 - Mutation: `or` → `and` in complexity line parsing
 - **Why it survives:** Multiple `or` operators in condition; changing one still returns True
 - **Status:** ✅ **Acceptable** - Complex logical conditions are inherently difficult to fully test
 
 **Type 3: Config Defaults (Originally 16 mutations)**
+
 - Killed by new config_engine tests
 - Tests now verify each configuration default value
 
@@ -182,6 +193,7 @@ from cli.module_name import MyClass
 ## Industry Benchmark Comparison
 
 **Mutation Score Ranges:**
+
 - 0-50%: ❌ Poor - Tests are ineffective
 - 50-70%: 🟡 Fair - Tests need improvement
 - 70-80%: 🟢 Good - Tests are effective
@@ -234,6 +246,7 @@ grep -A 5 "commit_validator" .mutation_test/report.json
 ### In CI/CD
 
 Automatic on every push:
+
 ```bash
 # Triggers automatically
 git push origin main
@@ -253,6 +266,7 @@ Survived: 15 (mostly false positives)
 ```
 
 If survived > expected:
+
 1. Review `.mutation_test/report.json` for details
 2. Look at original code vs mutated code
 3. Improve tests to catch more mutations
@@ -273,9 +287,11 @@ If survived > expected:
 ### 🎯 Next Priority (Tier 1 CRITICAL)
 
 2. **Property-Based Testing** (hypothesis) - ~3-4 hours
+
    ```bash
    pip install hypothesis
    ```
+
    - Find edge cases in validators
    - Test with 100+ random inputs per test
    - Add to 10-15 critical functions
@@ -331,6 +347,7 @@ Session 3: 61.90% → +24 tests, 94.7% mutation score ← YOU ARE HERE
 ```
 
 **Overall Improvement:**
+
 - Test count: 236 → 260 (+24)
 - Code coverage: 36.35% → 61.90% (+25.55%)
 - Type safety: 62 errors → 55 errors
@@ -342,6 +359,7 @@ Session 3: 61.90% → +24 tests, 94.7% mutation score ← YOU ARE HERE
 ## Files Modified/Created
 
 ### New Files
+
 - ✅ `cli/mutation_test.py` - Mutation testing framework (413 lines)
 - ✅ `tests/test_config_engine.py` - Config engine tests (254 lines)
 - ✅ `MUTATION_TESTING.md` - User guide (187 lines)
@@ -349,6 +367,7 @@ Session 3: 61.90% → +24 tests, 94.7% mutation score ← YOU ARE HERE
 - ✅ `.mutation_test/report.json` - Automated report
 
 ### Modified Files
+
 - ✅ `.github/workflows/quality.yml` - Added mutation-testing job
 - ✅ `tests/test_commit_validator.py` - Added sys.argv mocking
 - ✅ `tests/test_plugin_system.py` - Added sys.argv mocking
@@ -376,11 +395,13 @@ Session 3: 61.90% → +24 tests, 94.7% mutation score ← YOU ARE HERE
 ## Performance Impact
 
 ### Local Development
+
 - **Mutation testing runtime:** ~2-5 seconds per module
 - **Full run:** ~30-40 seconds (285 mutations × pytest run)
 - **CI/CD runtime:** ~2-3 minutes in GitHub Actions
 
 ### CI/CD Pipeline
+
 - **Total quality pipeline:** ~5-8 minutes
 - **Mutation testing portion:** ~2-3 minutes
 - **Mutation score check:** Instant (JSON parsing)

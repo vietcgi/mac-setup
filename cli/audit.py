@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import hashlib
+import hmac
+import os
 
 
 class AuditAction(Enum):
@@ -41,23 +43,66 @@ class AuditAction(Enum):
 class AuditLogger:
     """Enterprise audit logging system."""
 
-    def __init__(self, log_dir: Optional[Path] = None, enable_signing: bool = False):
+    def __init__(self, log_dir: Optional[Path] = None, enable_signing: bool = False, hmac_key: Optional[bytes] = None):
         """
         Initialize audit logger.
 
         Args:
             log_dir: Directory for audit logs (default ~/.devkit/audit)
-            enable_signing: Enable cryptographic signing of logs
+            enable_signing: Enable cryptographic signing of logs using HMAC
+            hmac_key: HMAC secret key (auto-generated if enable_signing=True and not provided)
         """
         self.log_dir = log_dir or Path.home() / ".devkit" / "audit"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.enable_signing = enable_signing
         self.logger = logging.getLogger(__name__)
 
+        # Initialize HMAC key for signing
+        self.hmac_key = hmac_key
+        if enable_signing and not hmac_key:
+            self.hmac_key = self._load_or_create_hmac_key()
+
         # Set up file logging
         log_file = self.log_dir / f"audit-{datetime.now().strftime('%Y%m%d')}.jsonl"
         self.log_file = log_file
         self._ensure_secure_permissions()
+
+    def _load_or_create_hmac_key(self) -> bytes:
+        """
+        Load HMAC key from secure storage or create a new one.
+
+        SECURITY: HMAC key is stored in ~/.devkit/.hmac_key with 0600 permissions.
+        This key is used for cryptographic signing of audit logs.
+
+        Returns:
+            HMAC secret key (32 bytes)
+        """
+        key_file = self.log_dir / ".hmac_key"
+
+        # Try to load existing key
+        if key_file.exists():
+            try:
+                with open(key_file, "rb") as f:
+                    key = f.read()
+                    if len(key) == 32:  # Validate key length
+                        return key
+            except Exception as e:
+                self.logger.warning(f"Failed to load HMAC key, generating new one: {e}")
+
+        # Generate new HMAC key (256 bits = 32 bytes)
+        key = os.urandom(32)
+
+        # Store key securely
+        try:
+            key_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(key_file, "wb") as f:
+                f.write(key)
+            key_file.chmod(0o600)  # Owner read/write only
+            self.logger.info("Generated new HMAC key for audit log signing")
+        except Exception as e:
+            self.logger.error(f"Failed to store HMAC key: {e}")
+
+        return key
 
     def _ensure_secure_permissions(self) -> None:
         """Ensure audit log directory has secure permissions (700)."""
@@ -70,16 +115,57 @@ class AuditLogger:
 
     def _sign_entry(self, entry: Dict[str, Any]) -> str:
         """
-        Create cryptographic signature for audit entry.
+        Create HMAC-SHA256 cryptographic signature for audit entry.
+
+        SECURITY: Uses HMAC with a secret key (not just SHA256 hash).
+        This prevents tampering: attackers cannot forge signatures without the key.
 
         Args:
             entry: Audit entry dictionary
 
         Returns:
-            SHA256 hash signature of entry JSON
+            HMAC-SHA256 signature in hexadecimal format
         """
+        if not self.hmac_key:
+            raise RuntimeError("HMAC signing enabled but no key available")
+
         entry_json = json.dumps(entry, sort_keys=True, default=str)
-        return hashlib.sha256(entry_json.encode()).hexdigest()
+        signature = hmac.new(
+            self.hmac_key,
+            entry_json.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        return signature
+
+    def verify_signature(self, entry: Dict[str, Any]) -> bool:
+        """
+        Verify HMAC-SHA256 signature of an audit log entry.
+
+        SECURITY: Detects tampering by verifying entry hasn't been modified.
+
+        Args:
+            entry: Audit log entry with signature field
+
+        Returns:
+            True if signature is valid, False otherwise
+        """
+        if "signature" not in entry:
+            return False
+
+        if not self.hmac_key:
+            self.logger.warning("Cannot verify signature: HMAC key not available")
+            return False
+
+        stored_signature = entry["signature"]
+        # Create a copy without the signature for verification
+        entry_copy = {k: v for k, v in entry.items() if k != "signature"}
+
+        try:
+            computed_signature = self._sign_entry(entry_copy)
+            return hmac.compare_digest(computed_signature, stored_signature)
+        except Exception as e:
+            self.logger.error(f"Error verifying signature: {e}")
+            return False
 
     def log_action(
         self,
@@ -100,8 +186,6 @@ class AuditLogger:
         Returns:
             Audit log entry
         """
-        import os
-
         entry = {
             "timestamp": datetime.now().isoformat(),
             "action": action.value,
@@ -207,12 +291,13 @@ class AuditLogger:
         """Get current audit log file path."""
         return self.log_file
 
-    def get_audit_logs(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_audit_logs(self, limit: Optional[int] = None, verify_signatures: bool = False) -> List[Dict[str, Any]]:
         """
         Get audit log entries.
 
         Args:
             limit: Maximum number of entries (default all)
+            verify_signatures: If True, only return entries with valid signatures
 
         Returns:
             List of audit log entries
@@ -223,7 +308,15 @@ class AuditLogger:
             with open(self.log_file, "r") as f:
                 for line in f:
                     if line.strip():
-                        entries.append(json.loads(line))
+                        entry = json.loads(line)
+
+                        # Skip if signature verification requested and entry has invalid signature
+                        if verify_signatures and entry.get("signature"):
+                            if not self.verify_signature(entry):
+                                self.logger.warning(f"Audit entry has invalid signature: {entry.get('timestamp')}")
+                                continue
+
+                        entries.append(entry)
         except Exception as e:
             self.logger.warning(f"Failed to read audit logs: {e}")
 
@@ -231,6 +324,66 @@ class AuditLogger:
             entries = entries[-limit:]
 
         return entries
+
+    def validate_log_integrity(self) -> Dict[str, Any]:
+        """
+        Validate integrity of all audit log entries.
+
+        SECURITY: Checks that all entries have valid HMAC signatures.
+        Returns report of any tampering detected.
+
+        Returns:
+            Dictionary with validation results:
+            {
+                "total_entries": int,
+                "valid_entries": int,
+                "invalid_entries": int,
+                "unsigned_entries": int,
+                "tampering_detected": bool,
+                "invalid_entry_timestamps": List[str]
+            }
+        """
+        entries = []
+        try:
+            with open(self.log_file, "r") as f:
+                for line in f:
+                    if line.strip():
+                        entries.append(json.loads(line))
+        except Exception as e:
+            self.logger.error(f"Failed to read audit logs for validation: {e}")
+            return {
+                "total_entries": 0,
+                "valid_entries": 0,
+                "invalid_entries": 0,
+                "unsigned_entries": 0,
+                "tampering_detected": False,
+                "invalid_entry_timestamps": [],
+                "error": str(e)
+            }
+
+        valid_count = 0
+        invalid_count = 0
+        unsigned_count = 0
+        invalid_timestamps = []
+
+        for entry in entries:
+            if "signature" not in entry:
+                unsigned_count += 1
+            elif self.verify_signature(entry):
+                valid_count += 1
+            else:
+                invalid_count += 1
+                invalid_timestamps.append(entry.get("timestamp", "unknown"))
+                self.logger.error(f"Tampering detected in audit entry: {entry.get('timestamp')}")
+
+        return {
+            "total_entries": len(entries),
+            "valid_entries": valid_count,
+            "invalid_entries": invalid_count,
+            "unsigned_entries": unsigned_count,
+            "tampering_detected": invalid_count > 0,
+            "invalid_entry_timestamps": invalid_timestamps
+        }
 
     def get_audit_summary(self, hours: int = 24) -> Dict[str, Any]:
         """

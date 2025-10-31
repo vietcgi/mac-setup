@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=75.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,13 +9,13 @@ description = "Enterprise-grade system configuration management"
 authors = [
     {name = "Kevin", email = "kevin@example.com"}
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 license = {text = "MIT"}
 
 dependencies = [
     "PyYAML>=6.0",
     "requests>=2.28",
-    "setuptools>=68.0",
+    "setuptools>=75.0",
 ]
 
 [project.optional-dependencies]
@@ -35,7 +35,7 @@ dev = [
     "black>=23.0.0",
     "types-PyYAML>=6.0.12",
     "types-requests>=2.31.0",
-    "types-setuptools>=68.0.0",
+    "types-setuptools>=75.0.0",
 ]
 
 # =========================================================================

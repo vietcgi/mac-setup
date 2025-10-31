@@ -17,6 +17,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Type, Any
 import re
+import hashlib
 
 
 class PluginManifest:
@@ -127,6 +128,35 @@ class PluginManifest:
                         )
 
         return len(errors) == 0, errors
+
+    def verify_integrity(self) -> Tuple[bool, str]:
+        """
+        Verify plugin manifest integrity using SHA256 checksum.
+
+        SECURITY: Detects tampering and corruption of manifest files.
+
+        Returns:
+            Tuple of (is_valid, message)
+        """
+        # Check if manifest has stored checksum
+        if "checksum" not in self.data:
+            return False, "Missing integrity checksum in manifest"
+
+        stored_checksum = self.data["checksum"]
+
+        # Create a copy without the checksum for computing hash
+        manifest_copy = {k: v for k, v in self.data.items() if k != "checksum"}
+        manifest_json = json.dumps(manifest_copy, sort_keys=True, default=str)
+        computed_checksum = hashlib.sha256(manifest_json.encode()).hexdigest()
+
+        if computed_checksum != stored_checksum:
+            return (
+                False,
+                f"Manifest integrity check failed. Plugin may have been tampered with. "
+                f"Expected: {stored_checksum}, Got: {computed_checksum}"
+            )
+
+        return True, "Manifest integrity verified"
 
     @staticmethod
     def _is_valid_semver(version: str) -> bool:

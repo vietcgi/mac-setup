@@ -19,6 +19,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install quality tools
       run: |
@@ -48,7 +49,6 @@ jobs:
           --cov-report=html \
           --cov-report=term-missing \
           --junitxml=junit.xml
-      continue-on-error: true
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -87,7 +87,6 @@ jobs:
           verify-setup.sh \
           update.sh \
           cli/config.sh
-      continue-on-error: true
 
     - name: Run shfmt (shell formatting check)
       run: |
@@ -106,6 +105,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install yamllint
       run: pip install yamllint
@@ -118,7 +118,6 @@ jobs:
           .github/workflows/*.yml \
           ansible/group_vars/ \
           ansible/roles/*/
-      continue-on-error: true
 
   # Complexity analysis
   complexity:
@@ -132,6 +131,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install radon
       run: pip install radon
@@ -155,7 +155,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
+        cache: 'pip'
 
     - name: Install pytest-benchmark
       run: pip install pytest-benchmark
@@ -176,6 +177,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
@@ -211,10 +213,42 @@ jobs:
         name: mutation-test-report
         path: .mutation_test/
 
+  # Type Checking with mypy
+  type-checking:
+    name: Type Checking (mypy)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        cache: 'pip'
+
+    - name: Install mypy and dependencies
+      run: |
+        pip install mypy types-PyYAML types-requests types-setuptools
+
+    - name: Run mypy type checking (strict mode)
+      run: |
+        mypy cli/ \
+          --strict \
+          --no-implicit-optional \
+          --disallow-untyped-calls \
+          --disallow-untyped-defs \
+          --warn-redundant-casts \
+          --warn-unused-ignores \
+          --warn-return-any \
+          --warn-unused-configs \
+          --pretty \
+          --show-error-context
+
   # Quality Summary
   quality-summary:
     name: Quality Summary
-    needs: [python-quality, bash-quality, yaml-quality, complexity, performance, mutation-testing]
+    needs: [python-quality, bash-quality, yaml-quality, complexity, performance, mutation-testing, type-checking]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -229,4 +263,5 @@ jobs:
         echo "Complexity:        ${{ needs.complexity.result }}"
         echo "Performance:       ${{ needs.performance.result }}"
         echo "Mutation Testing:  ${{ needs.mutation-testing.result }}"
+        echo "Type Checking:     ${{ needs.type-checking.result }}"
         echo "════════════════════════════════════════════════════"

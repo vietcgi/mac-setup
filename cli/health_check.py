@@ -43,7 +43,7 @@ class HealthCheck:
         self.description = description
         self.logger = logging.getLogger(__name__)
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> Tuple[str, str, Dict[str, Any]]:
         """
         Run the health check.
 

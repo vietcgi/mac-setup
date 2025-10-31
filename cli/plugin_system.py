@@ -191,6 +191,21 @@ class PluginLoader:
                 self.logger.error(f"Plugin validation failed for {module_name}: {message}")
                 return None
 
+            # SECURITY: Verify manifest integrity (detect tampering)
+            manifest_path = plugin_dir / "manifest.json"
+            if manifest_path.exists():
+                from .plugin_validator import PluginManifest
+                try:
+                    manifest = PluginManifest(manifest_path)
+                    integrity_valid, integrity_message = manifest.verify_integrity()
+                    if not integrity_valid:
+                        self.logger.error(f"Plugin integrity check failed for {module_name}: {integrity_message}")
+                        return None
+                    self.logger.debug(f"Plugin integrity verified for {module_name}")
+                except Exception as e:
+                    self.logger.error(f"Failed to verify plugin integrity for {module_name}: {e}")
+                    return None
+
             self.logger.debug(f"Plugin validation passed for {module_name}")
 
             # Create a proper module name with namespace

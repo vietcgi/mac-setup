@@ -12,9 +12,11 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import sys
+from datetime import datetime, timedelta
+from collections import deque
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -26,6 +28,114 @@ class ConfigEnvironment(Enum):
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
+
+
+class RateLimiter:
+    """
+    Rate limiter for sensitive configuration operations.
+
+    SECURITY: Prevents abuse and brute-force attacks by limiting
+    the number of sensitive operations (like config changes) within
+    a time window.
+
+    Default: Max 5 operations per 60 seconds
+    """
+
+    def __init__(self, max_operations: int = 5, window_seconds: int = 60):
+        """
+        Initialize rate limiter.
+
+        Args:
+            max_operations: Maximum operations allowed in time window
+            window_seconds: Time window in seconds
+        """
+        self.max_operations = max_operations
+        self.window_seconds = window_seconds
+        self.operations: Dict[str, deque] = {}
+
+    def is_allowed(self, identifier: str) -> Tuple[bool, str]:
+        """
+        Check if operation is allowed for given identifier.
+
+        Args:
+            identifier: User, IP, or operation identifier
+
+        Returns:
+            Tuple of (is_allowed, message)
+        """
+        now = datetime.now()
+
+        # Initialize operation list if needed
+        if identifier not in self.operations:
+            self.operations[identifier] = deque()
+
+        # Remove old operations outside time window
+        operations = self.operations[identifier]
+        window_start = now - timedelta(seconds=self.window_seconds)
+
+        while operations and operations[0] < window_start:
+            operations.popleft()
+
+        # Check if within limit
+        if len(operations) < self.max_operations:
+            operations.append(now)
+            remaining = self.max_operations - len(operations)
+            return True, f"Operation allowed ({remaining} remaining)"
+
+        # Rate limit exceeded
+        oldest_op = operations[0]
+        reset_time = oldest_op + timedelta(seconds=self.window_seconds)
+        wait_seconds = (reset_time - now).total_seconds()
+
+        return False, (
+            f"Rate limit exceeded: {len(operations)}/{self.max_operations} "
+            f"operations in {self.window_seconds}s window. "
+            f"Please wait {wait_seconds:.1f} seconds."
+        )
+
+    def reset(self, identifier: Optional[str] = None) -> None:
+        """
+        Reset rate limit for identifier or all identifiers.
+
+        Args:
+            identifier: Identifier to reset (None resets all)
+        """
+        if identifier:
+            self.operations.pop(identifier, None)
+        else:
+            self.operations.clear()
+
+    def get_stats(self, identifier: str) -> Dict[str, Any]:
+        """
+        Get rate limit statistics for identifier.
+
+        Returns:
+            Dictionary with operation count and reset time
+        """
+        if identifier not in self.operations:
+            return {
+                "identifier": identifier,
+                "operations_count": 0,
+                "max_operations": self.max_operations,
+                "window_seconds": self.window_seconds,
+                "next_reset": None
+            }
+
+        operations = self.operations[identifier]
+        now = datetime.now()
+
+        next_reset = None
+        if operations:
+            oldest_op = operations[0]
+            next_reset = (oldest_op + timedelta(seconds=self.window_seconds)).isoformat()
+
+        return {
+            "identifier": identifier,
+            "operations_count": len(operations),
+            "max_operations": self.max_operations,
+            "window_seconds": self.window_seconds,
+            "next_reset": next_reset
+        }
 
 
 @dataclass
@@ -55,6 +165,7 @@ class ConfigurationEngine:
         self,
         project_root: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
+        enable_rate_limiting: bool = False,
     ):
         """
         Initialize configuration engine.
@@ -62,12 +173,17 @@ class ConfigurationEngine:
         Args:
             project_root: Path to mac-setup project root
             logger: Logger instance
+            enable_rate_limiting: Enable rate limiting on sensitive operations
         """
         self.project_root = Path(project_root or Path(__file__).parent.parent)
         self.logger = logger or self._setup_logger()
         self.config: Dict[str, Any] = {}
         self.metadata: Dict[str, ConfigMetadata] = {}
         self._loaded_files: List[Path] = []
+
+        # Rate limiting for sensitive operations
+        self.enable_rate_limiting = enable_rate_limiting
+        self.rate_limiter = RateLimiter(max_operations=5, window_seconds=60)
 
     def _setup_logger(self) -> logging.Logger:
         """Setup default logger."""
@@ -357,14 +473,33 @@ class ConfigurationEngine:
         except (KeyError, TypeError):
             return default
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool, str]:
         """
         Set configuration value by dot-notation key.
 
+        SECURITY: Applies rate limiting to prevent abuse of config changes.
+
         Examples:
-            config.set("global.logging.level", "debug")
-            config.set("roles.shell.enabled", True)
+            success, msg = config.set("global.logging.level", "debug")
+            success, msg = config.set("roles.shell.enabled", True)
+
+        Args:
+            key: Configuration key in dot notation
+            value: New value
+            user_id: User identifier for rate limiting (default: current user)
+
+        Returns:
+            Tuple of (success, message)
         """
+        # Check rate limit if enabled
+        if self.enable_rate_limiting:
+            user = user_id or os.getenv("USER", "unknown")
+            allowed, message = self.rate_limiter.is_allowed(user)
+
+            if not allowed:
+                self.logger.warning(f"Rate limit: {message}")
+                return False, message
+
         keys = key.split(".")
         target = self.config
 
@@ -375,6 +510,7 @@ class ConfigurationEngine:
 
         target[keys[-1]] = value
         self.logger.debug(f"Set {key} = {value}")
+        return True, "Configuration updated"
 
     def validate(self) -> Tuple[bool, List[str]]:
         """
@@ -472,6 +608,28 @@ class ConfigurationEngine:
             return config_value if isinstance(config_value, dict) else {}
         return {}
 
+    def get_rate_limit_stats(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get rate limiting statistics for user.
+
+        Args:
+            user_id: User identifier (default: current user)
+
+        Returns:
+            Rate limit statistics
+        """
+        user = user_id or os.getenv("USER", "unknown")
+        return self.rate_limiter.get_stats(user)
+
+    def reset_rate_limit(self, user_id: Optional[str] = None) -> None:
+        """
+        Reset rate limit for user or all users.
+
+        Args:
+            user_id: User identifier (None resets all)
+        """
+        self.rate_limiter.reset(user_id)
+
 
 def main():
     """CLI interface for configuration engine."""
@@ -515,8 +673,13 @@ def main():
         print(yaml.dump({args.get: value}, default_flow_style=False))
 
     elif args.set:
-        engine.set(args.set[0], args.set[1])
-        engine.save(Path.home() / ".mac-setup" / "config.yaml")
+        success, message = engine.set(args.set[0], args.set[1])
+        if success:
+            engine.save(Path.home() / ".mac-setup" / "config.yaml")
+            print(f"✓ {message}")
+        else:
+            print(f"✗ {message}")
+            sys.exit(1)
 
     elif args.list_files:
         print("Loaded configuration files:")

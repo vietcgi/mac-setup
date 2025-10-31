@@ -289,6 +289,17 @@ class GitConfigManager:
                 with open(backup_path, "w") as dst:
                     dst.write(src.read())
 
+            # SECURITY FIX: Enforce 0600 permissions on backup file
+            # Git config may contain API keys, SSH keys, auth tokens
+            backup_path.chmod(0o600)
+
+            # Verify permissions are correctly set
+            stat_info = backup_path.stat()
+            if stat_info.st_mode & 0o077:  # Check if world/group readable
+                raise PermissionError(
+                    f"Backup file has insecure permissions: {oct(stat_info.st_mode)}"
+                )
+
             self.print_status(f"Configuration backed up: {backup_path.name}", "SUCCESS")
             return backup_path
 

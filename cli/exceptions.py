@@ -284,7 +284,7 @@ class DependencyError(DevkitException):
     """Missing or incompatible dependency."""
 
     @staticmethod
-    def tool_not_found(tool: str, install_cmd: str = None) -> "DependencyError":
+    def tool_not_found(tool: str, install_cmd: str | None = None) -> "DependencyError":
         """Create tool not found exception."""
         install = install_cmd or f"brew install {tool}"
         return DependencyError(
