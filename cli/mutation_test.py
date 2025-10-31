@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
+# !/usr/bin/env python3
 """Mutation Testing Framework for Devkit CLI.
 
 Validates test quality by introducing controlled mutations (bugs) into source code
@@ -424,3 +426,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+__all__ = [
+    "MutationTestRunner",
+]

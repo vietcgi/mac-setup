@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
+# !/usr/bin/env python3
 """Plugin System Security & Validation.
 
 Provides comprehensive validation for Devkit plugins:
@@ -375,3 +377,13 @@ if __name__ == "__main__":
             status = "✓" if is_valid else "✗"
     else:
         pass
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+__all__ = [
+    "PluginValidator",
+    "validate_all_plugins",
+    "validate_plugin_manifest",
+]

@@ -1,3 +1,5 @@
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
 """Health checks and monitoring for Devkit installation.
 
 Provides:
@@ -445,3 +447,21 @@ def create_default_monitor() -> HealthMonitor:
     monitor.add_check(SystemCheck())
 
     return monitor
+
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+
+__all__ = [
+    "ConfigurationCheck",
+    "DependencyCheck",
+    "DiskSpaceCheck",
+    "HealthCheck",
+    "HealthMonitor",
+    "HealthStatus",
+    "LogCheck",
+    "SystemCheck",
+    "create_default_monitor",
+]

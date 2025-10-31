@@ -1,3 +1,5 @@
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
 """Enterprise audit logging system for Devkit.
 
 Provides:
@@ -196,11 +198,11 @@ class AuditLogStorage:
             self._ensure_secure_permissions()
         except json.JSONEncodeError as e:
             self.logger.exception(
-                f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data."
+                f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data.",
             )
         except OSError as e:
             self.logger.exception(
-                f"Failed to write audit log: {e}. Check disk space and permissions."
+                f"Failed to write audit log: {e}. Check disk space and permissions.",
             )
         except Exception as e:
             self.logger.exception(f"Unexpected error writing audit log: {e}")
@@ -620,7 +622,9 @@ class AuditReporter:
 
         report_lines.append("Actions by Type:")
         for action, count in sorted(
-            action_counts.items(), key=operator.itemgetter(1), reverse=True
+            action_counts.items(),
+            key=operator.itemgetter(1),
+            reverse=True,
         ):
             report_lines.append(f"  {action}: {count}")
 
@@ -656,3 +660,16 @@ class AuditReporter:
                 report_lines.append(f"  - {timestamp}")
 
         return "\n".join(report_lines)
+
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+
+__all__ = [
+    "AuditLogStorage",
+    "AuditLogger",
+    "AuditReporter",
+    "AuditSigningService",
+]

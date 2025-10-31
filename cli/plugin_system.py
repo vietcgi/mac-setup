@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
+# !/usr/bin/env python3
 """Mac-Setup Plugin System.
 
 Allows users to extend mac-setup with custom roles, hooks, and tasks.
@@ -187,13 +189,13 @@ class PluginLoader:
                     integrity_valid, integrity_message = manifest.verify_integrity()
                     if not integrity_valid:
                         self.logger.error(
-                            f"Plugin integrity check failed for {module_name}: {integrity_message}"
+                            f"Plugin integrity check failed for {module_name}: {integrity_message}",
                         )
                         return None
                     self.logger.debug(f"Plugin integrity verified for {module_name}")
                 except Exception as e:
                     self.logger.exception(
-                        f"Failed to verify plugin integrity for {module_name}: {e}"
+                        f"Failed to verify plugin integrity for {module_name}: {e}",
                     )
                     return None
 
@@ -424,3 +426,13 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+__all__ = [
+    "PluginInterface",
+    "PluginManager",
+    "PluginSystem",
+]

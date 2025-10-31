@@ -1,3 +1,5 @@
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
 """Performance optimization and caching system for Devkit.
 
 Provides:
@@ -347,3 +349,16 @@ class ParallelInstaller:
         base_time = 10  # Base time per package
 
         return base_time * len(packages) / min(self.max_parallel, len(packages))
+
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+
+__all__ = [
+    "ParallelInstaller",
+    "PerformanceAnalyzer",
+    "PerformanceReport",
+    "SystemMonitor",
+]

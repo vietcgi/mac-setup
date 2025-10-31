@@ -1,3 +1,5 @@
+#  Copyright (c) 2024 Devkit Contributors
+#  SPDX-License-Identifier: MIT
 """Enhanced exception classes with helpful error messages and recovery suggestions.
 
 This module provides custom exception types that include:
@@ -346,3 +348,18 @@ class VerificationError(DevkitException):
             ],
             documentation="See TROUBLESHOOTING.md > Verification Issues",
         )
+
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+__all__ = [
+    "BootstrapError",
+    "ConfigError",
+    "DependencyError",
+    "DevkitException",
+    "PluginError",
+    "SecurityError",
+    "VerificationError",
+]
