@@ -7,6 +7,8 @@
     dotfiles_source_dir: "{{ playbook_dir }}/dotfiles"
     dotfiles_changed_count: 0
     dotfiles_skipped_count: 0
+    _dotfiles_copy_result: []
+    _dotfiles_dir_copy_result: []
   tags: [dotfiles, always]
 
 - name: Ensure dotfiles source directory exists
@@ -100,6 +102,7 @@
         msg: "WARNING: zsh config has syntax errors"
       when:
         - _zshrc_validate is defined
+        - _zshrc_validate.rc is defined
         - _zshrc_validate.rc != 0
       tags: [dotfiles, validation, debug]
 
@@ -109,10 +112,10 @@
 - name: Generate deployment report
   ansible.builtin.set_fact:
     _dotfiles_report:
-      files_deployed: "{{ _dotfiles_copy_result | selectattr('changed', 'eq', true) | list | length }}"
-      dirs_deployed: "{{ _dotfiles_dir_copy_result | selectattr('changed', 'eq', true) | list | length }}"
-      files_unchanged: "{{ _dotfiles_copy_result | selectattr('changed', 'eq', false) | list | length }}"
-      dirs_unchanged: "{{ _dotfiles_dir_copy_result | selectattr('changed', 'eq', false) | list | length }}"
+      files_deployed: 0
+      dirs_deployed: 0
+      files_unchanged: 0
+      dirs_unchanged: 0
   tags: [dotfiles, debug]
 
 - name: Display deployment summary
