@@ -1,5 +1,4 @@
-"""
-Enterprise audit logging system for Devkit.
+"""Enterprise audit logging system for Devkit.
 
 Provides:
 - Comprehensive action logging
@@ -16,16 +15,17 @@ Architecture (Refactored - Phase 2):
 - AuditReporter: Generates reports and summaries
 """
 
-import json
-import logging
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, Optional, List
-from enum import Enum
 import hashlib
 import hmac
+import json
+import logging
+import operator
 import os
 import shutil
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
 
 class AuditAction(Enum):
@@ -51,9 +51,8 @@ class AuditAction(Enum):
 class AuditSigningService:
     """Handles cryptographic signing and verification of audit entries."""
 
-    def __init__(self, log_dir: Path, hmac_key: Optional[bytes] = None):
-        """
-        Initialize signing service.
+    def __init__(self, log_dir: Path, hmac_key: Optional[bytes] = None) -> None:
+        """Initialize signing service.
 
         Args:
             log_dir: Directory for audit logs
@@ -67,8 +66,7 @@ class AuditSigningService:
             self.hmac_key = self._load_or_create_hmac_key()
 
     def _load_or_create_hmac_key(self) -> bytes:
-        """
-        Load HMAC key from secure storage or create a new one.
+        """Load HMAC key from secure storage or create a new one.
 
         SECURITY: HMAC key is stored in ~/.devkit/.hmac_key with 0600 permissions.
         This key is used for cryptographic signing of audit logs.
@@ -99,13 +97,12 @@ class AuditSigningService:
             key_file.chmod(0o600)  # Owner read/write only
             self.logger.info("Generated new HMAC key for audit log signing")
         except Exception as e:
-            self.logger.error(f"Failed to store HMAC key: {e}")
+            self.logger.exception(f"Failed to store HMAC key: {e}")
 
         return key
 
-    def sign_entry(self, entry: Dict[str, Any]) -> str:
-        """
-        Create HMAC-SHA256 cryptographic signature for audit entry.
+    def sign_entry(self, entry: dict[str, Any]) -> str:
+        """Create HMAC-SHA256 cryptographic signature for audit entry.
 
         SECURITY: Uses HMAC with a secret key (not just SHA256 hash).
         This prevents tampering: attackers cannot forge signatures without the key.
@@ -120,16 +117,14 @@ class AuditSigningService:
             raise RuntimeError("HMAC signing enabled but no key available")
 
         entry_json = json.dumps(entry, sort_keys=True, default=str)
-        signature = hmac.new(
+        return hmac.new(
             self.hmac_key,
             entry_json.encode(),
-            hashlib.sha256
+            hashlib.sha256,
         ).hexdigest()
-        return signature
 
-    def verify_signature(self, entry: Dict[str, Any]) -> bool:
-        """
-        Verify HMAC-SHA256 signature of an audit log entry.
+    def verify_signature(self, entry: dict[str, Any]) -> bool:
+        """Verify HMAC-SHA256 signature of an audit log entry.
 
         SECURITY: Detects tampering by verifying entry hasn't been modified.
 
@@ -154,23 +149,22 @@ class AuditSigningService:
             computed_signature = self.sign_entry(entry_copy)
             return hmac.compare_digest(computed_signature, stored_signature)
         except Exception as e:
-            self.logger.error(f"Error verifying signature: {e}")
+            self.logger.exception(f"Error verifying signature: {e}")
             return False
 
 
 class AuditLogStorage:
     """Handles file I/O, permissions, and rotation of audit logs."""
 
-    def __init__(self, log_dir: Path):
-        """
-        Initialize log storage.
+    def __init__(self, log_dir: Path) -> None:
+        """Initialize log storage.
 
         Args:
             log_dir: Directory for audit logs
         """
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.log_file = log_dir / f"audit-{datetime.now().strftime('%Y%m%d')}.jsonl"
+        self.log_file = log_dir / f"audit-{datetime.now().strftime("%Y%m%d")}.jsonl"
         self.logger = logging.getLogger(__name__)
         self._ensure_secure_permissions()
 
@@ -183,9 +177,8 @@ class AuditLogStorage:
         except Exception as e:
             self.logger.warning(f"Could not set audit log permissions: {e}")
 
-    def write_entry(self, entry: Dict[str, Any]) -> None:
-        """
-        Write audit entry to log file.
+    def write_entry(self, entry: dict[str, Any]) -> None:
+        """Write audit entry to log file.
 
         Args:
             entry: Audit entry dictionary
@@ -198,19 +191,22 @@ class AuditLogStorage:
             self.log_dir.mkdir(parents=True, exist_ok=True)
 
             # Write entry with atomic append
-            with open(self.log_file, "a") as f:
+            with open(self.log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry) + "\n")
             self._ensure_secure_permissions()
         except json.JSONEncodeError as e:
-            self.logger.error(f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data.")
-        except (IOError, OSError) as e:
-            self.logger.error(f"Failed to write audit log: {e}. Check disk space and permissions.")
+            self.logger.exception(
+                f"Failed to serialize audit entry: {e}. Entry may contain non-serializable data."
+            )
+        except OSError as e:
+            self.logger.exception(
+                f"Failed to write audit log: {e}. Check disk space and permissions."
+            )
         except Exception as e:
-            self.logger.error(f"Unexpected error writing audit log: {e}")
+            self.logger.exception(f"Unexpected error writing audit log: {e}")
 
-    def read_entries(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """
-        Read audit log entries from file.
+    def read_entries(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+        """Read audit log entries from file.
 
         Args:
             limit: Maximum number of entries (default all)
@@ -224,7 +220,7 @@ class AuditLogStorage:
             if not self.log_file.exists():
                 return entries
 
-            with open(self.log_file, "r") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     if line.strip():
                         try:
@@ -233,13 +229,13 @@ class AuditLogStorage:
                         except json.JSONDecodeError as e:
                             self.logger.warning(
                                 f"Skipping invalid JSON on line {line_num}: {e}. "
-                                f"Entry may be corrupt."
+                                f"Entry may be corrupt.",
                             )
                             continue
-        except (IOError, OSError) as e:
+        except OSError as e:
             self.logger.warning(f"Failed to read audit logs: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error reading audit logs: {e}")
+            self.logger.exception(f"Unexpected error reading audit logs: {e}")
 
         if limit:
             entries = entries[-limit:]
@@ -251,8 +247,7 @@ class AuditLogStorage:
         return self.log_file
 
     def rotate_logs(self, days: int = 90) -> None:
-        """
-        Rotate audit logs by archiving old ones.
+        """Rotate audit logs by archiving old ones.
 
         Args:
             days: Archive logs older than this many days (default 90)
@@ -269,7 +264,7 @@ class AuditLogStorage:
                     shutil.move(str(log_file), str(archive_path))
                     self.logger.info(f"Archived log file: {log_file.name}")
         except Exception as e:
-            self.logger.error(f"Failed to rotate logs: {e}")
+            self.logger.exception(f"Failed to rotate logs: {e}")
 
 
 class AuditLogger:
@@ -280,9 +275,8 @@ class AuditLogger:
         log_dir: Optional[Path] = None,
         enable_signing: bool = False,
         hmac_key: Optional[bytes] = None,
-    ):
-        """
-        Initialize audit logger.
+    ) -> None:
+        """Initialize audit logger.
 
         Args:
             log_dir: Directory for audit logs (default ~/.devkit/audit)
@@ -302,12 +296,11 @@ class AuditLogger:
     def log_action(
         self,
         action: AuditAction,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
         user: Optional[str] = None,
         status: str = "success",
-    ) -> Dict[str, Any]:
-        """
-        Log an action to the audit log.
+    ) -> dict[str, Any]:
+        """Log an action to the audit log.
 
         Args:
             action: Action type
@@ -337,9 +330,9 @@ class AuditLogger:
 
     def log_install_started(
         self,
-        roles: Optional[List[str]] = None,
-        details: Optional[Dict] = None,
-    ) -> Dict:
+        roles: Optional[list[str]] = None,
+        details: Optional[dict] = None,
+    ) -> dict:
         """Log installation start."""
         return self.log_action(
             AuditAction.INSTALL_STARTED,
@@ -349,15 +342,15 @@ class AuditLogger:
     def log_install_completed(
         self,
         duration_seconds: float,
-        details: Optional[Dict] = None,
-    ) -> Dict:
+        details: Optional[dict] = None,
+    ) -> dict:
         """Log successful installation."""
         return self.log_action(
             AuditAction.INSTALL_COMPLETED,
             details={"duration_seconds": duration_seconds, **(details or {})},
         )
 
-    def log_install_failed(self, error: str, details: Optional[Dict] = None) -> Dict:
+    def log_install_failed(self, error: str, details: Optional[dict] = None) -> dict:
         """Log failed installation."""
         return self.log_action(
             AuditAction.INSTALL_FAILED,
@@ -370,7 +363,7 @@ class AuditLogger:
         key: str,
         old_value: Any,
         new_value: Any,
-    ) -> Dict:
+    ) -> dict:
         """Log configuration change."""
         return self.log_action(
             AuditAction.CONFIG_CHANGED,
@@ -381,14 +374,14 @@ class AuditLogger:
             },
         )
 
-    def log_plugin_installed(self, plugin_name: str, version: str) -> Dict:
+    def log_plugin_installed(self, plugin_name: str, version: str) -> dict:
         """Log plugin installation."""
         return self.log_action(
             AuditAction.PLUGIN_INSTALLED,
             details={"plugin": plugin_name, "version": version},
         )
 
-    def log_plugin_removed(self, plugin_name: str) -> Dict:
+    def log_plugin_removed(self, plugin_name: str) -> dict:
         """Log plugin removal."""
         return self.log_action(
             AuditAction.PLUGIN_REMOVED,
@@ -399,8 +392,8 @@ class AuditLogger:
         self,
         check_name: str,
         status: str,
-        findings: Optional[List[str]] = None,
-    ) -> Dict:
+        findings: Optional[list[str]] = None,
+    ) -> dict:
         """Log security check."""
         return self.log_action(
             AuditAction.SECURITY_CHECK,
@@ -413,7 +406,7 @@ class AuditLogger:
         path: str,
         old_perms: str,
         new_perms: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Log permission change."""
         return self.log_action(
             AuditAction.PERMISSION_CHANGED,
@@ -427,14 +420,10 @@ class AuditLogger:
     def log_verification(
         self,
         passed: bool,
-        details: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        details: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Log setup verification."""
-        action = (
-            AuditAction.VERIFICATION_PASSED
-            if passed
-            else AuditAction.VERIFICATION_FAILED
-        )
+        action = AuditAction.VERIFICATION_PASSED if passed else AuditAction.VERIFICATION_FAILED
         return self.log_action(
             action,
             details=details,
@@ -444,8 +433,8 @@ class AuditLogger:
     def log_health_check(
         self,
         status: str,
-        details: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        details: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Log health check result."""
         return self.log_action(
             AuditAction.HEALTH_CHECK,
@@ -461,9 +450,8 @@ class AuditLogger:
         self,
         limit: Optional[int] = None,
         verify_signatures: bool = False,
-    ) -> List[Dict[str, Any]]:
-        """
-        Get audit log entries.
+    ) -> list[dict[str, Any]]:
+        """Get audit log entries.
 
         Args:
             limit: Maximum number of entries (default all)
@@ -483,15 +471,14 @@ class AuditLogger:
                         filtered_entries.append(entry)
                     else:
                         self.logger.warning(
-                            f"Audit entry has invalid signature: {entry.get('timestamp')}"
+                            f"Audit entry has invalid signature: {entry.get("timestamp")}",
                         )
             return filtered_entries
 
         return entries
 
-    def validate_log_integrity(self) -> Dict[str, Any]:
-        """
-        Validate integrity of all audit log entries.
+    def validate_log_integrity(self) -> dict[str, Any]:
+        """Validate integrity of all audit log entries.
 
         SECURITY: Checks that all entries have valid HMAC signatures.
         Returns report of any tampering detected.
@@ -522,7 +509,7 @@ class AuditLogger:
             else:
                 invalid_count += 1
                 invalid_timestamps.append(entry.get("timestamp", "unknown"))
-                self.logger.error(f"Tampering detected in audit entry: {entry.get('timestamp')}")
+                self.logger.error(f"Tampering detected in audit entry: {entry.get("timestamp")}")
 
         return {
             "total_entries": len(entries),
@@ -537,9 +524,8 @@ class AuditLogger:
         """Rotate audit logs by archiving old ones."""
         self.storage.rotate_logs()
 
-    def get_audit_summary(self, hours: int = 24) -> Dict[str, Any]:
-        """
-        Get summary of audit log for given time period.
+    def get_audit_summary(self, hours: int = 24) -> dict[str, Any]:
+        """Get summary of audit log for given time period.
 
         Args:
             hours: Look back hours (default 24)
@@ -550,7 +536,7 @@ class AuditLogger:
         cutoff = datetime.now() - timedelta(hours=hours)
         entries = self.storage.read_entries()
 
-        summary: Dict[str, Any] = {
+        summary: dict[str, Any] = {
             "total_actions": 0,
             "actions_by_type": {},
             "actions_by_status": {},
@@ -588,9 +574,8 @@ class AuditLogger:
 class AuditReporter:
     """Generates reports from audit logs."""
 
-    def __init__(self, audit_logger: AuditLogger):
-        """
-        Initialize report generator.
+    def __init__(self, audit_logger: AuditLogger) -> None:
+        """Initialize report generator.
 
         Args:
             audit_logger: AuditLogger instance
@@ -599,8 +584,7 @@ class AuditReporter:
         self.logger = logging.getLogger(__name__)
 
     def generate_activity_report(self, days: int = 30) -> str:
-        """
-        Generate activity report for given time period.
+        """Generate activity report for given time period.
 
         Args:
             days: Number of days to report on
@@ -617,8 +601,8 @@ class AuditReporter:
             "",
         ]
 
-        action_counts: Dict[str, int] = {}
-        user_counts: Dict[str, int] = {}
+        action_counts: dict[str, int] = {}
+        user_counts: dict[str, int] = {}
 
         for entry in entries:
             try:
@@ -635,19 +619,19 @@ class AuditReporter:
                 self.logger.debug(f"Error parsing entry: {e}")
 
         report_lines.append("Actions by Type:")
-        for action, count in sorted(action_counts.items(), key=lambda x: x[1], reverse=True):
+        for action, count in sorted(
+            action_counts.items(), key=operator.itemgetter(1), reverse=True
+        ):
             report_lines.append(f"  {action}: {count}")
 
-        report_lines.append("")
-        report_lines.append("Activity by User:")
-        for user, count in sorted(user_counts.items(), key=lambda x: x[1], reverse=True):
+        report_lines.extend(("", "Activity by User:"))
+        for user, count in sorted(user_counts.items(), key=operator.itemgetter(1), reverse=True):
             report_lines.append(f"  {user}: {count}")
 
         return "\n".join(report_lines)
 
     def generate_security_report(self) -> str:
-        """
-        Generate security and integrity report.
+        """Generate security and integrity report.
 
         Returns:
             Formatted security report
@@ -658,11 +642,11 @@ class AuditReporter:
             "Security & Integrity Report",
             "=" * 50,
             "",
-            f"Total Entries: {integrity['total_entries']}",
-            f"Valid Entries: {integrity['valid_entries']}",
-            f"Invalid Entries: {integrity['invalid_entries']}",
-            f"Unsigned Entries: {integrity['unsigned_entries']}",
-            f"Tampering Detected: {integrity['tampering_detected']}",
+            f"Total Entries: {integrity["total_entries"]}",
+            f"Valid Entries: {integrity["valid_entries"]}",
+            f"Invalid Entries: {integrity["invalid_entries"]}",
+            f"Unsigned Entries: {integrity["unsigned_entries"]}",
+            f"Tampering Detected: {integrity["tampering_detected"]}",
             "",
         ]
 

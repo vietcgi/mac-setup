@@ -1,5 +1,4 @@
-"""
-Health checks and monitoring for Devkit installation.
+"""Health checks and monitoring for Devkit installation.
 
 Provides:
 - System health status verification
@@ -9,12 +8,12 @@ Provides:
 - Detailed health reporting
 """
 
-import subprocess
+import json
 import logging
+import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
-import json
+from typing import Any, Optional
 
 
 class HealthStatus:
@@ -31,9 +30,8 @@ class HealthStatus:
 class HealthCheck:
     """Base class for all health checks."""
 
-    def __init__(self, name: str, description: str = ""):
-        """
-        Initialize health check.
+    def __init__(self, name: str, description: str = "") -> None:
+        """Initialize health check.
 
         Args:
             name: Check name
@@ -43,9 +41,8 @@ class HealthCheck:
         self.description = description
         self.logger = logging.getLogger(__name__)
 
-    def run(self) -> Tuple[str, str, Dict[str, Any]]:
-        """
-        Run the health check.
+    def run(self) -> tuple[str, str, dict[str, Any]]:
+        """Run the health check.
 
         Returns:
             Tuple of (status, message, details)
@@ -59,9 +56,8 @@ class HealthCheck:
 class DependencyCheck(HealthCheck):
     """Check if required dependencies are installed."""
 
-    def __init__(self, tools: List[str]):
-        """
-        Initialize dependency check.
+    def __init__(self, tools: list[str]) -> None:
+        """Initialize dependency check.
 
         Args:
             tools: List of tools to check for
@@ -69,7 +65,7 @@ class DependencyCheck(HealthCheck):
         super().__init__("Dependencies", "Check required tools are installed")
         self.tools = tools
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> tuple[str, str, dict]:
         """Check if all dependencies are available."""
         missing = []
         installed = []
@@ -77,7 +73,10 @@ class DependencyCheck(HealthCheck):
         for tool in self.tools:
             try:
                 result = subprocess.run(
-                    ["which", tool], capture_output=True, timeout=2, check=False
+                    ["which", tool],
+                    capture_output=True,
+                    timeout=2,
+                    check=False,
                 )
                 if result.returncode == 0:
                     installed.append(tool)
@@ -93,26 +92,24 @@ class DependencyCheck(HealthCheck):
                 f"All {len(installed)} dependencies installed",
                 {"installed": installed, "missing": []},
             )
-        elif len(missing) <= len(installed):
+        if len(missing) <= len(installed):
             return (
                 HealthStatus.WARNING,
                 f"{len(missing)} of {len(self.tools)} dependencies missing",
                 {"installed": installed, "missing": missing},
             )
-        else:
-            return (
-                HealthStatus.CRITICAL,
-                f"Most dependencies missing ({len(missing)}/{len(self.tools)})",
-                {"installed": installed, "missing": missing},
-            )
+        return (
+            HealthStatus.CRITICAL,
+            f"Most dependencies missing ({len(missing)}/{len(self.tools)})",
+            {"installed": installed, "missing": missing},
+        )
 
 
 class DiskSpaceCheck(HealthCheck):
     """Check available disk space."""
 
-    def __init__(self, min_gb: int = 5):
-        """
-        Initialize disk space check.
+    def __init__(self, min_gb: int = 5) -> None:
+        """Initialize disk space check.
 
         Args:
             min_gb: Minimum required GB (default 5)
@@ -120,7 +117,7 @@ class DiskSpaceCheck(HealthCheck):
         super().__init__("Disk Space", f"Check {min_gb}GB free space available")
         self.min_gb = min_gb
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> tuple[str, str, dict]:
         """Check available disk space."""
         try:
             result = subprocess.run(
@@ -145,12 +142,11 @@ class DiskSpaceCheck(HealthCheck):
                     f"{available_gb}GB free space available",
                     {"available_gb": available_gb, "minimum_gb": self.min_gb},
                 )
-            else:
-                return (
-                    HealthStatus.CRITICAL,
-                    f"Only {available_gb}GB free (need {self.min_gb}GB)",
-                    {"available_gb": available_gb, "minimum_gb": self.min_gb},
-                )
+            return (
+                HealthStatus.CRITICAL,
+                f"Only {available_gb}GB free (need {self.min_gb}GB)",
+                {"available_gb": available_gb, "minimum_gb": self.min_gb},
+            )
         except Exception as e:
             return (
                 HealthStatus.UNKNOWN,
@@ -162,9 +158,8 @@ class DiskSpaceCheck(HealthCheck):
 class ConfigurationCheck(HealthCheck):
     """Check configuration file health."""
 
-    def __init__(self, config_path: Optional[Path] = None):
-        """
-        Initialize configuration check.
+    def __init__(self, config_path: Optional[Path] = None) -> None:
+        """Initialize configuration check.
 
         Args:
             config_path: Path to config file (default ~/.devkit/config.yaml)
@@ -172,7 +167,7 @@ class ConfigurationCheck(HealthCheck):
         super().__init__("Configuration", "Check configuration file integrity")
         self.config_path = config_path or Path.home() / ".devkit" / "config.yaml"
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> tuple[str, str, dict]:
         """Check configuration file."""
         if not self.config_path.exists():
             return (
@@ -194,7 +189,7 @@ class ConfigurationCheck(HealthCheck):
                 )
 
             # Try to parse YAML
-            with open(self.config_path, "r") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 content = f.read()
                 if "global:" not in content:
                     return (
@@ -224,9 +219,8 @@ class ConfigurationCheck(HealthCheck):
 class LogCheck(HealthCheck):
     """Check system logs for errors."""
 
-    def __init__(self, log_file: Optional[Path] = None, look_back_hours: int = 24):
-        """
-        Initialize log check.
+    def __init__(self, log_file: Optional[Path] = None, look_back_hours: int = 24) -> None:
+        """Initialize log check.
 
         Args:
             log_file: Path to log file (default ~/.devkit/logs/setup.log)
@@ -236,7 +230,7 @@ class LogCheck(HealthCheck):
         self.log_file = log_file or Path.home() / ".devkit" / "logs" / "setup.log"
         self.look_back_hours = look_back_hours
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> tuple[str, str, dict]:
         """Check log file for errors."""
         if not self.log_file.exists():
             return (
@@ -246,7 +240,7 @@ class LogCheck(HealthCheck):
             )
 
         try:
-            with open(self.log_file, "r") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             errors = []
@@ -268,7 +262,7 @@ class LogCheck(HealthCheck):
                     "No errors in logs",
                     {"path": str(self.log_file), "lines": len(lines)},
                 )
-            elif errors:
+            if errors:
                 return (
                     HealthStatus.CRITICAL,
                     f"Found {len(errors)} errors in logs",
@@ -278,16 +272,15 @@ class LogCheck(HealthCheck):
                         "recent_errors": errors[:3],
                     },
                 )
-            else:
-                return (
-                    HealthStatus.WARNING,
-                    f"Found {len(warnings)} warnings in logs",
-                    {
-                        "path": str(self.log_file),
-                        "warning_count": len(warnings),
-                        "recent_warnings": warnings[:3],
-                    },
-                )
+            return (
+                HealthStatus.WARNING,
+                f"Found {len(warnings)} warnings in logs",
+                {
+                    "path": str(self.log_file),
+                    "warning_count": len(warnings),
+                    "recent_warnings": warnings[:3],
+                },
+            )
 
         except Exception as e:
             return (
@@ -300,16 +293,20 @@ class LogCheck(HealthCheck):
 class SystemCheck(HealthCheck):
     """Check overall system health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize system check."""
         super().__init__("System", "Check overall system health")
 
-    def run(self) -> Tuple[str, str, Dict]:
+    def run(self) -> tuple[str, str, dict]:
         """Check system health."""
         try:
             # Check if system is responsive
             result = subprocess.run(
-                ["uname", "-a"], capture_output=True, timeout=2, text=True, check=True
+                ["uname", "-a"],
+                capture_output=True,
+                timeout=2,
+                text=True,
+                check=True,
             )
 
             uname = result.stdout.strip()
@@ -351,19 +348,18 @@ class SystemCheck(HealthCheck):
 class HealthMonitor:
     """Orchestrate and manage all health checks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize health monitor."""
-        self.checks: List[HealthCheck] = []
-        self.results: Dict[str, Tuple[str, str, Dict]] = {}
+        self.checks: list[HealthCheck] = []
+        self.results: dict[str, tuple[str, str, dict]] = {}
         self.logger = logging.getLogger(__name__)
 
     def add_check(self, check: HealthCheck) -> None:
         """Add a health check."""
         self.checks.append(check)
 
-    def run_all(self) -> Dict[str, Tuple[str, str, Dict]]:
-        """
-        Run all health checks.
+    def run_all(self) -> dict[str, tuple[str, str, dict]]:
+        """Run all health checks.
 
         Returns:
             Dict mapping check names to (status, message, details)
@@ -376,7 +372,7 @@ class HealthMonitor:
                 self.results[check.name] = (status, message, details)
                 self.logger.debug(f"{check.name}: {status} - {message}")
             except Exception as e:
-                self.logger.error(f"Health check {check.name} failed: {e}")
+                self.logger.exception(f"Health check {check.name} failed: {e}")
                 self.results[check.name] = (
                     HealthStatus.UNKNOWN,
                     f"Check failed: {e}",
@@ -394,51 +390,32 @@ class HealthMonitor:
 
         if HealthStatus.CRITICAL in statuses:
             return HealthStatus.CRITICAL
-        elif HealthStatus.WARNING in statuses:
+        if HealthStatus.WARNING in statuses:
             return HealthStatus.WARNING
-        elif all(s == HealthStatus.HEALTHY for s in statuses):
+        if all(s == HealthStatus.HEALTHY for s in statuses):
             return HealthStatus.HEALTHY
-        else:
-            return HealthStatus.UNKNOWN
+        return HealthStatus.UNKNOWN
 
     def print_report(self) -> None:
         """Print health check report."""
         if not self.results:
-            print("No health checks have been run")
             return
 
-        overall = self.get_overall_status()
+        self.get_overall_status()
 
         # Status emoji
-        emoji = {
-            HealthStatus.HEALTHY: "✅",
-            HealthStatus.WARNING: "⚠️",
-            HealthStatus.CRITICAL: "❌",
-            HealthStatus.UNKNOWN: "❓",
-        }
 
-        print("\n" + "=" * 60)
-        print(f"HEALTH CHECK REPORT - Overall: {emoji.get(overall, '?')} {overall.upper()}")
-        print("=" * 60 + "\n")
-
-        for check_name, (status, message, details) in self.results.items():
-            print(f"{emoji.get(status, '?')} {check_name}: {status.upper()}")
-            print(f"   {message}")
-
+        for _status, _message, details in self.results.values():
             if details:
-                for key, value in details.items():
+                for value in details.values():
                     if isinstance(value, list) and len(value) > 3:
-                        print(f"   {key}: {value[:3]} ... ({len(value)} total)")
+                        pass
                     else:
-                        print(f"   {key}: {value}")
-
-            print()
-
-        print("=" * 60)
+                        pass
 
     def get_json_report(self) -> str:
         """Get health check report as JSON."""
-        checks_dict: Dict[str, Dict[str, Any]] = {}
+        checks_dict: dict[str, dict[str, Any]] = {}
 
         for check_name, (status, message, details) in self.results.items():
             checks_dict[check_name] = {
@@ -447,7 +424,7 @@ class HealthMonitor:
                 "details": details,
             }
 
-        report: Dict[str, Any] = {
+        report: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "overall_status": self.get_overall_status(),
             "checks": checks_dict,

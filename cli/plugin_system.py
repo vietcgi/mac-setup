@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Mac-Setup Plugin System
+"""Mac-Setup Plugin System.
 
 Allows users to extend mac-setup with custom roles, hooks, and tasks.
 Plugins can be defined in ~/.mac-setup/plugins/ and are auto-discovered.
@@ -9,13 +8,13 @@ SECURITY: All plugins are validated before loading using PluginValidator.
 Plugins must have a valid manifest.json and implement PluginInterface.
 """
 
-import sys
-import logging
 import importlib.util
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+import logging
+import sys
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Optional
 
 # Security: Import validator
 from .plugin_validator import PluginValidator
@@ -30,7 +29,7 @@ class HookContext:
     task: Optional[str] = None
     status: str = "running"  # "running", "success", "failed"
     error: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class HookInterface(ABC):
@@ -38,8 +37,7 @@ class HookInterface(ABC):
 
     @abstractmethod
     def execute(self, context: HookContext) -> bool:
-        """
-        Execute hook.
+        """Execute hook.
 
         Args:
             context: Hook execution context
@@ -47,7 +45,6 @@ class HookInterface(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
 
 
 class PluginInterface(ABC):
@@ -60,59 +57,50 @@ class PluginInterface(ABC):
     @abstractmethod
     def initialize(self) -> None:
         """Initialize plugin."""
-        pass
 
     @abstractmethod
-    def get_roles(self) -> Dict[str, Path]:
-        """
-        Get custom roles provided by plugin.
+    def get_roles(self) -> dict[str, Path]:
+        """Get custom roles provided by plugin.
 
         Returns:
             Dictionary mapping role names to role directories
         """
-        pass
 
     @abstractmethod
-    def get_hooks(self) -> Dict[str, List[HookInterface]]:
-        """
-        Get hooks for various stages.
+    def get_hooks(self) -> dict[str, list[HookInterface]]:
+        """Get hooks for various stages.
 
         Returns:
             Dictionary mapping stage names to lists of hooks
         """
-        pass
 
     @abstractmethod
-    def validate(self) -> tuple[bool, List[str]]:
-        """
-        Validate plugin configuration.
+    def validate(self) -> tuple[bool, list[str]]:
+        """Validate plugin configuration.
 
         Returns:
             Tuple of (is_valid, error_list)
         """
-        pass
 
 
 class PluginLoader:
-    """
-    Loads and manages mac-setup plugins.
+    """Loads and manages mac-setup plugins.
 
     Searches for plugins in:
     1. ~/.mac-setup/plugins/ (user plugins)
     2. ./plugins/ (project plugins)
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        """
-        Initialize plugin loader.
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+        """Initialize plugin loader.
 
         Args:
             logger: Logger instance
         """
         self.logger = logger or self._setup_logger()
-        self.plugins: Dict[str, PluginInterface] = {}
-        self.hooks: Dict[str, List[HookInterface]] = {}
-        self.plugin_paths: List[Path] = []
+        self.plugins: dict[str, PluginInterface] = {}
+        self.hooks: dict[str, list[HookInterface]] = {}
+        self.plugin_paths: list[Path] = []
 
     def _setup_logger(self) -> logging.Logger:
         """Setup default logger."""
@@ -134,9 +122,8 @@ class PluginLoader:
         else:
             self.logger.warning(f"Plugin path not found: {path}")
 
-    def discover_plugins(self) -> List[tuple[str, str]]:
-        """
-        Auto-discover plugins in configured paths.
+    def discover_plugins(self) -> list[tuple[str, str]]:
+        """Auto-discover plugins in configured paths.
 
         Returns:
             List of discovered plugin (path, module_name) tuples
@@ -166,8 +153,7 @@ class PluginLoader:
         return discovered
 
     def load_plugin(self, plugin_path: str, module_name: str) -> Optional[PluginInterface]:
-        """
-        Load a single plugin module with security validation.
+        """Load a single plugin module with security validation.
 
         SECURITY: Before loading, validates:
         1. Plugin manifest exists and is valid
@@ -195,15 +181,20 @@ class PluginLoader:
             manifest_path = plugin_dir / "manifest.json"
             if manifest_path.exists():
                 from .plugin_validator import PluginManifest
+
                 try:
                     manifest = PluginManifest(manifest_path)
                     integrity_valid, integrity_message = manifest.verify_integrity()
                     if not integrity_valid:
-                        self.logger.error(f"Plugin integrity check failed for {module_name}: {integrity_message}")
+                        self.logger.error(
+                            f"Plugin integrity check failed for {module_name}: {integrity_message}"
+                        )
                         return None
                     self.logger.debug(f"Plugin integrity verified for {module_name}")
                 except Exception as e:
-                    self.logger.error(f"Failed to verify plugin integrity for {module_name}: {e}")
+                    self.logger.exception(
+                        f"Failed to verify plugin integrity for {module_name}: {e}"
+                    )
                     return None
 
             self.logger.debug(f"Plugin validation passed for {module_name}")
@@ -238,7 +229,7 @@ class PluginLoader:
                         return None
 
                     self.logger.info(
-                        f"Loaded plugin: {plugin_instance.name} v{plugin_instance.version}"
+                        f"Loaded plugin: {plugin_instance.name} v{plugin_instance.version}",
                     )
                     return plugin_instance
 
@@ -246,12 +237,11 @@ class PluginLoader:
             return None
 
         except Exception as e:
-            self.logger.error(f"Error loading plugin {module_name}: {e}")
+            self.logger.exception(f"Error loading plugin {module_name}: {e}")
             return None
 
-    def load_all(self, plugin_paths: Optional[List[Path]] = None) -> int:
-        """
-        Discover and load all plugins.
+    def load_all(self, plugin_paths: Optional[list[Path]] = None) -> int:
+        """Discover and load all plugins.
 
         Args:
             plugin_paths: Optional list of paths to search
@@ -293,11 +283,11 @@ class PluginLoader:
         """Get plugin by name."""
         return self.plugins.get(name)
 
-    def list_plugins(self) -> List[str]:
+    def list_plugins(self) -> list[str]:
         """List loaded plugin names."""
         return list(self.plugins.keys())
 
-    def get_plugin_roles(self) -> Dict[str, Path]:
+    def get_plugin_roles(self) -> dict[str, Path]:
         """Get all custom roles from loaded plugins."""
         roles = {}
         for plugin in self.plugins.values():
@@ -305,8 +295,7 @@ class PluginLoader:
         return roles
 
     def execute_hooks(self, stage: str, context: Optional[HookContext] = None) -> bool:
-        """
-        Execute all hooks for a given stage.
+        """Execute all hooks for a given stage.
 
         Args:
             stage: Hook stage name
@@ -331,7 +320,7 @@ class PluginLoader:
                     context.status = "failed"
                     return False
             except Exception as e:
-                self.logger.error(f"Hook execution error: {e}")
+                self.logger.exception(f"Hook execution error: {e}")
                 context.error = str(e)
                 context.status = "failed"
                 return False
@@ -339,7 +328,7 @@ class PluginLoader:
         context.status = "success"
         return True
 
-    def get_plugin_info(self) -> Dict[str, Dict[str, Any]]:
+    def get_plugin_info(self) -> dict[str, dict[str, Any]]:
         """Get information about all loaded plugins."""
         info = {}
         for name, plugin in self.plugins.items():
@@ -355,7 +344,7 @@ class PluginLoader:
 class BuiltinHook(HookInterface):
     """Base class for builtin hooks."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
 
     def execute(self, context: HookContext) -> bool:
@@ -364,8 +353,7 @@ class BuiltinHook(HookInterface):
 
 
 class SimplePlugin(PluginInterface):
-    """
-    Example simple plugin for reference.
+    """Example simple plugin for reference.
 
     Users can create their own plugins by extending PluginInterface.
     """
@@ -376,22 +364,21 @@ class SimplePlugin(PluginInterface):
 
     def initialize(self) -> None:
         """Initialize plugin."""
-        pass
 
-    def get_roles(self) -> Dict[str, Path]:
+    def get_roles(self) -> dict[str, Path]:
         """Return custom roles."""
         return {}
 
-    def get_hooks(self) -> Dict[str, List[HookInterface]]:
+    def get_hooks(self) -> dict[str, list[HookInterface]]:
         """Return hooks."""
         return {}
 
-    def validate(self) -> tuple[bool, List[str]]:
+    def validate(self) -> tuple[bool, list[str]]:
         """Validate plugin."""
         return True, []
 
 
-def main():
+def main() -> None:
     """CLI interface for plugin system."""
     import argparse
 
@@ -420,24 +407,19 @@ def main():
     # Handle commands
     if args.list:
         plugins = loader.list_plugins()
-        print(f"Loaded {len(plugins)} plugins:")
-        for plugin in plugins:
-            print(f"  - {plugin}")
+        for _plugin in plugins:
+            pass
 
     elif args.info:
-        info = loader.get_plugin_info()
-        import json
-
-        print(json.dumps(info, indent=2))
+        loader.get_plugin_info()
 
     elif args.validate:
         # All plugins are validated during load
-        print("✓ All plugins validated successfully")
+        pass
 
     else:
         # Default: show summary
         plugins = loader.list_plugins()
-        print(f"Plugins: {len(plugins)} loaded")
 
 
 if __name__ == "__main__":

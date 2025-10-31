@@ -1,5 +1,4 @@
-"""
-Performance optimization and caching system for Devkit.
+"""Performance optimization and caching system for Devkit.
 
 Provides:
 - Package installation parallelization
@@ -8,21 +7,20 @@ Provides:
 - Intelligent cache invalidation
 """
 
-import json
 import hashlib
+import json
+import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import logging
+from typing import Any, Optional
 
 
 class CacheManager:
     """Manage installation and configuration caches."""
 
-    def __init__(self, cache_dir: Optional[Path] = None):
-        """
-        Initialize cache manager.
+    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+        """Initialize cache manager.
 
         Args:
             cache_dir: Directory to store cache files (defaults to ~/.devkit/cache)
@@ -37,8 +35,7 @@ class CacheManager:
         return self.cache_dir / f"{safe_key}.cache"
 
     def set(self, key: str, value: dict, ttl_hours: int = 24) -> None:
-        """
-        Store value in cache with optional TTL.
+        """Store value in cache with optional TTL.
 
         Args:
             key: Cache key
@@ -57,15 +54,14 @@ class CacheManager:
         }
 
         try:
-            with open(cache_file, "w") as f:
+            with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f)
             self.logger.debug(f"Cached {key} for {ttl_hours} hours")
         except Exception as e:
             self.logger.warning(f"Failed to cache {key}: {e}")
 
     def get(self, key: str) -> Optional[Any]:
-        """
-        Retrieve value from cache if valid.
+        """Retrieve value from cache if valid.
 
         Args:
             key: Cache key
@@ -79,7 +75,7 @@ class CacheManager:
             return None
 
         try:
-            with open(cache_file, "r") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 cache_data: dict[str, Any] = json.load(f)
 
             expires = datetime.fromisoformat(cache_data["expires"])
@@ -114,7 +110,7 @@ class CacheManager:
         except Exception as e:
             self.logger.warning(f"Failed to clear cache: {e}")
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> dict:
         """Get cache statistics."""
         cache_files = list(self.cache_dir.glob("*.cache"))
         total_size = sum(f.stat().st_size for f in cache_files)
@@ -130,14 +126,13 @@ class CacheManager:
 class PerformanceMonitor:
     """Monitor and track performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor."""
-        self.metrics: Dict[str, List[float]] = {}
+        self.metrics: dict[str, list[float]] = {}
         self.logger = logging.getLogger(__name__)
 
     def start_timer(self, label: str) -> float:
-        """
-        Start a timer for performance measurement.
+        """Start a timer for performance measurement.
 
         Args:
             label: Metric label
@@ -148,8 +143,7 @@ class PerformanceMonitor:
         return time.time()
 
     def record_metric(self, label: str, duration: float, unit: str = "seconds") -> None:
-        """
-        Record a performance metric.
+        """Record a performance metric.
 
         Args:
             label: Metric label
@@ -163,8 +157,7 @@ class PerformanceMonitor:
         self.logger.debug(f"Metric {label}: {duration:.2f} {unit}")
 
     def end_timer(self, label: str, start_time: float) -> float:
-        """
-        End a timer and record the metric.
+        """End a timer and record the metric.
 
         Args:
             label: Metric label
@@ -177,7 +170,7 @@ class PerformanceMonitor:
         self.record_metric(label, elapsed)
         return elapsed
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         """Get performance metrics summary."""
         summary = {}
 
@@ -200,36 +193,23 @@ class PerformanceMonitor:
         summary = self.get_summary()
 
         if not summary:
-            print("No metrics recorded")
             return
 
-        print("\n" + "=" * 60)
-        print("PERFORMANCE METRICS REPORT")
-        print("=" * 60 + "\n")
-
-        for label, stats in sorted(summary.items()):
-            print(f"{label}:")
-            print(f"  Count: {stats['count']}")
-            print(f"  Min:   {stats['min']}s")
-            print(f"  Max:   {stats['max']}s")
-            print(f"  Avg:   {stats['avg']}s")
-            print(f"  Total: {stats['total']}s\n")
-
-        print("=" * 60)
+        for _label, _stats in sorted(summary.items()):
+            pass
 
 
 class InstallationOptimizer:
     """Optimize installation processes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize installation optimizer."""
         self.cache = CacheManager()
         self.performance = PerformanceMonitor()
         self.logger = logging.getLogger(__name__)
 
     def should_reinstall(self, package: str, version: str, cache_ttl: int = 24) -> bool:
-        """
-        Check if package should be reinstalled based on cache.
+        """Check if package should be reinstalled based on cache.
 
         Args:
             package: Package name
@@ -249,8 +229,7 @@ class InstallationOptimizer:
         return True
 
     def mark_installed(self, package: str, version: str, success: bool = True) -> None:
-        """
-        Mark package as installed in cache.
+        """Mark package as installed in cache.
 
         Args:
             package: Package name
@@ -268,21 +247,21 @@ class InstallationOptimizer:
             },
         )
 
-    def get_optimization_suggestions(self) -> List[str]:
+    def get_optimization_suggestions(self) -> list[str]:
         """Get suggestions for further optimization."""
         suggestions = []
 
         stats = self.cache.get_cache_stats()
         if stats["entries"] > 100:
             suggestions.append(
-                f"Clear cache ({stats['entries']} entries, {stats['size_mb']}MB): "
-                "devkit cache clear"
+                f"Clear cache ({stats["entries"]} entries, {stats["size_mb"]}MB): "
+                "devkit cache clear",
             )
 
         perf = self.performance.get_summary()
         for label, metrics in perf.items():
             if metrics["avg"] > 30:  # Operations taking over 30s
-                suggestions.append(f"Slow operation detected ({label}): avg {metrics['avg']}s")
+                suggestions.append(f"Slow operation detected ({label}): avg {metrics["avg"]}s")
 
         return suggestions
 
@@ -290,9 +269,8 @@ class InstallationOptimizer:
 class ParallelInstaller:
     """Support parallel installation of packages."""
 
-    def __init__(self, max_parallel: int = 4):
-        """
-        Initialize parallel installer.
+    def __init__(self, max_parallel: int = 4) -> None:
+        """Initialize parallel installer.
 
         Args:
             max_parallel: Maximum number of parallel installations
@@ -301,9 +279,8 @@ class ParallelInstaller:
         self.optimizer = InstallationOptimizer()
         self.logger = logging.getLogger(__name__)
 
-    def get_install_order(self, packages: List[Dict]) -> List[List[Dict]]:
-        """
-        Get optimal installation order for packages.
+    def get_install_order(self, packages: list[dict]) -> list[list[dict]]:
+        """Get optimal installation order for packages.
 
         Handles dependency ordering and parallelization.
 
@@ -357,9 +334,8 @@ class ParallelInstaller:
 
         return waves
 
-    def estimate_duration(self, packages: List[Dict]) -> float:
-        """
-        Estimate total installation duration.
+    def estimate_duration(self, packages: list[dict]) -> float:
+        """Estimate total installation duration.
 
         Args:
             packages: List of packages

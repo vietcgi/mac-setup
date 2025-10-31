@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""
-Mac-Setup Configuration Engine
+"""Mac-Setup Configuration Engine.
 
 Handles loading, validating, merging, and managing configuration from multiple sources.
 Supports YAML configuration files, environment variables, and runtime overrides.
 """
 
-import os
-import yaml
 import json
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
+import os
 import sys
-from datetime import datetime, timedelta
 from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
+
+import yaml
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -31,8 +31,7 @@ class ConfigEnvironment(Enum):
 
 
 class RateLimiter:
-    """
-    Rate limiter for sensitive configuration operations.
+    """Rate limiter for sensitive configuration operations.
 
     SECURITY: Prevents abuse and brute-force attacks by limiting
     the number of sensitive operations (like config changes) within
@@ -41,9 +40,8 @@ class RateLimiter:
     Default: Max 5 operations per 60 seconds
     """
 
-    def __init__(self, max_operations: int = 5, window_seconds: int = 60):
-        """
-        Initialize rate limiter.
+    def __init__(self, max_operations: int = 5, window_seconds: int = 60) -> None:
+        """Initialize rate limiter.
 
         Args:
             max_operations: Maximum operations allowed in time window
@@ -51,11 +49,10 @@ class RateLimiter:
         """
         self.max_operations = max_operations
         self.window_seconds = window_seconds
-        self.operations: Dict[str, deque] = {}
+        self.operations: dict[str, deque] = {}
 
-    def is_allowed(self, identifier: str) -> Tuple[bool, str]:
-        """
-        Check if operation is allowed for given identifier.
+    def is_allowed(self, identifier: str) -> tuple[bool, str]:
+        """Check if operation is allowed for given identifier.
 
         Args:
             identifier: User, IP, or operation identifier
@@ -94,8 +91,7 @@ class RateLimiter:
         )
 
     def reset(self, identifier: Optional[str] = None) -> None:
-        """
-        Reset rate limit for identifier or all identifiers.
+        """Reset rate limit for identifier or all identifiers.
 
         Args:
             identifier: Identifier to reset (None resets all)
@@ -105,9 +101,8 @@ class RateLimiter:
         else:
             self.operations.clear()
 
-    def get_stats(self, identifier: str) -> Dict[str, Any]:
-        """
-        Get rate limit statistics for identifier.
+    def get_stats(self, identifier: str) -> dict[str, Any]:
+        """Get rate limit statistics for identifier.
 
         Returns:
             Dictionary with operation count and reset time
@@ -118,11 +113,11 @@ class RateLimiter:
                 "operations_count": 0,
                 "max_operations": self.max_operations,
                 "window_seconds": self.window_seconds,
-                "next_reset": None
+                "next_reset": None,
             }
 
         operations = self.operations[identifier]
-        now = datetime.now()
+        datetime.now()
 
         next_reset = None
         if operations:
@@ -134,7 +129,7 @@ class RateLimiter:
             "operations_count": len(operations),
             "max_operations": self.max_operations,
             "window_seconds": self.window_seconds,
-            "next_reset": next_reset
+            "next_reset": next_reset,
         }
 
 
@@ -148,8 +143,7 @@ class ConfigMetadata:
 
 
 class ConfigurationEngine:
-    """
-    Main configuration engine for mac-setup.
+    """Main configuration engine for mac-setup.
 
     Loads configuration from multiple sources in priority order:
     1. CLI arguments (highest priority)
@@ -166,9 +160,8 @@ class ConfigurationEngine:
         project_root: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
         enable_rate_limiting: bool = False,
-    ):
-        """
-        Initialize configuration engine.
+    ) -> None:
+        """Initialize configuration engine.
 
         Args:
             project_root: Path to mac-setup project root
@@ -177,9 +170,9 @@ class ConfigurationEngine:
         """
         self.project_root = Path(project_root or Path(__file__).parent.parent)
         self.logger = logger or self._setup_logger()
-        self.config: Dict[str, Any] = {}
-        self.metadata: Dict[str, ConfigMetadata] = {}
-        self._loaded_files: List[Path] = []
+        self.config: dict[str, Any] = {}
+        self.metadata: dict[str, ConfigMetadata] = {}
+        self._loaded_files: list[Path] = []
 
         # Rate limiting for sensitive operations
         self.enable_rate_limiting = enable_rate_limiting
@@ -197,8 +190,7 @@ class ConfigurationEngine:
         return logger
 
     def validate_and_secure_config_file(self, config_path: Path) -> None:
-        """
-        Validate and secure configuration file permissions.
+        """Validate and secure configuration file permissions.
 
         Config files may contain sensitive data (API keys, tokens, etc.)
         and must have restrictive permissions (0600 - user read/write only).
@@ -221,7 +213,7 @@ class ConfigurationEngine:
         try:
             stat_info = config_path.stat()
         except OSError as e:
-            self.logger.error(f"Cannot access config file: {e}")
+            self.logger.exception(f"Cannot access config file: {e}")
             raise
 
         # Verify ownership - file must be owned by current user
@@ -230,14 +222,14 @@ class ConfigurationEngine:
             raise PermissionError(
                 f"Config file {config_path} is owned by different user "
                 f"(uid: {stat_info.st_uid}, current: {current_uid}). "
-                f"This could be a security risk."
+                f"This could be a security risk.",
             )
 
         # Check file permissions
         file_mode = stat_info.st_mode & 0o777
         if file_mode != 0o600:
             self.logger.warning(
-                f"Config file {config_path} has insecure permissions: {oct(file_mode)}"
+                f"Config file {config_path} has insecure permissions: {oct(file_mode)}",
             )
             self.logger.info("Fixing permissions to 0600 (user read/write only)...")
 
@@ -245,7 +237,7 @@ class ConfigurationEngine:
                 config_path.chmod(0o600)
                 self.logger.info(f"✓ Fixed config permissions for {config_path}")
             except OSError as e:
-                self.logger.error(f"Cannot fix file permissions: {e}")
+                self.logger.exception(f"Cannot fix file permissions: {e}")
                 raise PermissionError(f"Unable to fix permissions on {config_path}: {e}")
 
     def load_defaults(self) -> None:
@@ -316,9 +308,8 @@ class ConfigurationEngine:
             version="1.0",
         )
 
-    def load_file(self, file_path: str | Path, section: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Load configuration from YAML file.
+    def load_file(self, file_path: str | Path, section: Optional[str] = None) -> dict[str, Any]:
+        """Load configuration from YAML file.
 
         Args:
             file_path: Path to configuration file
@@ -333,7 +324,7 @@ class ConfigurationEngine:
             return {}
 
         try:
-            with open(path, "r") as f:
+            with open(path, encoding="utf-8") as f:
                 config = yaml.safe_load(f) or {}
             self._loaded_files.append(path)
             self.logger.debug(f"Loaded config from {path}")
@@ -343,15 +334,14 @@ class ConfigurationEngine:
 
             return config
         except yaml.YAMLError as e:
-            self.logger.error(f"Invalid YAML in {path}: {e}")
+            self.logger.exception(f"Invalid YAML in {path}: {e}")
             return {}
         except Exception as e:
-            self.logger.error(f"Error loading {path}: {e}")
+            self.logger.exception(f"Error loading {path}: {e}")
             return {}
 
     def _parse_config_value(self, value: str) -> str | bool | list[str]:
-        """
-        Parse configuration value from environment variable.
+        """Parse configuration value from environment variable.
 
         Handles boolean strings, comma-separated lists, and plain strings.
 
@@ -361,21 +351,19 @@ class ConfigurationEngine:
         Returns:
             Parsed value as appropriate type
         """
-        if value.lower() in ("true", "false"):
+        if value.lower() in {"true", "false"}:
             return value.lower() == "true"
-        elif "," in value:
+        if "," in value:
             return [v.strip() for v in value.split(",")]
-        else:
-            return value
+        return value
 
     def _set_nested_value(
         self,
-        target: Dict[str, Any],
-        key_parts: List[str],
+        target: dict[str, Any],
+        key_parts: list[str],
         value: Any,
     ) -> None:
-        """
-        Set value in nested dictionary using key parts.
+        """Set value in nested dictionary using key parts.
 
         Args:
             target: Dictionary to update
@@ -389,9 +377,8 @@ class ConfigurationEngine:
             current = current[part]
         current[key_parts[-1]] = value
 
-    def load_environment_overrides(self) -> Dict[str, Any]:
-        """
-        Load configuration from environment variables.
+    def load_environment_overrides(self) -> dict[str, Any]:
+        """Load configuration from environment variables.
 
         Supports variables like:
         - MAC_SETUP_ENABLED_ROLES=core,shell,editors
@@ -430,9 +417,8 @@ class ConfigurationEngine:
         group: Optional[str] = None,
         platform: Optional[str] = None,
         local_config: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """
-        Load all configuration in priority order.
+    ) -> dict[str, Any]:
+        """Load all configuration in priority order.
 
         Args:
             group: Machine group (development, design, qa, sre)
@@ -450,7 +436,7 @@ class ConfigurationEngine:
         # 2. Load platform-specific config
         if platform:
             platform_config = self.load_file(
-                self.project_root / "config" / "platforms" / f"{platform}.yaml"
+                self.project_root / "config" / "platforms" / f"{platform}.yaml",
             )
             self._deep_merge(self.config, platform_config)
             self.logger.debug(f"Merged platform config: {platform}")
@@ -483,8 +469,7 @@ class ConfigurationEngine:
         return self.config
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        Get configuration value by dot-notation key.
+        """Get configuration value by dot-notation key.
 
         Examples:
             config.get("global.logging.level")
@@ -500,9 +485,8 @@ class ConfigurationEngine:
         except (KeyError, TypeError):
             return default
 
-    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> Tuple[bool, str]:
-        """
-        Set configuration value by dot-notation key.
+    def set(self, key: str, value: Any, user_id: Optional[str] = None) -> tuple[bool, str]:
+        """Set configuration value by dot-notation key.
 
         SECURITY: Applies rate limiting to prevent abuse of config changes.
 
@@ -539,14 +523,14 @@ class ConfigurationEngine:
         self.logger.debug(f"Set {key} = {value}")
         return True, "Configuration updated"
 
-    def _validate_environment(self, errors: List[str]) -> None:
+    def _validate_environment(self, errors: list[str]) -> None:
         """Validate setup environment configuration."""
         valid_environments = ["development", "staging", "production"]
         current_env = self.get("global.setup_environment")
         if current_env not in valid_environments:
             errors.append(f"Invalid setup_environment: {current_env}")
 
-    def _validate_roles(self, errors: List[str]) -> None:
+    def _validate_roles(self, errors: list[str]) -> None:
         """Validate enabled/disabled roles don't overlap."""
         enabled = set(self.get("global.enabled_roles", []))
         disabled = set(self.get("global.disabled_roles", []))
@@ -554,14 +538,14 @@ class ConfigurationEngine:
         if overlap:
             errors.append(f"Roles in both enabled and disabled: {overlap}")
 
-    def _validate_logging(self, errors: List[str]) -> None:
+    def _validate_logging(self, errors: list[str]) -> None:
         """Validate logging configuration."""
         valid_levels = ["debug", "info", "warning", "error"]
         current_level = self.get("global.logging.level")
         if current_level not in valid_levels:
             errors.append(f"Invalid logging level: {current_level}")
 
-    def _validate_performance(self, errors: List[str]) -> None:
+    def _validate_performance(self, errors: list[str]) -> None:
         """Validate performance settings."""
         parallel_tasks = self.get("global.performance.parallel_tasks", 1)
         if parallel_tasks < 1:
@@ -571,14 +555,13 @@ class ConfigurationEngine:
         if timeout < 30:
             errors.append("timeout must be >= 30 seconds")
 
-    def validate(self) -> Tuple[bool, List[str]]:
-        """
-        Validate configuration against schema.
+    def validate(self) -> tuple[bool, list[str]]:
+        """Validate configuration against schema.
 
         Returns:
             Tuple of (is_valid, error_list)
         """
-        errors: List[str] = []
+        errors: list[str] = []
 
         # Validate all sections
         self._validate_environment(errors)
@@ -589,8 +572,7 @@ class ConfigurationEngine:
         return len(errors) == 0, errors
 
     def export(self, format_type: str = "yaml") -> str:
-        """
-        Export configuration in specified format.
+        """Export configuration in specified format.
 
         Args:
             format_type: "yaml" or "json"
@@ -600,23 +582,22 @@ class ConfigurationEngine:
         """
         if format_type == "json":
             return json.dumps(self.config, indent=2)
-        elif format_type == "yaml":
+        if format_type == "yaml":
             yaml_str = yaml.dump(self.config, default_flow_style=False)
             return yaml_str if yaml_str is not None else ""
-        else:
-            raise ValueError(f"Unsupported format: {format_type}")
+        raise ValueError(f"Unsupported format: {format_type}")
 
     def save(self, file_path: str | Path) -> None:
         """Save current configuration to file."""
         path = Path(file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(self.export("yaml"))
 
         self.logger.info(f"Configuration saved to {path}")
 
-    def _deep_merge(self, base: Dict, override: Dict) -> None:
+    def _deep_merge(self, base: dict, override: dict) -> None:
         """Deep merge override into base dictionary."""
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -631,17 +612,17 @@ class ConfigurationEngine:
 
         return datetime.now().isoformat()
 
-    def list_loaded_files(self) -> List[str]:
+    def list_loaded_files(self) -> list[str]:
         """Get list of loaded configuration files."""
         return [str(f) for f in self._loaded_files]
 
-    def get_enabled_roles(self) -> List[str]:
+    def get_enabled_roles(self) -> list[str]:
         """Get list of enabled roles based on current configuration."""
         enabled = self.get("global.enabled_roles", [])
         disabled = self.get("global.disabled_roles", [])
         return [r for r in enabled if r not in disabled]
 
-    def get_role_config(self, role: str) -> Dict[str, Any]:
+    def get_role_config(self, role: str) -> dict[str, Any]:
         """Get configuration for specific role."""
         role_config: Any = self.get(f"roles.{role}", {})
         if isinstance(role_config, dict):
@@ -649,9 +630,8 @@ class ConfigurationEngine:
             return config_value if isinstance(config_value, dict) else {}
         return {}
 
-    def get_rate_limit_stats(self, user_id: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Get rate limiting statistics for user.
+    def get_rate_limit_stats(self, user_id: Optional[str] = None) -> dict[str, Any]:
+        """Get rate limiting statistics for user.
 
         Args:
             user_id: User identifier (default: current user)
@@ -663,8 +643,7 @@ class ConfigurationEngine:
         return self.rate_limiter.get_stats(user)
 
     def reset_rate_limit(self, user_id: Optional[str] = None) -> None:
-        """
-        Reset rate limit for user or all users.
+        """Reset rate limit for user or all users.
 
         Args:
             user_id: User identifier (None resets all)
@@ -672,7 +651,7 @@ class ConfigurationEngine:
         self.rate_limiter.reset(user_id)
 
 
-def main():
+def main() -> None:
     """CLI interface for configuration engine."""
     import argparse
 
@@ -701,48 +680,38 @@ def main():
     if args.validate:
         is_valid, errors = engine.validate()
         if is_valid:
-            print("✓ Configuration is valid")
             sys.exit(0)
         else:
-            print("✗ Configuration errors:")
-            for error in errors:
-                print(f"  - {error}")
+            for _error in errors:
+                pass
             sys.exit(1)
 
     elif args.get:
-        value = engine.get(args.get)
-        print(yaml.dump({args.get: value}, default_flow_style=False))
+        engine.get(args.get)
 
     elif args.set:
-        success, message = engine.set(args.set[0], args.set[1])
+        success, _message = engine.set(args.set[0], args.set[1])
         if success:
             engine.save(Path.home() / ".mac-setup" / "config.yaml")
-            print(f"✓ {message}")
         else:
-            print(f"✗ {message}")
             sys.exit(1)
 
     elif args.list_files:
-        print("Loaded configuration files:")
-        for f in engine.list_loaded_files():
-            print(f"  - {f}")
+        for _f in engine.list_loaded_files():
+            pass
 
     elif args.list_roles:
-        print("Enabled roles:")
-        for role in engine.get_enabled_roles():
-            print(f"  - {role}")
+        for _role in engine.get_enabled_roles():
+            pass
 
     elif args.export:
-        print(engine.export(args.export))
+        pass
 
     else:
         # Default: show summary
         is_valid, errors = engine.validate()
-        print(f"Environment: {engine.get('global.setup_environment')}")
-        print(f"Enabled roles: {len(engine.get_enabled_roles())}")
-        print(f"Valid: {is_valid}")
         if errors:
-            print(f"Errors: {len(errors)}")
+            pass
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Plugin System Security & Validation
+"""Plugin System Security & Validation.
 
 Provides comprehensive validation for Devkit plugins:
 - Manifest validation (required fields, types)
@@ -12,19 +11,19 @@ Provides comprehensive validation for Devkit plugins:
 All plugins must have a manifest.json file and implement the PluginInterface.
 """
 
+import hashlib
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Type, Any
 import re
-import hashlib
+from pathlib import Path
+from typing import Any, Optional
 
 
 class PluginManifest:
     """Validates plugin manifest files."""
 
     # Required fields that every plugin must have
-    REQUIRED_FIELDS: Dict[str, Type[Any]] = {
+    REQUIRED_FIELDS: dict[str, type[Any]] = {
         "name": str,
         "version": str,
         "author": str,
@@ -32,7 +31,7 @@ class PluginManifest:
     }
 
     # Optional fields with type checking
-    OPTIONAL_FIELDS: Dict[str, Type[Any]] = {
+    OPTIONAL_FIELDS: dict[str, type[Any]] = {
         "homepage": str,
         "repository": str,
         "license": str,
@@ -48,9 +47,8 @@ class PluginManifest:
         "environment",  # Can read environment variables
     }
 
-    def __init__(self, manifest_path: Path):
-        """
-        Load and parse plugin manifest.
+    def __init__(self, manifest_path: Path) -> None:
+        """Load and parse plugin manifest.
 
         Args:
             manifest_path: Path to manifest.json file
@@ -64,14 +62,13 @@ class PluginManifest:
 
         self.path = manifest_path
         try:
-            with open(manifest_path) as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 self.data = json.load(f)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid manifest JSON in {manifest_path}: {e}")
 
-    def validate(self) -> Tuple[bool, List[str]]:
-        """
-        Validate manifest against schema.
+    def validate(self) -> tuple[bool, list[str]]:
+        """Validate manifest against schema.
 
         Returns:
             Tuple of (is_valid, list_of_errors)
@@ -85,25 +82,23 @@ class PluginManifest:
             elif not isinstance(self.data[field], field_type):
                 errors.append(
                     f"Invalid type for {field}: expected {field_type.__name__}, "
-                    f"got {type(self.data[field]).__name__}"
+                    f"got {type(self.data[field]).__name__}",
                 )
 
         # Validate version format (semantic versioning)
-        if "version" in self.data:
-            if not self._is_valid_semver(self.data["version"]):
-                errors.append(
-                    f"Invalid version format: {self.data['version']}. "
-                    f"Must be semantic version (X.Y.Z)"
-                )
+        if "version" in self.data and not self._is_valid_semver(self.data["version"]):
+            errors.append(
+                f"Invalid version format: {self.data["version"]}. "
+                f"Must be semantic version (X.Y.Z)",
+            )
 
         # Validate optional fields if present
         for field, field_type in self.OPTIONAL_FIELDS.items():
-            if field in self.data:
-                if not isinstance(self.data[field], field_type):
-                    errors.append(
-                        f"Invalid type for {field}: expected {field_type.__name__}, "
-                        f"got {type(self.data[field]).__name__}"
-                    )
+            if field in self.data and not isinstance(self.data[field], field_type):
+                errors.append(
+                    f"Invalid type for {field}: expected {field_type.__name__}, "
+                    f"got {type(self.data[field]).__name__}",
+                )
 
         # Validate permissions (if specified)
         if "permissions" in self.data:
@@ -111,7 +106,7 @@ class PluginManifest:
             if invalid_perms:
                 errors.append(
                     f"Invalid permissions: {invalid_perms}. "
-                    f"Valid options: {self.VALID_PERMISSIONS}"
+                    f"Valid options: {self.VALID_PERMISSIONS}",
                 )
 
         # Validate requires (if specified)
@@ -124,14 +119,13 @@ class PluginManifest:
                     if not isinstance(version_spec, str):
                         errors.append(
                             f"Package requirement '{pkg}' must have string version constraint, "
-                            f"got {type(version_spec).__name__}"
+                            f"got {type(version_spec).__name__}",
                         )
 
         return len(errors) == 0, errors
 
-    def verify_integrity(self) -> Tuple[bool, str]:
-        """
-        Verify plugin manifest integrity using SHA256 checksum.
+    def verify_integrity(self) -> tuple[bool, str]:
+        """Verify plugin manifest integrity using SHA256 checksum.
 
         SECURITY: Detects tampering and corruption of manifest files.
 
@@ -153,15 +147,14 @@ class PluginManifest:
             return (
                 False,
                 f"Manifest integrity check failed. Plugin may have been tampered with. "
-                f"Expected: {stored_checksum}, Got: {computed_checksum}"
+                f"Expected: {stored_checksum}, Got: {computed_checksum}",
             )
 
         return True, "Manifest integrity verified"
 
     @staticmethod
     def _is_valid_semver(version: str) -> bool:
-        """
-        Validate semantic version format (X.Y.Z).
+        """Validate semantic version format (X.Y.Z).
 
         Supports:
         - 1.0.0
@@ -180,8 +173,7 @@ class PluginManifest:
 
 
 class PluginValidator:
-    """
-    Comprehensive plugin validation system.
+    """Comprehensive plugin validation system.
 
     Validates plugins before loading to ensure:
     - Required files exist
@@ -190,9 +182,8 @@ class PluginValidator:
     - Permissions are declared
     """
 
-    def __init__(self, plugins_dir: Path, logger: Optional[logging.Logger] = None):
-        """
-        Initialize plugin validator.
+    def __init__(self, plugins_dir: Path, logger: Optional[logging.Logger] = None) -> None:
+        """Initialize plugin validator.
 
         Args:
             plugins_dir: Directory containing plugins
@@ -201,9 +192,8 @@ class PluginValidator:
         self.plugins_dir = plugins_dir
         self.logger = logger or self._setup_logger()
 
-    def validate_plugin(self, plugin_name: str) -> Tuple[bool, str]:
-        """
-        Validate plugin before loading.
+    def validate_plugin(self, plugin_name: str) -> tuple[bool, str]:
+        """Validate plugin before loading.
 
         Checks:
         1. Plugin directory exists
@@ -260,15 +250,14 @@ class PluginValidator:
 
         # Log successful validation
         self.logger.info(
-            f"✓ Plugin validated: {plugin_name} v{plugin_info.get('version', '?')} "
-            f"by {plugin_info.get('author', 'Unknown')}"
+            f"✓ Plugin validated: {plugin_name} v{plugin_info.get("version", "?")} "
+            f"by {plugin_info.get("author", "Unknown")}",
         )
 
         return True, "Plugin validation passed"
 
     def _verify_plugin_class(self, plugin_dir: Path) -> bool:
-        """
-        Verify plugin implements required interface.
+        """Verify plugin implements required interface.
 
         Checks that __init__.py contains:
         - class Plugin definition
@@ -294,9 +283,8 @@ class PluginValidator:
         # Should have at least the required methods
         return method_count >= len(required_methods)
 
-    def validate_all_plugins(self) -> Dict[str, Tuple[bool, str]]:
-        """
-        Validate all plugins in the plugins directory.
+    def validate_all_plugins(self) -> dict[str, tuple[bool, str]]:
+        """Validate all plugins in the plugins directory.
 
         Returns:
             Dictionary mapping plugin names to (is_valid, message) tuples
@@ -320,9 +308,8 @@ class PluginValidator:
 
         return results
 
-    def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
-        """
-        Get plugin information from manifest.
+    def get_plugin_info(self, plugin_name: str) -> Optional[dict[str, Any]]:
+        """Get plugin information from manifest.
 
         Args:
             plugin_name: Name of plugin
@@ -357,9 +344,8 @@ class PluginValidator:
         return logger
 
 
-def validate_plugin_manifest(manifest_path: Path) -> Tuple[bool, List[str]]:
-    """
-    Standalone function to validate a plugin manifest file.
+def validate_plugin_manifest(manifest_path: Path) -> tuple[bool, list[str]]:
+    """Standalone function to validate a plugin manifest file.
 
     Useful for plugin developers to validate their manifest.json.
 
@@ -385,8 +371,7 @@ if __name__ == "__main__":
         validator = PluginValidator(plugins_dir)
         results = validator.validate_all_plugins()
 
-        for plugin_name, (is_valid, message) in results.items():
+        for is_valid, _message in results.values():
             status = "✓" if is_valid else "✗"
-            print(f"{status} {plugin_name}: {message}")
     else:
-        print("Usage: python3 cli/plugin_validator.py <plugins_dir>")
+        pass

@@ -1,5 +1,4 @@
-"""
-Enhanced exception classes with helpful error messages and recovery suggestions.
+"""Enhanced exception classes with helpful error messages and recovery suggestions.
 
 This module provides custom exception types that include:
 - Clear, user-friendly error messages
@@ -8,7 +7,7 @@ This module provides custom exception types that include:
 - Suggestion for documentation references
 """
 
-from typing import Optional, List
+from typing import Optional
 
 
 class DevkitException(Exception):
@@ -18,11 +17,10 @@ class DevkitException(Exception):
         self,
         message: str,
         cause: Optional[str] = None,
-        solutions: Optional[List[str]] = None,
+        solutions: Optional[list[str]] = None,
         documentation: Optional[str] = None,
-    ):
-        """
-        Initialize enhanced exception.
+    ) -> None:
+        """Initialize enhanced exception.
 
         Args:
             message: User-friendly error message
@@ -194,7 +192,7 @@ class PluginError(DevkitException):
                 f"Check plugin directory: ls -la ~/.devkit/plugins/{plugin}/",
                 "Verify manifest.json exists and is valid JSON",
                 "Verify __init__.py exists and contains Plugin class",
-                "Run validator: python3 -c \"from cli.plugin_validator import validate_plugin_manifest; validate_plugin_manifest('{plugin}')\"",
+                f"Run validator: python3 -c \"from cli.plugin_validator import validate_plugin_manifest; validate_plugin_manifest('{plugin}')\"",
                 "See PLUGIN_DEVELOPMENT.md for plugin requirements",
             ],
             documentation="See docs/PLUGINS.md for plugin system",
@@ -272,7 +270,7 @@ class SecurityError(DevkitException):
             message=f"File has insecure permissions: {path}",
             cause=f"Permissions are {current}, should be {expected}",
             solutions=[
-                f"Fix permissions: chmod {expected.replace('0', '')} {path}",
+                f"Fix permissions: chmod {expected.replace("0", "")} {path}",
                 f"Verify: ls -la {path}",
                 "Consider using secure_config() to auto-fix permissions",
             ],
@@ -292,9 +290,9 @@ class DependencyError(DevkitException):
             cause="Tool is not installed or not in PATH",
             solutions=[
                 f"Install: {install}",
-                "Verify installation: which {tool}",
+                f"Verify installation: which {tool}",
                 "Update PATH if needed: source ~/.zshrc",
-                "Check if installed in different location: find /opt -name {tool}",
+                f"Check if installed in different location: find /opt -name {tool}",
             ],
             documentation="See README.md > Requirements",
         )
@@ -308,8 +306,8 @@ class DependencyError(DevkitException):
             solutions=[
                 f"Upgrade: brew upgrade {tool}",
                 f"Check version: {tool} --version",
-                "If already latest, check PATH: which {tool}",
-                "Remove old version: brew uninstall {tool} && brew install {tool}",
+                f"If already latest, check PATH: which {tool}",
+                f"Remove old version: brew uninstall {tool} && brew install {tool}",
             ],
             documentation="See README.md > Requirements",
         )
@@ -319,12 +317,12 @@ class VerificationError(DevkitException):
     """Setup verification failed."""
 
     @staticmethod
-    def some_tools_missing(missing_tools: List[str]) -> "VerificationError":
+    def some_tools_missing(missing_tools: list[str]) -> "VerificationError":
         """Create verification failure exception."""
         install_cmd = " ".join(missing_tools)
         return VerificationError(
             message=f"Setup verification failed: {len(missing_tools)} tool(s) missing",
-            cause=f"Missing tools: {', '.join(missing_tools)}",
+            cause=f"Missing tools: {", ".join(missing_tools)}",
             solutions=[
                 f"Install all missing: brew install {install_cmd}",
                 "Verify each installed: which <tool>",
