@@ -349,6 +349,46 @@ class ConfigurationEngine:
             self.logger.error(f"Error loading {path}: {e}")
             return {}
 
+    def _parse_config_value(self, value: str) -> str | bool | list[str]:
+        """
+        Parse configuration value from environment variable.
+
+        Handles boolean strings, comma-separated lists, and plain strings.
+
+        Args:
+            value: String value from environment variable
+
+        Returns:
+            Parsed value as appropriate type
+        """
+        if value.lower() in ("true", "false"):
+            return value.lower() == "true"
+        elif "," in value:
+            return [v.strip() for v in value.split(",")]
+        else:
+            return value
+
+    def _set_nested_value(
+        self,
+        target: Dict[str, Any],
+        key_parts: List[str],
+        value: Any,
+    ) -> None:
+        """
+        Set value in nested dictionary using key parts.
+
+        Args:
+            target: Dictionary to update
+            key_parts: Nested key parts (e.g., ["logging", "level"])
+            value: Value to set
+        """
+        current = target
+        for part in key_parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+        current[key_parts[-1]] = value
+
     def load_environment_overrides(self) -> Dict[str, Any]:
         """
         Load configuration from environment variables.
@@ -366,25 +406,12 @@ class ConfigurationEngine:
 
             # Convert MAC_SETUP_ENABLED_ROLES to enabled_roles
             config_key = key[len(prefix) :].lower()
+            parsed_value = self._parse_config_value(value)
 
-            # Parse value (handle arrays and booleans)
-            parsed_value: str | bool | list[str]
-            if value.lower() in ("true", "false"):
-                parsed_value = value.lower() == "true"
-            elif "," in value:
-                parsed_value = [v.strip() for v in value.split(",")]
-            else:
-                parsed_value = value
-
-            # Nested keys use double underscore: MAC_SETUP_LOGGING__LEVEL
+            # Handle nested keys using double underscore: MAC_SETUP_LOGGING__LEVEL
             if "__" in config_key:
-                parts = config_key.split("__")
-                current: Any = overrides
-                for part in parts[:-1]:
-                    if part not in current:
-                        current[part] = {}
-                    current = current[part]
-                current[parts[-1]] = parsed_value
+                key_parts = config_key.split("__")
+                self._set_nested_value(overrides, key_parts, parsed_value)
             else:
                 overrides[config_key] = parsed_value
 
@@ -512,6 +539,38 @@ class ConfigurationEngine:
         self.logger.debug(f"Set {key} = {value}")
         return True, "Configuration updated"
 
+    def _validate_environment(self, errors: List[str]) -> None:
+        """Validate setup environment configuration."""
+        valid_environments = ["development", "staging", "production"]
+        current_env = self.get("global.setup_environment")
+        if current_env not in valid_environments:
+            errors.append(f"Invalid setup_environment: {current_env}")
+
+    def _validate_roles(self, errors: List[str]) -> None:
+        """Validate enabled/disabled roles don't overlap."""
+        enabled = set(self.get("global.enabled_roles", []))
+        disabled = set(self.get("global.disabled_roles", []))
+        overlap = enabled & disabled
+        if overlap:
+            errors.append(f"Roles in both enabled and disabled: {overlap}")
+
+    def _validate_logging(self, errors: List[str]) -> None:
+        """Validate logging configuration."""
+        valid_levels = ["debug", "info", "warning", "error"]
+        current_level = self.get("global.logging.level")
+        if current_level not in valid_levels:
+            errors.append(f"Invalid logging level: {current_level}")
+
+    def _validate_performance(self, errors: List[str]) -> None:
+        """Validate performance settings."""
+        parallel_tasks = self.get("global.performance.parallel_tasks", 1)
+        if parallel_tasks < 1:
+            errors.append("parallel_tasks must be >= 1")
+
+        timeout = self.get("global.performance.timeout", 30)
+        if timeout < 30:
+            errors.append("timeout must be >= 30 seconds")
+
     def validate(self) -> Tuple[bool, List[str]]:
         """
         Validate configuration against schema.
@@ -519,31 +578,13 @@ class ConfigurationEngine:
         Returns:
             Tuple of (is_valid, error_list)
         """
-        errors = []
+        errors: List[str] = []
 
-        # Validate global settings
-        valid_environments = ["development", "staging", "production"]
-        if self.get("global.setup_environment") not in valid_environments:
-            errors.append(f"Invalid setup_environment: {self.get('global.setup_environment')}")
-
-        # Validate enabled/disabled roles don't overlap
-        enabled = set(self.get("global.enabled_roles", []))
-        disabled = set(self.get("global.disabled_roles", []))
-        overlap = enabled & disabled
-        if overlap:
-            errors.append(f"Roles in both enabled and disabled: {overlap}")
-
-        # Validate logging level
-        valid_levels = ["debug", "info", "warning", "error"]
-        if self.get("global.logging.level") not in valid_levels:
-            errors.append(f"Invalid logging level: {self.get('global.logging.level')}")
-
-        # Validate performance settings
-        if self.get("global.performance.parallel_tasks", 1) < 1:
-            errors.append("parallel_tasks must be >= 1")
-
-        if self.get("global.performance.timeout", 30) < 30:
-            errors.append("timeout must be >= 30 seconds")
+        # Validate all sections
+        self._validate_environment(errors)
+        self._validate_roles(errors)
+        self._validate_logging(errors)
+        self._validate_performance(errors)
 
         return len(errors) == 0, errors
 
