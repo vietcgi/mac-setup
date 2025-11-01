@@ -82,12 +82,16 @@
   ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew update"
   changed_when: false
   when: homebrew_check.stat.exists
+  environment:
+    PATH: "{{ ansible_env.PATH }}"
   tags: [homebrew]
 
 - name: Install core packages via Homebrew
   ansible.builtin.shell: |
     {{ homebrew_prefix }}/bin/brew install git curl wget
   changed_when: false
+  environment:
+    PATH: "{{ ansible_env.PATH }}"
   tags: [homebrew, packages]
 
 - name: Install Ansible (if needed)
@@ -95,6 +99,8 @@
     {{ homebrew_prefix }}/bin/brew install ansible
   changed_when: false
   when: ansible_version is not defined
+  environment:
+    PATH: "{{ ansible_env.PATH }}"
   tags: [homebrew, packages]
 
 - name: Create logging directory structure
@@ -127,5 +133,5 @@
     - "{{ homebrew_prefix }}/bin/brew"
   changed_when: false
   environment:
-    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ ansible_env.PATH }}"
   tags: [validation]
