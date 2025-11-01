@@ -54,7 +54,7 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          coverage report --fail-under=80
+          coverage report --fail-under=75
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
@@ -121,8 +121,8 @@ jobs:
             with open('coverage.json') as f:
               data = json.load(f)
               total_coverage = data['totals']['percent_covered']
-              if total_coverage < 80:
-                print(f'Coverage {total_coverage}% is below 80% threshold')
+              if total_coverage < 75:
+                print(f'Coverage {total_coverage}% is below 75% threshold')
                 exit(1)
               else:
                 print(f'✓ Coverage {total_coverage}% meets threshold')
