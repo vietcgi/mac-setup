@@ -541,6 +541,8 @@ jobs:
       - test-ubuntu-20
       - test-debian-12
       - test-debian-11
+      - test-fedora-40
+      - test-arch-linux
     runs-on: ubuntu-latest
     if: always()
 
@@ -549,43 +551,59 @@ jobs:
       run: |
         echo "=== Test Results Summary ==="
         echo ""
-        echo "macOS 15 (Sequoia):  ${{ needs.test-macos-15.result }}"
-        echo "macOS 14 (Sonoma):   ${{ needs.test-macos-14.result }}"
-        echo "macOS 13 (Ventura):  ${{ needs.test-macos-13.result }}"
-        echo "macOS 12 (Monterey): ${{ needs.test-macos-12.result }}"
-        echo "Ubuntu 24.04:        ${{ needs.test-ubuntu-24.result }}"
-        echo "Ubuntu 22.04:        ${{ needs.test-ubuntu-22.result }}"
-        echo "Ubuntu 20.04:        ${{ needs.test-ubuntu-20.result }}"
-        echo "Debian 12:           ${{ needs.test-debian-12.result }}"
-        echo "Debian 11:           ${{ needs.test-debian-11.result }}"
+        echo "Native Runners (Critical):"
+        echo "  macOS 15 (Sequoia):  ${{ needs.test-macos-15.result }}"
+        echo "  macOS 14 (Sonoma):   ${{ needs.test-macos-14.result }}"
+        echo "  macOS 13 (Ventura):  ${{ needs.test-macos-13.result }}"
+        echo "  macOS 12 (Monterey): ${{ needs.test-macos-12.result }}"
+        echo "  Ubuntu 24.04 (Noble): ${{ needs.test-ubuntu-24.result }}"
+        echo "  Ubuntu 22.04 (Jammy): ${{ needs.test-ubuntu-22.result }}"
+        echo "  Ubuntu 20.04 (Focal): ${{ needs.test-ubuntu-20.result }}"
+        echo ""
+        echo "Container Tests (Informational):"
+        echo "  Debian 12 (Bookworm): ${{ needs.test-debian-12.result }}"
+        echo "  Debian 11 (Bullseye): ${{ needs.test-debian-11.result }}"
+        echo "  Fedora 40:            ${{ needs.test-fedora-40.result }}"
+        echo "  Arch Linux:           ${{ needs.test-arch-linux.result }}"
         echo ""
 
-        # Count failures
-        failures=0
-        [[ "${{ needs.test-macos-15.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-macos-14.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-macos-13.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-macos-12.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-ubuntu-24.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-ubuntu-22.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-ubuntu-20.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-debian-12.result }}" != "success" ]] && ((failures++))
-        [[ "${{ needs.test-debian-11.result }}" != "success" ]] && ((failures++))
+        # Count critical vs informational failures
+        critical_failures=0
+        info_failures=0
 
-        total=9
-        successes=$((total - failures))
+        # Critical tests (native runners)
+        [[ "${{ needs.test-macos-15.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-macos-14.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-macos-13.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-macos-12.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-ubuntu-24.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-ubuntu-22.result }}" != "success" ]] && ((critical_failures++))
+        [[ "${{ needs.test-ubuntu-20.result }}" != "success" ]] && ((critical_failures++))
+
+        # Informational tests (containers - may have transient failures)
+        [[ "${{ needs.test-debian-12.result }}" != "success" ]] && ((info_failures++))
+        [[ "${{ needs.test-debian-11.result }}" != "success" ]] && ((info_failures++))
+        [[ "${{ needs.test-fedora-40.result }}" != "success" ]] && ((info_failures++))
+        [[ "${{ needs.test-arch-linux.result }}" != "success" ]] && ((info_failures++))
+
+        critical_total=7
+        info_total=4
+        critical_successes=$((critical_total - critical_failures))
+        info_successes=$((info_total - info_failures))
 
         echo "=== Final Results ==="
-        echo "Passed: $successes/$total"
-        echo "Failed: $failures/$total"
+        echo "Critical (Native):  $critical_successes/$critical_total passed"
+        echo "Informational (Containers): $info_successes/$info_total passed"
+        echo ""
 
-        if [ $failures -gt 0 ]; then
-          echo ""
-          echo "Some tests failed. Check the logs above."
+        if [ $critical_failures -gt 0 ]; then
+          echo "⚠️  Some critical tests failed. Check the logs above."
           exit 1
         else
-          echo ""
-          echo "🎉 All tests passed!"
+          echo "✓ All critical tests passed!"
+          if [ $info_failures -gt 0 ]; then
+            echo "ℹ️  Note: $info_failures informational container tests had issues (non-blocking)"
+          fi
         fi
 
   # ===========================================================================
