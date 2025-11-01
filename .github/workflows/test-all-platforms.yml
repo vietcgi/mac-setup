@@ -472,6 +472,7 @@ jobs:
         uname -a
 
     - name: Run bootstrap
+      shell: bash
       run: |
         chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
@@ -534,6 +535,7 @@ jobs:
         uname -a
 
     - name: Run bootstrap
+      shell: bash
       run: |
         chmod +x bootstrap.sh
         export DEBIAN_FRONTEND=noninteractive
