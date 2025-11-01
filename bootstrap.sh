@@ -348,39 +348,65 @@ install_ansible() {
         log_info "Installing Ansible via pip3 (Linux)..."
 
         if ! command -v pip3 &> /dev/null; then
-            log_error "pip3 is required to install Ansible"
+            log_error "pip3 not found, attempting system package manager..."
 
             # Try system package manager as fallback
             if command -v apt-get &> /dev/null; then
                 log_info "Attempting to install ansible via apt-get..."
-                sudo apt-get update && sudo apt-get install -y ansible || {
-                    log_error "Failed to install Ansible via apt-get"
-                    return 1
-                }
+                if command -v sudo &> /dev/null; then
+                    sudo apt-get update && sudo apt-get install -y ansible || {
+                        log_error "Failed to install Ansible via apt-get"
+                        return 1
+                    }
+                else
+                    apt-get update && apt-get install -y ansible || {
+                        log_error "Failed to install Ansible via apt-get (no sudo)"
+                        return 1
+                    }
+                fi
             elif command -v dnf &> /dev/null; then
                 log_info "Attempting to install ansible via dnf..."
-                sudo dnf install -y ansible || {
-                    log_error "Failed to install Ansible via dnf"
-                    return 1
-                }
+                if command -v sudo &> /dev/null; then
+                    sudo dnf install -y ansible || {
+                        log_error "Failed to install Ansible via dnf"
+                        return 1
+                    }
+                else
+                    dnf install -y ansible || {
+                        log_error "Failed to install Ansible via dnf (no sudo)"
+                        return 1
+                    }
+                fi
             elif command -v pacman &> /dev/null; then
                 log_info "Attempting to install ansible via pacman..."
-                sudo pacman -S --noconfirm ansible || {
-                    log_error "Failed to install Ansible via pacman"
-                    return 1
-                }
+                if command -v sudo &> /dev/null; then
+                    sudo pacman -S --noconfirm ansible || {
+                        log_error "Failed to install Ansible via pacman"
+                        return 1
+                    }
+                else
+                    pacman -S --noconfirm ansible || {
+                        log_error "Failed to install Ansible via pacman (no sudo)"
+                        return 1
+                    }
+                fi
             else
                 log_error "No supported package manager found (apt-get, dnf, pacman)"
                 suggest_fix "ansible" "Install pip3 or a supported package manager"
                 return 1
             fi
         else
-            # Use pip3 to install ansible
-            retry pip3 install --upgrade ansible || {
+            # Use pip3 to install ansible (user or system-wide)
+            log_info "Using pip3 to install Ansible..."
+            if retry pip3 install --user ansible 2>/dev/null; then
+                log_success "Ansible installed via pip3 (user)"
+            elif retry pip3 install --upgrade ansible; then
+                log_success "Ansible installed via pip3 (system)"
+            else
                 log_error "Failed to install Ansible via pip3 after 3 attempts"
                 suggest_fix "ansible" "Check pip3 installation: pip3 --version"
                 return 1
-            }
+            fi
         fi
     fi
 
