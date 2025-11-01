@@ -6,8 +6,37 @@
     os_family: "{{ ansible_os_family }}"
     is_macos: "{{ ansible_os_family == 'Darwin' }}"
     is_linux: "{{ ansible_os_family != 'Darwin' }}"
-    homebrew_prefix: "{{ '/opt/homebrew' if ansible_os_family == 'Darwin' else '/home/linuxbrew/.linuxbrew' }}"
   tags: [always]
+
+- name: Detect Homebrew path (macOS architecture-specific)
+  block:
+    - name: Check for ARM64 Homebrew (Apple Silicon)
+      ansible.builtin.stat:
+        path: "/opt/homebrew/bin/brew"
+      register: arm64_homebrew
+      when: is_macos
+
+    - name: Check for x86_64 Homebrew (Intel)
+      ansible.builtin.stat:
+        path: "/usr/local/bin/brew"
+      register: x86_homebrew
+      when: is_macos
+
+    - name: Set homebrew_prefix for macOS (ARM64)
+      ansible.builtin.set_fact:
+        homebrew_prefix: "/opt/homebrew"
+      when: is_macos and arm64_homebrew.stat.exists
+
+    - name: Set homebrew_prefix for macOS (Intel)
+      ansible.builtin.set_fact:
+        homebrew_prefix: "/usr/local"
+      when: is_macos and x86_homebrew.stat.exists and not arm64_homebrew.stat.exists
+
+    - name: Set homebrew_prefix for Linux
+      ansible.builtin.set_fact:
+        homebrew_prefix: "/home/linuxbrew/.linuxbrew"
+      when: is_linux
+  tags: [always, homebrew]
 
 - name: Set user and home from environment
   ansible.builtin.set_fact:
@@ -47,7 +76,6 @@
 - name: Ensure Homebrew is in PATH
   ansible.builtin.set_fact:
     ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
-  when: not homebrew_check.stat.exists
   tags: [homebrew]
 
 - name: Update Homebrew
@@ -96,6 +124,8 @@
   loop:
     - git
     - curl
-    - brew
+    - "{{ homebrew_prefix }}/bin/brew"
   changed_when: false
+  environment:
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [validation]
