@@ -42,8 +42,6 @@
   ansible.builtin.set_fact:
     current_user: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') or 'root' }}"
     home_dir: "{{ lookup('env', 'HOME') or '/root' }}"
-    # Use PATH passed from bootstrap script if available (for Linux Homebrew)
-    bootstrap_path: "{{ ansible_env_path | default(ansible_env.PATH) }}"
   tags: [always]
 
 - name: Create devkit directories
@@ -77,7 +75,7 @@
 
 - name: Ensure Homebrew is in PATH
   ansible.builtin.set_fact:
-    ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ bootstrap_path}) }}"
+    ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
   tags: [homebrew]
 
 - name: Update Homebrew

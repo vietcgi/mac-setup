@@ -482,14 +482,9 @@ run_ansible_setup() {
 
     cd "$SCRIPT_DIR"
 
-    # Export current PATH for Ansible to use
-    # This ensures Homebrew binaries are available to Ansible on Linux systems
-    export ANSIBLE_PYTHON_INTERPRETER="${ANSIBLE_PYTHON_INTERPRETER:-/usr/bin/python3}"
-
     ansible-playbook -i inventory.yml setup.yml \
         --extra-vars="setup_environment=${ENVIRONMENT:-development}" \
         --extra-vars="enabled_roles=${SELECTED_ROLES:-core,shell,editors,languages,development}" \
-        -e "ansible_env_path=${PATH}" \
         || {
             log_error "Ansible setup failed"
             return 1
