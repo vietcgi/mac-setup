@@ -458,10 +458,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git and bash (needed for checkout and bootstrap)
+    - name: Install git, bash, and curl (needed for checkout and bootstrap)
       run: |
         apt-get update -y
-        apt-get install -y git bash
+        apt-get install -y git bash curl build-essential
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -528,10 +528,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git and bash (needed for checkout and bootstrap)
+    - name: Install git, bash, and curl (needed for checkout and bootstrap)
       run: |
         apt-get update -y
-        apt-get install -y git bash
+        apt-get install -y git bash curl build-essential
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -678,9 +678,9 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git (needed for checkout)
+    - name: Install git, curl and build tools (needed for checkout and bootstrap)
       run: |
-        dnf install -y git
+        dnf install -y git curl gcc g++ make
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -739,9 +739,9 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git (needed for checkout)
+    - name: Install git, curl and build tools (needed for checkout and bootstrap)
       run: |
-        pacman -Sy --noconfirm git
+        pacman -Sy --noconfirm git curl base-devel
 
     - name: Checkout code
       uses: actions/checkout@v4
