@@ -67,6 +67,8 @@
     set -o pipefail
     curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | \
       /bin/bash 2>&1 | tee /tmp/homebrew_install.log
+  args:
+    executable: /bin/bash
   register: homebrew_install
   when: not homebrew_check.stat.exists
   retries: 3
