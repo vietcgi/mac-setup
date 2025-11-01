@@ -307,36 +307,82 @@ install_ansible() {
         return 0
     fi
 
-    log_info "Installing Ansible via Homebrew..."
+    # Detect OS
+    local os_type
+    os_type=$(uname -s)
 
-    if ! command -v brew &> /dev/null; then
-        log_error "Homebrew is required to install Ansible"
-        log_error ""
-        log_error "Please install Homebrew first: https://brew.sh"
-        suggest_fix "ansible" "Install Homebrew before attempting Ansible installation"
-        return 1
+    if [[ "$os_type" == "Darwin" ]]; then
+        # macOS: use Homebrew
+        log_info "Installing Ansible via Homebrew (macOS)..."
+
+        if ! command -v brew &> /dev/null; then
+            log_error "Homebrew is required to install Ansible"
+            log_error ""
+            log_error "Please install Homebrew first: https://brew.sh"
+            suggest_fix "ansible" "Install Homebrew before attempting Ansible installation"
+            return 1
+        fi
+
+        if ! command -v python3 &> /dev/null; then
+            log_error "Python 3 is required to install Ansible"
+            log_error "Please install Python first via: brew install python3"
+            suggest_fix "ansible" "Install Python 3 before attempting Ansible installation"
+            return 1
+        fi
+
+        # Use retry for network-dependent brew install
+        retry brew install ansible || {
+            log_error "Failed to install Ansible after 3 attempts"
+            log_error ""
+            log_error "Troubleshooting steps:"
+            log_error "  1. Check if Homebrew is working: brew --version"
+            log_error "  2. Update Homebrew: brew update"
+            log_error "  3. Check Python: python3 --version"
+            log_error "  4. Try individual install: brew install ansible"
+            log_error "  5. Check brew logs: brew log --file install.log"
+            suggest_fix "ansible" "See https://docs.ansible.com/ansible/latest/installation_guide/"
+            return 1
+        }
+    else
+        # Linux: try pip first (preferred), then system package manager
+        log_info "Installing Ansible via pip3 (Linux)..."
+
+        if ! command -v pip3 &> /dev/null; then
+            log_error "pip3 is required to install Ansible"
+
+            # Try system package manager as fallback
+            if command -v apt-get &> /dev/null; then
+                log_info "Attempting to install ansible via apt-get..."
+                sudo apt-get update && sudo apt-get install -y ansible || {
+                    log_error "Failed to install Ansible via apt-get"
+                    return 1
+                }
+            elif command -v dnf &> /dev/null; then
+                log_info "Attempting to install ansible via dnf..."
+                sudo dnf install -y ansible || {
+                    log_error "Failed to install Ansible via dnf"
+                    return 1
+                }
+            elif command -v pacman &> /dev/null; then
+                log_info "Attempting to install ansible via pacman..."
+                sudo pacman -S --noconfirm ansible || {
+                    log_error "Failed to install Ansible via pacman"
+                    return 1
+                }
+            else
+                log_error "No supported package manager found (apt-get, dnf, pacman)"
+                suggest_fix "ansible" "Install pip3 or a supported package manager"
+                return 1
+            fi
+        else
+            # Use pip3 to install ansible
+            retry pip3 install --upgrade ansible || {
+                log_error "Failed to install Ansible via pip3 after 3 attempts"
+                suggest_fix "ansible" "Check pip3 installation: pip3 --version"
+                return 1
+            }
+        fi
     fi
-
-    if ! command -v python3 &> /dev/null; then
-        log_error "Python 3 is required to install Ansible"
-        log_error "Please install Python first via: brew install python3"
-        suggest_fix "ansible" "Install Python 3 before attempting Ansible installation"
-        return 1
-    fi
-
-    # Use retry for network-dependent brew install
-    retry brew install ansible || {
-        log_error "Failed to install Ansible after 3 attempts"
-        log_error ""
-        log_error "Troubleshooting steps:"
-        log_error "  1. Check if Homebrew is working: brew --version"
-        log_error "  2. Update Homebrew: brew update"
-        log_error "  3. Check Python: python3 --version"
-        log_error "  4. Try individual install: brew install ansible"
-        log_error "  5. Check brew logs: brew log --file install.log"
-        suggest_fix "ansible" "See https://docs.ansible.com/ansible/latest/installation_guide/"
-        return 1
-    }
 
     log_success "Ansible installed successfully"
 }
