@@ -730,9 +730,9 @@ run_ansible_setup() {
 
     cd "$SCRIPT_DIR"
 
-    ansible-playbook -i inventory.yml setup.yml \
-        --extra-vars="setup_environment=${ENVIRONMENT:-development}" \
-        --extra-vars="enabled_roles=${SELECTED_ROLES:-core,shell,editors,languages,development}" \
+    bash -c "ansible-playbook -i inventory.yml setup.yml \
+        --extra-vars=\"setup_environment=\${ENVIRONMENT:-development}\" \
+        --extra-vars=\"enabled_roles=\${SELECTED_ROLES:-core,shell,editors,languages,development}\"" \
         || {
             log_error "Ansible setup failed"
             return 1
