@@ -398,13 +398,22 @@ install_ansible() {
         else
             # Use pip3 to install ansible (user or system-wide)
             log_info "Using pip3 to install Ansible..."
-            if retry pip3 install --user ansible 2>/dev/null; then
+
+            # Try user installation first (preferred, doesn't need sudo)
+            if retry pip3 install --user ansible; then
                 log_success "Ansible installed via pip3 (user)"
-            elif retry pip3 install --upgrade ansible; then
+            # If user installation fails, try system-wide
+            elif retry pip3 install ansible; then
                 log_success "Ansible installed via pip3 (system)"
             else
                 log_error "Failed to install Ansible via pip3 after 3 attempts"
-                suggest_fix "ansible" "Check pip3 installation: pip3 --version"
+                log_error ""
+                log_error "Troubleshooting steps:"
+                log_error "  1. Verify pip3 is installed: pip3 --version"
+                log_error "  2. Upgrade pip: pip3 install --upgrade pip"
+                log_error "  3. Check disk space: df -h /tmp"
+                log_error "  4. Try manual install: pip3 install ansible"
+                suggest_fix "ansible" "Ensure pip3 is functional and has sufficient disk space"
                 return 1
             fi
         fi
