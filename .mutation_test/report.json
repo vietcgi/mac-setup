@@ -1,129 +1,17 @@
 {
-  "timestamp": "2025-10-30T16:05:33.670262",
-  "total_mutations": 285,
-  "killed_mutations": 270,
-  "survived_mutations": 15,
-  "mutation_score": 94.74,
+  "timestamp": "2025-10-31T23:28:46.135558+00:00",
+  "total_mutations": 318,
+  "killed_mutations": 317,
+  "survived_mutations": 1,
+  "mutation_score": 99.69,
   "survived_mutations_details": [
     {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 87,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 87"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 88,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 88"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 118,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 118"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 119,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 119"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 126,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 126"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 127,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 127"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 164,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 164"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 165,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 165"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 205,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 205"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 206,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 206"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 213,
-      "type": "logical_operator",
-      "original": "\"A\" in line or \"B\" in line or \"C\" in line or \"D\" in line or \"F\" in line",
-      "mutated": "\"A\" in line and \"B\" in line or \"C\" in line or \"D\" in line or \"F\" in line",
-      "description": "Changed 'or' to 'and' on line 213"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 252,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 252"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 253,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 253"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 349,
-      "type": "boolean_literal",
-      "original": "capture_output=True,",
-      "mutated": "capture_output=False,",
-      "description": "Changed True to False on line 349"
-    },
-    {
-      "file": "/Users/kevin/devkit/cli/commit_validator.py",
-      "line": 350,
-      "type": "boolean_literal",
-      "original": "text=True,",
-      "mutated": "text=False,",
-      "description": "Changed True to False on line 350"
+      "file": "/Users/kevin/devkit/cli/audit.py",
+      "line": 92,
+      "type": "comparison_operator",
+      "original": "if len(key) == 32:  # Validate key length",
+      "mutated": "if len(key) != 32:  # Validate key length",
+      "description": "Changed '==' to '!=' on line 92"
     }
   ]
 }

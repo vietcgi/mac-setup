@@ -73,17 +73,12 @@
   changed_when: homebrew_install.rc == 0
   tags: [homebrew]
 
-- name: Ensure Homebrew is in PATH
-  ansible.builtin.set_fact:
-    ansible_env: "{{ ansible_env | combine({'PATH': homebrew_prefix ~ '/bin:' ~ ansible_env.PATH}) }}"
-  tags: [homebrew]
-
 - name: Update Homebrew
   ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew update"
   changed_when: false
   when: homebrew_check.stat.exists
   environment:
-    PATH: "{{ ansible_env.PATH }}"
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [homebrew]
 
 - name: Install core packages via Homebrew
@@ -91,7 +86,7 @@
     {{ homebrew_prefix }}/bin/brew install git curl wget
   changed_when: false
   environment:
-    PATH: "{{ ansible_env.PATH }}"
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [homebrew, packages]
 
 - name: Install Ansible (if needed)
@@ -100,7 +95,7 @@
   changed_when: false
   when: ansible_version is not defined
   environment:
-    PATH: "{{ ansible_env.PATH }}"
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [homebrew, packages]
 
 - name: Create logging directory structure
