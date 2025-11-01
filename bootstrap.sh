@@ -251,7 +251,7 @@ install_system_dependencies() {
                 }
 
                 # Install essential build tools and curl
-                sudo apt-get install -y -qq build-essential curl git ca-certificates || {
+                sudo apt-get install -y -qq build-essential curl git ca-certificates pipx || {
                     log_error "Failed to install build tools via apt-get"
                     return 1
                 }
@@ -261,7 +261,7 @@ install_system_dependencies() {
                     return 1
                 }
 
-                apt-get install -y -qq build-essential curl git ca-certificates || {
+                apt-get install -y -qq build-essential curl git ca-certificates pipx || {
                     log_error "Failed to install build tools via apt-get (no sudo)"
                     return 1
                 }
@@ -274,12 +274,12 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates || {
+                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
                     log_error "Failed to install build tools via dnf"
                     return 1
                 }
             else
-                dnf install -y gcc gcc-c++ make curl git ca-certificates || {
+                dnf install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
                     log_error "Failed to install build tools via dnf (no sudo)"
                     return 1
                 }
@@ -292,12 +292,12 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo yum install -y gcc gcc-c++ make curl git ca-certificates || {
+                sudo yum install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
                     log_error "Failed to install build tools via yum"
                     return 1
                 }
             else
-                yum install -y gcc gcc-c++ make curl git ca-certificates || {
+                yum install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
                     log_error "Failed to install build tools via yum (no sudo)"
                     return 1
                 }
@@ -310,12 +310,12 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo pacman -S --noconfirm base-devel curl git ca-certificates || {
+                sudo pacman -S --noconfirm base-devel curl git ca-certificates python-pipx || {
                     log_error "Failed to install build tools via pacman"
                     return 1
                 }
             else
-                pacman -S --noconfirm base-devel curl git ca-certificates || {
+                pacman -S --noconfirm base-devel curl git ca-certificates python-pipx || {
                     log_error "Failed to install build tools via pacman (no sudo)"
                     return 1
                 }
@@ -328,12 +328,12 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo apk add --no-cache gcc g++ make curl git ca-certificates || {
+                sudo apk add --no-cache gcc g++ make curl git ca-certificates py3-pip || {
                     log_error "Failed to install build tools via apk"
                     return 1
                 }
             else
-                apk add --no-cache gcc g++ make curl git ca-certificates || {
+                apk add --no-cache gcc g++ make curl git ca-certificates py3-pip || {
                     log_error "Failed to install build tools via apk (no sudo)"
                     return 1
                 }
