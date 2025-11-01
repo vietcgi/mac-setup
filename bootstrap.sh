@@ -264,6 +264,12 @@ install_homebrew() {
             suggest_fix "homebrew-linux" "See https://docs.brew.sh/Homebrew-on-Linux"
             return 1
         }
+
+        # Add Homebrew to PATH for current shell on Linux
+        # This is needed immediately after installation so subsequent commands can find brew
+        if [[ -d "/home/linuxbrew/.linuxbrew/bin" ]]; then
+            export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        fi
     fi
 
     log_success "Homebrew installed successfully"
