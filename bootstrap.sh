@@ -134,7 +134,15 @@ verify_bootstrap_integrity() {
     fi
 
     local actual_checksum
-    actual_checksum=$(sha256sum "$0" | awk '{print $1}')
+    # Use cross-platform compatible checksum command
+    if command -v sha256sum &> /dev/null; then
+        actual_checksum=$(sha256sum "$0" | awk '{print $1}')
+    elif command -v shasum &> /dev/null; then
+        actual_checksum=$(shasum -a 256 "$0" | awk '{print $1}')
+    else
+        log_warning "Bootstrap integrity check skipped (no checksum utility available)"
+        return 0
+    fi
 
     if [ "$actual_checksum" != "$BOOTSTRAP_CHECKSUM" ]; then
         log_error "Bootstrap script integrity check FAILED!"
