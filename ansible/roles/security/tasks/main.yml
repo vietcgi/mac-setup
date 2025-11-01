@@ -22,6 +22,8 @@
     - name: Generate SSH key (ed25519)
       ansible.builtin.shell: |
         ssh-keygen -t ed25519 -f {{ home_dir }}/.ssh/id_ed25519 -N "" -C "$(whoami)@$(hostname)"
+      args:
+        executable: /bin/bash
       when: not ssh_key_check.stat.exists
       tags: [security, ssh]
 
@@ -80,6 +82,8 @@
   block:
     - name: Check if GPG key exists
       ansible.builtin.shell: gpg --list-secret-keys | grep -q uid
+      args:
+        executable: /bin/bash
       register: gpg_key_check
       failed_when: false
       changed_when: false
@@ -116,6 +120,8 @@
 
     - name: Export GPG public key
       ansible.builtin.shell: gpg --armor --export {{ ansible_user_id }} > {{ home_dir }}/.gpg_public_key.asc
+      args:
+        executable: /bin/bash
       changed_when: false
       tags: [security, gpg]
 

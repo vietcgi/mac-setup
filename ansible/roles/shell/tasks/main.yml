@@ -17,6 +17,7 @@
       ansible.builtin.shell: |
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
       args:
+        executable: /bin/bash
         creates: "{{ home_dir }}/.oh-my-zsh"
       tags: [shell, zsh]
 

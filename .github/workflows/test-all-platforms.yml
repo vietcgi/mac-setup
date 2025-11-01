@@ -458,10 +458,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git (needed for checkout)
+    - name: Install git and bash (needed for checkout and bootstrap)
       run: |
         apt-get update -y
-        apt-get install -y git
+        apt-get install -y git bash
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -521,10 +521,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-    - name: Install git (needed for checkout)
+    - name: Install git and bash (needed for checkout and bootstrap)
       run: |
         apt-get update -y
-        apt-get install -y git
+        apt-get install -y git bash
 
     - name: Checkout code
       uses: actions/checkout@v4
