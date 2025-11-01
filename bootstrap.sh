@@ -225,6 +225,132 @@ detect_arch() {
 # Prerequisite Installation
 ################################################################################
 
+install_system_dependencies() {
+    print_section "Installing system dependencies"
+
+    local os_type
+    os_type=$(uname -s)
+
+    if [[ "$os_type" == "Darwin" ]]; then
+        # macOS: Homebrew is a prerequisite, system dependencies are minimal
+        log_info "macOS detected - using Homebrew for dependencies"
+        return 0
+    elif [[ "$os_type" == "Linux" ]]; then
+        # Linux: Install build dependencies based on package manager
+        log_info "Detecting Linux distribution..."
+
+        # Detect package manager and install required dependencies
+        if command -v apt-get &> /dev/null; then
+            log_info "Debian/Ubuntu detected - installing dependencies via apt-get"
+
+            # Update package lists
+            if command -v sudo &> /dev/null; then
+                sudo apt-get update -qq || {
+                    log_error "Failed to update package lists via apt-get"
+                    return 1
+                }
+
+                # Install essential build tools and curl
+                sudo apt-get install -y -qq build-essential curl git ca-certificates || {
+                    log_error "Failed to install build tools via apt-get"
+                    return 1
+                }
+            else
+                apt-get update -qq || {
+                    log_error "Failed to update package lists via apt-get (no sudo)"
+                    return 1
+                }
+
+                apt-get install -y -qq build-essential curl git ca-certificates || {
+                    log_error "Failed to install build tools via apt-get (no sudo)"
+                    return 1
+                }
+            fi
+
+            log_success "Build tools installed via apt-get"
+
+        elif command -v dnf &> /dev/null; then
+            log_info "Fedora/RHEL detected - installing dependencies via dnf"
+
+            # Install essential build tools and curl
+            if command -v sudo &> /dev/null; then
+                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via dnf"
+                    return 1
+                }
+            else
+                dnf install -y gcc gcc-c++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via dnf (no sudo)"
+                    return 1
+                }
+            fi
+
+            log_success "Build tools installed via dnf"
+
+        elif command -v yum &> /dev/null; then
+            log_info "RHEL/CentOS detected - installing dependencies via yum"
+
+            # Install essential build tools and curl
+            if command -v sudo &> /dev/null; then
+                sudo yum install -y gcc gcc-c++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via yum"
+                    return 1
+                }
+            else
+                yum install -y gcc gcc-c++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via yum (no sudo)"
+                    return 1
+                }
+            fi
+
+            log_success "Build tools installed via yum"
+
+        elif command -v pacman &> /dev/null; then
+            log_info "Arch Linux detected - installing dependencies via pacman"
+
+            # Install essential build tools and curl
+            if command -v sudo &> /dev/null; then
+                sudo pacman -S --noconfirm base-devel curl git ca-certificates || {
+                    log_error "Failed to install build tools via pacman"
+                    return 1
+                }
+            else
+                pacman -S --noconfirm base-devel curl git ca-certificates || {
+                    log_error "Failed to install build tools via pacman (no sudo)"
+                    return 1
+                }
+            fi
+
+            log_success "Build tools installed via pacman"
+
+        elif command -v apk &> /dev/null; then
+            log_info "Alpine Linux detected - installing dependencies via apk"
+
+            # Install essential build tools and curl
+            if command -v sudo &> /dev/null; then
+                sudo apk add --no-cache gcc g++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via apk"
+                    return 1
+                }
+            else
+                apk add --no-cache gcc g++ make curl git ca-certificates || {
+                    log_error "Failed to install build tools via apk (no sudo)"
+                    return 1
+                }
+            fi
+
+            log_success "Build tools installed via apk"
+
+        else
+            log_warning "No supported package manager found (apt-get, dnf, yum, pacman, apk)"
+            log_warning "Attempting to continue anyway - some dependencies may be missing"
+            return 0
+        fi
+    fi
+
+    log_success "System dependencies installed"
+}
+
 install_homebrew() {
     print_section "Installing Homebrew"
 
@@ -774,23 +900,29 @@ main() {
     detect_os || exit 1
     detect_arch || exit 1
 
-    # Step 2: Install Homebrew
-    print_section "Step 2: Install Homebrew"
+    # Step 2: Install system dependencies (for Linux platforms)
+    print_section "Step 2: Install System Dependencies"
+    install_system_dependencies || {
+        log_warning "System dependencies installation failed. Some features may not work."
+    }
+
+    # Step 3: Install Homebrew
+    print_section "Step 3: Install Homebrew"
     install_homebrew || {
         log_warning "Homebrew installation failed. Some features may not work."
     }
 
-    # Step 3: Install Python
+    # Step 4: Install Python
     if [[ "$PYTHON_REQUIRED" == "true" ]]; then
-        print_section "Step 3: Install Python"
+        print_section "Step 4: Install Python"
         install_python || {
             log_warning "Python installation failed. Python tools will not be available."
         }
     fi
 
-    # Step 4: Install Ansible
+    # Step 5: Install Ansible
     if [[ "$SKIP_ANSIBLE" != "true" ]]; then
-        print_section "Step 4: Install Ansible"
+        print_section "Step 5: Install Ansible"
         if ! install_ansible; then
             log_error "Ansible installation failed"
             log_error "Debug info:"
