@@ -19,7 +19,7 @@
     state: directory
     mode: '0755'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   loop:
     - "{{ git_config_home }}"
     - "{{ git_templates_dir }}"
@@ -33,7 +33,7 @@
     dest: "{{ git_global_config }}"
     mode: '0644'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   changed_when: false
   notify: reload git config
   tags: [git, config]
@@ -44,7 +44,7 @@
     dest: "{{ git_local_config }}"
     mode: '0644'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   changed_when: false
   notify: reload git config
   tags: [git, config]
@@ -55,7 +55,7 @@
     dest: "{{ git_attributes_file }}"
     mode: '0644'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   tags: [git, config]
 
 - name: Deploy gitignore_global
@@ -64,7 +64,7 @@
     dest: "{{ git_config_home }}/ignore"
     mode: '0644'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   tags: [git, config]
 
 # Git Hooks Setup
@@ -77,7 +77,7 @@
     dest: "{{ git_hooks_dir }}/pre-commit"
     mode: '0755'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   notify: reload git hooks
   when: not git_enable_precommit | default(true)
   tags: [git, hooks]
@@ -88,7 +88,7 @@
     dest: "{{ git_hooks_dir }}/commit-msg"
     mode: '0755'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   notify: reload git hooks
   when: not git_enable_precommit | default(true)
   tags: [git, hooks]
@@ -99,7 +99,7 @@
     dest: "{{ git_hooks_dir }}/post-commit"
     mode: '0755'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
@@ -109,7 +109,7 @@
     dest: "{{ git_hooks_dir }}/prepare-commit-msg"
     mode: '0755'
     owner: "{{ current_user }}"
-    group: staff
+    group: "{{ ansible_user_gid | default(omit) }}"
   when: not git_enable_precommit | default(true)
   tags: [git, hooks]
 
@@ -291,7 +291,7 @@
         dest: "{{ repo_root }}/.pre-commit-config.yaml"
         mode: '0644'
         owner: "{{ current_user }}"
-        group: staff
+        group: "{{ ansible_user_gid | default(omit) }}"
       when:
         - git_enable_precommit | default(true)
         - repo_root is defined
