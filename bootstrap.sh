@@ -777,10 +777,19 @@ main() {
     # Step 4: Install Ansible
     if [[ "$SKIP_ANSIBLE" != "true" ]]; then
         print_section "Step 4: Install Ansible"
-        install_ansible || {
-            log_error "Ansible installation failed. Cannot continue."
-            exit 1
-        }
+        if ! install_ansible; then
+            log_error "Ansible installation failed"
+            log_error "Debug info:"
+            log_error "  OS: ${os_family:-unknown}"
+            log_error "  Architecture: ${ARCH:-unknown}"
+            if command -v ansible-playbook >/dev/null 2>&1; then
+                log_error "  Ansible found in PATH"
+            else
+                log_error "  Ansible NOT in PATH"
+            fi
+            log_error "Continuing without Ansible (some features may not work)"
+            SKIP_ANSIBLE=true
+        fi
     fi
 
     # Step 5: Create configuration
