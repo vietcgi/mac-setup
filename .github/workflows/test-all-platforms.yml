@@ -37,8 +37,14 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Homebrew environment in a fresh shell
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+        # Source Homebrew environment dynamically
+        if [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
+        fi
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -106,8 +112,14 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Homebrew environment in a fresh shell
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+        # Source Homebrew environment dynamically
+        if [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
+        fi
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -268,11 +280,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -391,11 +408,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -448,11 +470,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -505,11 +532,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -640,11 +672,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
@@ -695,11 +732,16 @@ jobs:
 
     - name: Verify installations
       run: |
-        # Source Linuxbrew environment
+        # Source Linuxbrew environment dynamically
         if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -f /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        elif command -v brew &> /dev/null; then
+          eval "$(brew shellenv)"
         fi
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         echo "PATH=$PATH"
 
         echo "=== Verifying Core Tools ==="
