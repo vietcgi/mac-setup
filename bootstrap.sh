@@ -827,6 +827,10 @@ main() {
     echo "  4. Restart your shell: exec \$SHELL"
     echo ""
     log_info "Your development environment is ready!"
+
+    # Create success marker for CI/CD verification
+    mkdir -p ~/.devkit
+    touch ~/.devkit/.bootstrap_success
 }
 
 # Run main function

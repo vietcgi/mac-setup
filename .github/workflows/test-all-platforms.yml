@@ -323,7 +323,18 @@ jobs:
 
     - name: Check for zero failures
       run: |
-        echo "Bootstrap completed successfully with zero failures"
+        if [ -f ~/.devkit/.bootstrap_success ]; then
+          echo "✅ Bootstrap completed successfully!"
+          exit 0
+        else
+          echo "❌ ERROR: Bootstrap did not complete successfully!"
+          echo ""
+          echo "=== Bootstrap logs ==="
+          if [ -f ~/.devkit/logs/setup.log ]; then
+            tail -100 ~/.devkit/logs/setup.log || true
+          fi
+          exit 1
+        fi
 
     - name: Upload logs on failure
       if: failure()
