@@ -93,13 +93,43 @@
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [homebrew]
 
-- name: Install core packages via Homebrew
+- name: Install core packages via Homebrew (macOS only)
   ansible.builtin.shell: |
     {{ homebrew_prefix }}/bin/brew install git curl wget
   changed_when: false
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
+  when: is_macos
   tags: [homebrew, packages]
+
+# Install git natively on Linux (required for pre-commit to work in Docker)
+- name: Install git and other core packages on Linux
+  block:
+    - name: Update package manager cache (apt)
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Install packages via apt (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: ['git', 'curl', 'wget', 'build-essential', 'python3-dev']
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install packages via dnf (Fedora/RHEL)
+      ansible.builtin.dnf:
+        name: ['git', 'curl', 'wget', 'gcc', 'make', 'python3-devel']
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install packages via pacman (Arch Linux)
+      community.general.pacman:
+        name: ['git', 'curl', 'wget', 'base-devel']
+        state: present
+      when: ansible_os_family == 'Archlinux'
+  when: is_linux
+  tags: [packages, linux]
 
 - name: Install Ansible (if needed)
   ansible.builtin.shell: |
