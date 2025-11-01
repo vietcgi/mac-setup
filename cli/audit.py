@@ -320,7 +320,7 @@ class AuditLogger:
             "timestamp": datetime.now(tz=UTC).isoformat(),
             "action": action.value,
             "status": status,
-            "user": user or os.getenv("USER", "unknown"),
+            "user": str(user or os.getenv("USER", "unknown")),
             "hostname": os.uname()[1],
             "details": details or {},
         }
