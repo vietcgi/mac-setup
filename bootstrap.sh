@@ -571,9 +571,11 @@ run_ansible_setup() {
 
     cd "$SCRIPT_DIR"
 
-    ansible-playbook -i inventory.yml setup.yml \
-        --extra-vars="setup_environment=${ENVIRONMENT:-development}" \
-        --extra-vars="enabled_roles=${SELECTED_ROLES:-core,shell,editors,languages,development}" \
+    # Explicitly use bash environment for Ansible playbook execution
+    # This ensures compatibility in Docker containers that default to /bin/sh
+    bash -c "ansible-playbook -i inventory.yml setup.yml \
+        --extra-vars='setup_environment=${ENVIRONMENT:-development}' \
+        --extra-vars='enabled_roles=${SELECTED_ROLES:-core,shell,editors,languages,development}'" \
         || {
             log_error "Ansible setup failed"
             return 1
