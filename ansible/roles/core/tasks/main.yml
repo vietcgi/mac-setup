@@ -64,19 +64,28 @@
 
 - name: Install Homebrew
   ansible.builtin.shell: |
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    set -o pipefail
+    curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | \
+      /bin/bash 2>&1 | tee /tmp/homebrew_install.log
   register: homebrew_install
   when: not homebrew_check.stat.exists
   retries: 3
   delay: 5
   until: homebrew_install is succeeded
-  changed_when: homebrew_install.rc == 0
+  changed_when: true
+  failed_when: homebrew_install.rc != 0
+  tags: [homebrew]
+
+- name: Verify Homebrew installation
+  ansible.builtin.stat:
+    path: "{{ homebrew_prefix }}/bin/brew"
+  register: homebrew_verify
   tags: [homebrew]
 
 - name: Update Homebrew
   ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew update"
   changed_when: false
-  when: homebrew_check.stat.exists
+  when: homebrew_verify.stat.exists
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
   tags: [homebrew]
