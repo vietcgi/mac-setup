@@ -472,11 +472,7 @@ jobs:
         uname -a
 
     - name: Run bootstrap
-      shell: bash
-      run: |
-        chmod +x bootstrap.sh
-        export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap.sh
+      run: bash -c "chmod +x bootstrap.sh && export DEBIAN_FRONTEND=noninteractive && bash bootstrap.sh"
       env:
         CI: true
 
@@ -535,11 +531,7 @@ jobs:
         uname -a
 
     - name: Run bootstrap
-      shell: bash
-      run: |
-        chmod +x bootstrap.sh
-        export DEBIAN_FRONTEND=noninteractive
-        ./bootstrap.sh
+      run: bash -c "chmod +x bootstrap.sh && export DEBIAN_FRONTEND=noninteractive && bash bootstrap.sh"
       env:
         CI: true
 
