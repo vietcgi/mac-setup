@@ -251,10 +251,13 @@ install_system_dependencies() {
                 }
 
                 # Install essential build tools and curl
-                sudo apt-get install -y -qq build-essential curl git ca-certificates pipx || {
+                sudo apt-get install -y -qq build-essential curl git ca-certificates || {
                     log_error "Failed to install build tools via apt-get"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                sudo apt-get install -y -qq pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             else
                 apt-get update -qq || {
                     log_error "Failed to update package lists via apt-get (no sudo)"
@@ -274,15 +277,21 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
+                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via dnf"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                sudo dnf install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             else
-                dnf install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
+                dnf install -y gcc gcc-c++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via dnf (no sudo)"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                dnf install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             fi
 
             log_success "Build tools installed via dnf"
@@ -292,15 +301,21 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo yum install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
+                sudo yum install -y gcc gcc-c++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via yum"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                sudo yum install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             else
-                yum install -y gcc gcc-c++ make curl git ca-certificates python3-pipx || {
+                yum install -y gcc gcc-c++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via yum (no sudo)"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                yum install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             fi
 
             log_success "Build tools installed via yum"
@@ -310,15 +325,21 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo pacman -S --noconfirm base-devel curl git ca-certificates python-pipx || {
+                sudo pacman -S --noconfirm base-devel curl git ca-certificates || {
                     log_error "Failed to install build tools via pacman"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                sudo pacman -S --noconfirm python-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             else
-                pacman -S --noconfirm base-devel curl git ca-certificates python-pipx || {
+                pacman -S --noconfirm base-devel curl git ca-certificates || {
                     log_error "Failed to install build tools via pacman (no sudo)"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                pacman -S --noconfirm python-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
             fi
 
             log_success "Build tools installed via pacman"
@@ -328,15 +349,21 @@ install_system_dependencies() {
 
             # Install essential build tools and curl
             if command -v sudo &> /dev/null; then
-                sudo apk add --no-cache gcc g++ make curl git ca-certificates py3-pip || {
+                sudo apk add --no-cache gcc g++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via apk"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                sudo apk add --no-cache py3-pip 2>/dev/null || log_warning "pipx installation skipped (not available)"
             else
-                apk add --no-cache gcc g++ make curl git ca-certificates py3-pip || {
+                apk add --no-cache gcc g++ make curl git ca-certificates || {
                     log_error "Failed to install build tools via apk (no sudo)"
                     return 1
                 }
+
+                # Install pipx (optional - not critical to bootstrap success)
+                apk add --no-cache py3-pip 2>/dev/null || log_warning "pipx installation skipped (not available)"
             fi
 
             log_success "Build tools installed via apk"
