@@ -694,7 +694,14 @@ jobs:
       shell: bash
       run: |
         chmod +x bootstrap.sh
-        ./bootstrap.sh
+        # Run bootstrap with verbose output and capture errors
+        bash -x bootstrap.sh 2>&1 | tee /tmp/bootstrap.log || {
+          EXIT_CODE=$?
+          echo "Bootstrap failed with exit code $EXIT_CODE"
+          echo "=== Last 50 lines of output ==="
+          tail -50 /tmp/bootstrap.log || true
+          exit $EXIT_CODE
+        }
       env:
         CI: true
 
@@ -755,7 +762,14 @@ jobs:
       shell: bash
       run: |
         chmod +x bootstrap.sh
-        ./bootstrap.sh
+        # Run bootstrap with verbose output and capture errors
+        bash -x bootstrap.sh 2>&1 | tee /tmp/bootstrap.log || {
+          EXIT_CODE=$?
+          echo "Bootstrap failed with exit code $EXIT_CODE"
+          echo "=== Last 50 lines of output ==="
+          tail -50 /tmp/bootstrap.log || true
+          exit $EXIT_CODE
+        }
       env:
         CI: true
 

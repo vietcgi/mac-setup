@@ -244,28 +244,33 @@ install_system_dependencies() {
             log_info "Debian/Ubuntu detected - installing dependencies via apt-get"
 
             # Update package lists
-            if command -v sudo &> /dev/null; then
-                sudo apt-get update -qq || {
-                    log_error "Failed to update package lists via apt-get"
-                    return 1
-                }
+            if [[ $EUID -ne 0 ]]; then
+                if command -v sudo &> /dev/null; then
+                    sudo apt-get update -qq || {
+                        log_error "Failed to update package lists via apt-get"
+                        return 1
+                    }
 
-                # Install essential build tools and curl
-                sudo apt-get install -y -qq build-essential curl git ca-certificates || {
-                    log_error "Failed to install build tools via apt-get"
-                    return 1
-                }
+                    # Install essential build tools and curl
+                    sudo apt-get install -y -qq build-essential curl git ca-certificates || {
+                        log_error "Failed to install build tools via apt-get"
+                        return 1
+                    }
 
-                # Install pipx (optional - not critical to bootstrap success)
-                sudo apt-get install -y -qq pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                    # Install pipx (optional - not critical to bootstrap success)
+                    sudo apt-get install -y -qq pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                else
+                    log_error "sudo not found, but required for apt-get"
+                    return 1
+                fi
             else
                 apt-get update -qq || {
-                    log_error "Failed to update package lists via apt-get (no sudo)"
+                    log_error "Failed to update package lists via apt-get (running as root)"
                     return 1
                 }
 
                 apt-get install -y -qq build-essential curl git ca-certificates pipx || {
-                    log_error "Failed to install build tools via apt-get (no sudo)"
+                    log_error "Failed to install build tools via apt-get (running as root)"
                     return 1
                 }
             fi
@@ -276,17 +281,22 @@ install_system_dependencies() {
             log_info "Fedora/RHEL detected - installing dependencies via dnf"
 
             # Install essential build tools and curl
-            if command -v sudo &> /dev/null; then
-                sudo dnf install -y gcc gcc-c++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via dnf"
-                    return 1
-                }
+            if [[ $EUID -ne 0 ]]; then
+                if command -v sudo &> /dev/null; then
+                    sudo dnf install -y gcc gcc-c++ make curl git ca-certificates || {
+                        log_error "Failed to install build tools via dnf"
+                        return 1
+                    }
 
-                # Install pipx (optional - not critical to bootstrap success)
-                sudo dnf install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                    # Install pipx (optional - not critical to bootstrap success)
+                    sudo dnf install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                else
+                    log_error "sudo not found, but required for dnf"
+                    return 1
+                fi
             else
                 dnf install -y gcc gcc-c++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via dnf (no sudo)"
+                    log_error "Failed to install build tools via dnf (running as root)"
                     return 1
                 }
 
@@ -300,17 +310,22 @@ install_system_dependencies() {
             log_info "RHEL/CentOS detected - installing dependencies via yum"
 
             # Install essential build tools and curl
-            if command -v sudo &> /dev/null; then
-                sudo yum install -y gcc gcc-c++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via yum"
-                    return 1
-                }
+            if [[ $EUID -ne 0 ]]; then
+                if command -v sudo &> /dev/null; then
+                    sudo yum install -y gcc gcc-c++ make curl git ca-certificates || {
+                        log_error "Failed to install build tools via yum"
+                        return 1
+                    }
 
-                # Install pipx (optional - not critical to bootstrap success)
-                sudo yum install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                    # Install pipx (optional - not critical to bootstrap success)
+                    sudo yum install -y python3-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                else
+                    log_error "sudo not found, but required for yum"
+                    return 1
+                fi
             else
                 yum install -y gcc gcc-c++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via yum (no sudo)"
+                    log_error "Failed to install build tools via yum (running as root)"
                     return 1
                 }
 
@@ -324,17 +339,22 @@ install_system_dependencies() {
             log_info "Arch Linux detected - installing dependencies via pacman"
 
             # Install essential build tools and curl
-            if command -v sudo &> /dev/null; then
-                sudo pacman -S --noconfirm base-devel curl git ca-certificates || {
-                    log_error "Failed to install build tools via pacman"
-                    return 1
-                }
+            if [[ $EUID -ne 0 ]]; then
+                if command -v sudo &> /dev/null; then
+                    sudo pacman -S --noconfirm base-devel curl git ca-certificates || {
+                        log_error "Failed to install build tools via pacman"
+                        return 1
+                    }
 
-                # Install pipx (optional - not critical to bootstrap success)
-                sudo pacman -S --noconfirm python-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                    # Install pipx (optional - not critical to bootstrap success)
+                    sudo pacman -S --noconfirm python-pipx 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                else
+                    log_error "sudo not found, but required for pacman"
+                    return 1
+                fi
             else
                 pacman -S --noconfirm base-devel curl git ca-certificates || {
-                    log_error "Failed to install build tools via pacman (no sudo)"
+                    log_error "Failed to install build tools via pacman (running as root)"
                     return 1
                 }
 
@@ -348,17 +368,22 @@ install_system_dependencies() {
             log_info "Alpine Linux detected - installing dependencies via apk"
 
             # Install essential build tools and curl
-            if command -v sudo &> /dev/null; then
-                sudo apk add --no-cache gcc g++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via apk"
-                    return 1
-                }
+            if [[ $EUID -ne 0 ]]; then
+                if command -v sudo &> /dev/null; then
+                    sudo apk add --no-cache gcc g++ make curl git ca-certificates || {
+                        log_error "Failed to install build tools via apk"
+                        return 1
+                    }
 
-                # Install pipx (optional - not critical to bootstrap success)
-                sudo apk add --no-cache py3-pip 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                    # Install pipx (optional - not critical to bootstrap success)
+                    sudo apk add --no-cache py3-pip 2>/dev/null || log_warning "pipx installation skipped (not available)"
+                else
+                    log_error "sudo not found, but required for apk"
+                    return 1
+                fi
             else
                 apk add --no-cache gcc g++ make curl git ca-certificates || {
-                    log_error "Failed to install build tools via apk (no sudo)"
+                    log_error "Failed to install build tools via apk (running as root)"
                     return 1
                 }
 
@@ -520,40 +545,55 @@ install_ansible() {
             # Try system package manager as fallback
             if command -v apt-get &> /dev/null; then
                 log_info "Attempting to install ansible via apt-get..."
-                if command -v sudo &> /dev/null; then
-                    sudo apt-get update && sudo apt-get install -y ansible || {
-                        log_error "Failed to install Ansible via apt-get"
+                if [[ $EUID -ne 0 ]]; then
+                    if command -v sudo &> /dev/null; then
+                        sudo apt-get update && sudo apt-get install -y ansible || {
+                            log_error "Failed to install Ansible via apt-get"
+                            return 1
+                        }
+                    else
+                        log_error "sudo not found, but required for apt-get"
                         return 1
-                    }
+                    fi
                 else
                     apt-get update && apt-get install -y ansible || {
-                        log_error "Failed to install Ansible via apt-get (no sudo)"
+                        log_error "Failed to install Ansible via apt-get (running as root)"
                         return 1
                     }
                 fi
             elif command -v dnf &> /dev/null; then
                 log_info "Attempting to install ansible via dnf..."
-                if command -v sudo &> /dev/null; then
-                    sudo dnf install -y ansible || {
-                        log_error "Failed to install Ansible via dnf"
+                if [[ $EUID -ne 0 ]]; then
+                    if command -v sudo &> /dev/null; then
+                        sudo dnf install -y ansible || {
+                            log_error "Failed to install Ansible via dnf"
+                            return 1
+                        }
+                    else
+                        log_error "sudo not found, but required for dnf"
                         return 1
-                    }
+                    fi
                 else
                     dnf install -y ansible || {
-                        log_error "Failed to install Ansible via dnf (no sudo)"
+                        log_error "Failed to install Ansible via dnf (running as root)"
                         return 1
                     }
                 fi
             elif command -v pacman &> /dev/null; then
                 log_info "Attempting to install ansible via pacman..."
-                if command -v sudo &> /dev/null; then
-                    sudo pacman -S --noconfirm ansible || {
-                        log_error "Failed to install Ansible via pacman"
+                if [[ $EUID -ne 0 ]]; then
+                    if command -v sudo &> /dev/null; then
+                        sudo pacman -S --noconfirm ansible || {
+                            log_error "Failed to install Ansible via pacman"
+                            return 1
+                        }
+                    else
+                        log_error "sudo not found, but required for pacman"
                         return 1
-                    }
+                    fi
                 else
                     pacman -S --noconfirm ansible || {
-                        log_error "Failed to install Ansible via pacman (no sudo)"
+                        log_error "Failed to install Ansible via pacman (running as root)"
                         return 1
                     }
                 fi
